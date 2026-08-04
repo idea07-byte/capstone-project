@@ -1,16 +1,19 @@
-# ShopSphere
+# Shop MVP
 
-A small Java console application for managing users and products in a marketplace.
-
-## Requirements
-
-- JDK 17 or later
+Minimal Java command-line product viewer for the reduced MVP.
 
 ## Run
 
 ```powershell
-javac Main.java model\*.java service\*.java exception\*.java util\*.java
-java Main
+cd d:\java\capstone
+javac -d out src\Main.java src\model\Product.java src\model\User.java src\model\Customer.java src\service\ProductService.java src\service\UserService.java src\exception\ProductNotFoundException.java src\exception\UserNotFoundException.java
+java -cp out Main
 ```
 
-The application starts with sample users and products, and provides menu options to list, add, and find products.
+This starts a simple CLI that lets you:
+- view available products
+- add a product
+- find a product by ID
+- view seeded users
+
+No database or web server is required.
