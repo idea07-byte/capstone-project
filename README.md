@@ -6,7 +6,7 @@ Minimal Java command-line product viewer for the reduced MVP.
 
 ```powershell
 cd d:\java\capstone
-javac -d out src\Main.java src\model\Product.java src\model\User.java src\model\Customer.java src\service\ProductService.java src\service\UserService.java src\exception\ProductNotFoundException.java src\exception\UserNotFoundException.java
+javac -d out src\Main.java src\model\Product.java src\model\User.java src\model\Customer.java src\service\ProductService.java src\service\UserService.java
 java -cp out Main
 ```
 
