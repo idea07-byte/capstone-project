@@ -42,7 +42,7 @@ public class Main {
         productService.addProduct(new Product(102, "USB-C Cable", 299.0, 25));
         productService.addProduct(new Product(103, "Mechanical Keyboard", 2499.0, 8));
 
-        userService.addUser(new Customer(1, "Asha", "asha@example.com", "pass1234", "Mumbai"));
+        userService.addUser(new Customer(1, "Asha", "asha@example.com", "pass1234"));
     }
 
     private static void showProducts() {
