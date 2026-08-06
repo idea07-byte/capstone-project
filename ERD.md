@@ -31,3 +31,42 @@ erDiagram
 
     USER ||--|| CUSTOMER : extends
 ```
+
+## Class Diagram
+
+```mermaid
+classDiagram
+    class Product {
+      +int id
+      +String name
+      +double price
+      +int quantity
+      +getId()
+      +getName()
+      +getPrice()
+      +getQuantity()
+      +toString()
+    }
+
+    class User {
+      +int id
+      +String name
+      +String email
+      +String password
+      +getId()
+      +getName()
+      +getEmail()
+      +getPassword()
+      +getRole()
+      +setName(name)
+      +setEmail(email)
+      +setPassword(password)
+      +toString()
+    }
+
+    class Customer {
+      +getRole()
+    }
+
+    User <|-- Customer
+```
