@@ -16,6 +16,10 @@ See the ER diagram in `ERD.md` or view the generated image below:
 
 ![Entity-Relationship Diagram](ERD.png)
 
+Also view the generated class diagram:
+
+![Class Diagram](ERD-class.png)
+
 ## Model Structure
 
 - `Product`: stores product details such as ID, name, price, and quantity.
