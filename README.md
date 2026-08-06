@@ -10,6 +10,10 @@ javac -d out src\Main.java src\model\Product.java src\model\User.java src\model\
 java -cp out Main
 ```
 
+## ER Diagram
+
+See the ER diagram in `ERD.md`.
+
 This starts a simple CLI that lets you:
 - view available products
 - add a product
