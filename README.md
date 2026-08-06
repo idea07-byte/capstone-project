@@ -12,13 +12,13 @@ java -cp out Main
 
 ## ER Diagram
 
-See the ER diagram in `ERD.md` or view the generated image below:
+See the ER diagram in `docs/erd.md` or view the generated image below:
 
-![Entity-Relationship Diagram](ERD.png)
+![Entity-Relationship Diagram](docs/erd.png)
 
 Also view the generated class diagram:
 
-![Class Diagram](ERD-class.png)
+![Class Diagram](docs/class-diagram.png)
 
 ## Model Structure
 
