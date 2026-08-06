@@ -1,5 +1,11 @@
 # Usage
 
+## Table of contents
+
+- [Run](#run)
+- [CLI Features](#cli-features)
+- [Documentation](#documentation)
+
 ## Run
 
 ```powershell
