@@ -14,6 +14,9 @@ This starts a simple CLI that lets you:
 - view available products
 - add a product
 - find a product by ID
+- remove a product by ID
 - view seeded users
+- add a user
+- find a user by ID
 
 No database or web server is required.
