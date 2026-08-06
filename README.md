@@ -12,7 +12,9 @@ java -cp out Main
 
 ## ER Diagram
 
-See the ER diagram in `ERD.md`.
+See the ER diagram in `ERD.md` or view the generated image below:
+
+![Entity-Relationship Diagram](ERD.png)
 
 This starts a simple CLI that lets you:
 - view available products
