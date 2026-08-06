@@ -16,6 +16,12 @@ See the ER diagram in `ERD.md` or view the generated image below:
 
 ![Entity-Relationship Diagram](ERD.png)
 
+## Model Structure
+
+- `Product`: stores product details such as ID, name, price, and quantity.
+- `User`: abstract base class for authentication-related fields.
+- `Customer`: concrete user type extending `User` with a customer role.
+
 This starts a simple CLI that lets you:
 - view available products
 - add a product
