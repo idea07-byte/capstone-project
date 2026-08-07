@@ -23,4 +23,17 @@ public class ProductService {
     public boolean removeProductById(int id) {
         return products.removeIf(product -> product.getId() == id);
     }
+
+    public boolean hasSufficientStock(int productId, int requestQuantity) {
+        Product product = getProductById(productId);
+        return product != null && product.getQuantity() >= requestQuantity;
+    }
+
+    public void reduceProductQuantity(int productId, int amount) {
+        Product product = getProductById(productId);
+        if (product == null) {
+            throw new IllegalArgumentException("Product not found: " + productId);
+        }
+        product.reduceQuantity(amount);
+    }
 }

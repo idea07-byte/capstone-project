@@ -10,7 +10,7 @@
 
 ```powershell
 cd d:\java\capstone
-javac -d out src\Main.java src\model\Product.java src\model\User.java src\model\Customer.java src\service\ProductService.java src\service\UserService.java
+javac -d out src\Main.java src\model\*.java src\service\*.java
 java -cp out Main
 ```
 
@@ -20,9 +20,12 @@ java -cp out Main
 - Add a product
 - Find a product by ID
 - Remove a product by ID
-- View seeded users
+- View users
 - Add a user
 - Find a user by ID
+- Create a customer order with multiple items
+- View order history
+- Find an order by ID
 
 ## Documentation
 

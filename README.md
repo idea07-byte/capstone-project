@@ -1,6 +1,13 @@
-# Shop MVP
+# Shop Capstone
 
-A minimal Java command-line product viewer for the reduced MVP.
+A Java command-line shop system with products, users, and orders.
+
+## Features
+
+- Manage products with stock tracking
+- Manage customers and admin users
+- Create customer orders with multiple items
+- Find products, users, and orders by ID
 
 ## Documentation
 

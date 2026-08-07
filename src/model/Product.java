@@ -4,7 +4,7 @@ public class Product {
     private final int id;
     private final String name;
     private final double price;
-    private final int quantity;
+    private int quantity;
 
     public Product(int id, String name, double price, int quantity) {
         this.id = id;
@@ -17,6 +17,20 @@ public class Product {
     public String getName() { return name; }
     public double getPrice() { return price; }
     public int getQuantity() { return quantity; }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void reduceQuantity(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Quantity reduction must be positive.");
+        }
+        if (amount > quantity) {
+            throw new IllegalArgumentException("Not enough stock to reduce by " + amount);
+        }
+        quantity -= amount;
+    }
 
     @Override
     public String toString() {
