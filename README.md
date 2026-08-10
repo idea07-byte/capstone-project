@@ -12,8 +12,7 @@ A Java command-line shop system with products, users, and orders.
 ## Documentation
 
 - [Usage guide](docs/usage.md)
-- [ER diagram](docs/erd.md)
-- [Generated ER diagram image](docs/erd.png)
-- [Generated class diagram image](docs/class-diagram.png)
+- [System diagrams](docs/diagrams.md)
+- [ER diagram reference](docs/erd.md)
 
 No database or web server is required.

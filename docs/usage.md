@@ -29,6 +29,5 @@ java -cp out Main
 
 ## Documentation
 
-- ER diagram: `docs/erd.md`
-- Generated ER diagram image: `docs/erd.png`
-- Generated class diagram image: `docs/class-diagram.png`
+- System diagrams: `docs/diagrams.md`
+- ER diagram reference: `docs/erd.md`
