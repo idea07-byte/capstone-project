@@ -1,6 +1,10 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.io.IOException;
+import java.awt.Desktop;
+import java.net.URI;
+import java.net.URISyntaxException;
 import model.Admin;
 import model.Customer;
 import model.Order;
@@ -17,6 +21,19 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
+        // Start web server on a separate thread
+        startWebServer();
+
+        // Give server time to start before opening browser
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Open browser to login page
+        openBrowser("http://localhost:8080");
+
         seedData();
         System.out.println("=== Shop Capstone ===");
 
@@ -240,6 +257,34 @@ public class Main {
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid ID.");
+        }
+    }
+
+    private static void startWebServer() {
+        Thread webServerThread = new Thread(() -> {
+            try {
+                WebServer.startServer();
+            } catch (Exception e) {
+                System.err.println("Failed to start web server: " + e.getMessage());
+            }
+        });
+        webServerThread.setDaemon(true);
+        webServerThread.setName("WebServerThread");
+        webServerThread.start();
+    }
+
+    private static void openBrowser(String url) {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+                System.out.println("Opening browser at: " + url);
+            } else {
+                System.out.println("Browser could not be opened automatically.");
+                System.out.println("Please visit: " + url);
+            }
+        } catch (IOException | URISyntaxException e) {
+            System.err.println("Could not open browser: " + e.getMessage());
+            System.out.println("Please visit: " + url);
         }
     }
 }
