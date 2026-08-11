@@ -7,10 +7,12 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class WebServer {
     private static final int PORT = 8080;
-    private static final String WEB_ROOT = "./web";
+    private static final String WEB_ROOT = "./web/dist";
 
     public static void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
@@ -32,6 +34,7 @@ public class WebServer {
         System.out.println("==================================");
         System.out.println("Server running at: http://localhost:" + PORT);
         System.out.println("Access the app at: http://localhost:" + PORT);
+        System.out.println("React build directory: " + Paths.get(WEB_ROOT).toAbsolutePath().normalize());
         System.out.println("\nTest Credentials:");
         System.out.println("Email: admin@shop.com | Password: admin123");
         System.out.println("Email: customer@shop.com | Password: customer123");
@@ -48,10 +51,17 @@ public class WebServer {
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
             if (path.equals("/")) {
-                path = "/index.html";
+                sendReactShell(exchange, Paths.get(WEB_ROOT).toAbsolutePath().normalize());
+                return;
             }
 
-            Path filePath = Paths.get(WEB_ROOT + path);
+            Path webRoot = Paths.get(WEB_ROOT).toAbsolutePath().normalize();
+            Path filePath = webRoot.resolve(path.substring(1)).normalize();
+
+            if (!filePath.startsWith(webRoot)) {
+                sendNotFound(exchange, path);
+                return;
+            }
 
             if (Files.exists(filePath) && !Files.isDirectory(filePath)) {
                 String contentType = getContentType(filePath.toString());
@@ -64,17 +74,72 @@ public class WebServer {
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(fileContent);
                 }
+            } else if (!path.startsWith("/api/")) {
+                sendReactShell(exchange, webRoot);
             } else {
-                String notFound = "<!DOCTYPE html><html><head><title>404</title></head>" +
-                        "<body><h1>404 - File Not Found</h1><p>Resource: " + path + "</p></body></html>";
-                byte[] response = notFound.getBytes();
+                sendNotFound(exchange, path);
+            }
+        }
 
-                exchange.getResponseHeaders().set("Content-Type", "text/html");
-                exchange.sendResponseHeaders(404, response.length);
+        private void sendReactShell(HttpExchange exchange, Path webRoot) throws IOException {
+            Optional<Path> scriptPath = findAsset(webRoot, ".js");
+            Optional<Path> stylePath = findAsset(webRoot, ".css");
+
+            if (scriptPath.isEmpty()) {
+                String message = "React app is not built. Run: cd web && npm install && npm run build";
+                byte[] response = message.getBytes();
+
+                exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(500, response.length);
 
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(response);
                 }
+                return;
+            }
+
+            String script = "/" + webRoot.relativize(scriptPath.get()).toString().replace("\\", "/");
+            String styleLink = stylePath
+                    .map(path -> "<link rel=\"stylesheet\" href=\"/" + webRoot.relativize(path).toString().replace("\\", "/") + "\">")
+                    .orElse("");
+            String html = "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\">" +
+                    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                    "<title>Shop Capstone</title>" + styleLink + "</head><body><div id=\"root\"></div>" +
+                    "<script type=\"module\" src=\"" + script + "\"></script></body></html>";
+            byte[] response = html.getBytes();
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, response.length);
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response);
+            }
+        }
+
+        private Optional<Path> findAsset(Path webRoot, String extension) throws IOException {
+            Path assets = webRoot.resolve("assets");
+            if (!Files.isDirectory(assets)) {
+                return Optional.empty();
+            }
+
+            try (Stream<Path> files = Files.list(assets)) {
+                return files
+                        .filter(path -> path.getFileName().toString().endsWith(extension))
+                        .findFirst();
+            }
+        }
+
+        private void sendNotFound(HttpExchange exchange, String path) throws IOException {
+            String notFound = "<!DOCTYPE html><html><head><title>404</title></head>" +
+                    "<body><h1>404 - File Not Found</h1><p>Resource: " + path + "</p></body></html>";
+            byte[] response = notFound.getBytes();
+
+            exchange.getResponseHeaders().set("Content-Type", "text/html");
+            exchange.sendResponseHeaders(404, response.length);
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response);
             }
         }
 
@@ -82,6 +147,7 @@ public class WebServer {
             if (filePath.endsWith(".html")) return "text/html";
             if (filePath.endsWith(".css")) return "text/css";
             if (filePath.endsWith(".js")) return "application/javascript";
+            if (filePath.endsWith(".mjs")) return "application/javascript";
             if (filePath.endsWith(".json")) return "application/json";
             if (filePath.endsWith(".png")) return "image/png";
             if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";

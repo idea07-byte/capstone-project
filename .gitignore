@@ -6,10 +6,14 @@ target/
 
 # IDE settings
 .idea/
+.vscode/
 *.iml
 .classpath
 .project
 .settings/
+
+# Node dependencies
+node_modules/
 
 # Operating system files
 .DS_Store
