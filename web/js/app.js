@@ -1,5 +1,8 @@
 // Login Form Handler
 document.addEventListener('DOMContentLoaded', function() {
+    // Display current server URL
+    displayServerUrl();
+
     const loginForm = document.getElementById('loginForm');
     const loginModal = document.getElementById('loginModal');
     const closeBtn = document.querySelector('.close');
@@ -133,3 +136,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Display server URL in navbar
+function displayServerUrl() {
+    const serverUrlElement = document.getElementById('serverUrl');
+    if (serverUrlElement) {
+        const currentUrl = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+        serverUrlElement.textContent = currentUrl;
+        
+        // Make URL clickable
+        serverUrlElement.style.cursor = 'pointer';
+        serverUrlElement.addEventListener('click', function() {
+            navigator.clipboard.writeText(currentUrl);
+            alert('Server URL copied to clipboard:\n' + currentUrl);
+        });
+    }
+}

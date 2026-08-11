@@ -52,6 +52,28 @@ body {
     color: #64b5f6;
 }
 
+.server-url {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(100, 181, 246, 0.1);
+    border-radius: 5px;
+    border: 1px solid #64b5f6;
+    font-size: 0.85rem;
+}
+
+.url-label {
+    color: #b3e5fc;
+    font-weight: bold;
+}
+
+.url-value {
+    color: #64b5f6;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
 .login-btn {
     padding: 0.5rem 1.5rem;
     border: 2px solid white;
