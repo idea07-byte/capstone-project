@@ -9,9 +9,8 @@ A shop system with products, users, and orders, split into a Java backend and a 
 - Create customer orders with multiple items
 - Find products, users, and orders by ID
 
-## Project URLs
+## Project URL
 
-- Backend: http://localhost:8080
 - Frontend: http://localhost:3000
 
 ## Documentation
