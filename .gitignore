@@ -15,6 +15,12 @@ target/
 # Node dependencies
 node_modules/
 
+# Database drivers (download locally)
+backend/lib/
+
+# Local database credentials (never commit)
+backend/resources/database.properties
+
 # Operating system files
 .DS_Store
 Thumbs.db

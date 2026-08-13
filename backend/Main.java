@@ -13,6 +13,7 @@ import model.Product;
 import service.OrderService;
 import service.ProductService;
 import service.UserService;
+import db.Database;
 
 public class Main {
     private static final ProductService productService = new ProductService();
@@ -34,7 +35,7 @@ public class Main {
         // Open browser to login page
         openBrowser("http://localhost:8080");
 
-        seedData();
+        Database.initialize();
         System.out.println("=== Shop Capstone ===");
 
         boolean running = true;
@@ -71,15 +72,6 @@ public class Main {
         }
 
         System.out.println("Goodbye.");
-    }
-
-    private static void seedData() {
-        productService.addProduct(new Product(101, "Wireless Mouse", 799.0, 12));
-        productService.addProduct(new Product(102, "USB-C Cable", 299.0, 25));
-        productService.addProduct(new Product(103, "Mechanical Keyboard", 2499.0, 8));
-
-        userService.addUser(new Customer(1, "Asha", "asha@example.com", "pass1234"));
-        userService.addUser(new Admin(900, "Admin", "admin@example.com", "adminpass"));
     }
 
     private static void showProducts() {

@@ -10,7 +10,7 @@
 
 ```powershell
 cd d:\java\capstone
-javac -d out src\Main.java src\model\*.java src\service\*.java
+javac -d out backend\Main.java backend\model\*.java backend\service\*.java backend\WebServer.java
 java -cp out Main
 ```
 

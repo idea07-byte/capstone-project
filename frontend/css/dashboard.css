@@ -336,3 +336,137 @@
         padding: 0.75rem 0.5rem;
     }
 }
+
+/* Status Badges */
+.status-pending {
+    color: #f57c00;
+    font-weight: bold;
+}
+
+.status-processing {
+    color: #1976d2;
+    font-weight: bold;
+}
+
+.status-delivered {
+    color: #388e3c;
+    font-weight: bold;
+}
+
+.status-shipped {
+    color: #7b1fa2;
+    font-weight: bold;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal h3 {
+    color: #1a3a52;
+    margin-bottom: 1.5rem;
+}
+
+.modal .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.modal .form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #333;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.modal .form-group input,
+.modal .form-group select {
+    width: 100%;
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.modal .form-group input:focus,
+.modal .form-group select:focus {
+    outline: none;
+    border-color: #64b5f6;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-cancel {
+    padding: 0.7rem 1.5rem;
+    background: #eee;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background: #ddd;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Order builder */
+.order-items-preview {
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.order-items-preview .preview-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.9rem;
+}
+
+.order-items-preview .preview-row:last-child {
+    border-bottom: none;
+}
+
+.order-total {
+    text-align: right;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #1a3a52;
+    margin-top: 0.75rem;
+}
