@@ -107,6 +107,9 @@ function App() {
             <span className="url-label">Server:</span>
             <span className="url-value">{window.location.origin}</span>
           </div>
+          <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" className="frontend-link">
+            Frontend
+          </a>
         </div>
       </nav>
 
