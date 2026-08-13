@@ -9,9 +9,10 @@ A shop system with products, users, and orders, split into a Java backend and a 
 - Create customer orders with multiple items
 - Find products, users, and orders by ID
 
-## Project URL
+## Project URLs
 
-- https://github.com/idea07-byte/capstone-project.git
+- Backend: http://localhost:8080
+- Frontend: http://localhost:3000
 
 ## Documentation
 
