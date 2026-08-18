@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-echo Building BuyIt backend...
+echo Building BuyIt Marketplace...
 
 set LIB_DIR=lib
 set OUT_DIR=..\out
