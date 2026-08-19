@@ -63,8 +63,10 @@ public class ProductService {
 
         if (sortBy != null) {
             sql.append(switch (sortBy) {
-                case "price_low" -> " ORDER BY p.price ASC";
-                case "price_high" -> " ORDER BY p.price DESC";
+                case "price_asc" -> " ORDER BY p.price ASC";
+                case "price_desc" -> " ORDER BY p.price DESC";
+                case "name_asc" -> " ORDER BY p.name ASC";
+                case "name_desc" -> " ORDER BY p.name DESC";
                 case "rating" -> " ORDER BY p.id DESC";
                 case "newest" -> " ORDER BY p.created_at DESC";
                 default -> " ORDER BY p.id DESC";

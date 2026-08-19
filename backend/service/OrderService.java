@@ -217,7 +217,7 @@ public class OrderService {
     public double totalRevenue() {
         try (Connection conn = Database.getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COALESCE(SUM(final_amount), 0) FROM orders WHERE payment_status = 'PAID' OR order_status != 'CANCELLED'")) { rs.next(); return rs.getDouble(1);
+             ResultSet rs = stmt.executeQuery("SELECT COALESCE(SUM(final_amount), 0) FROM orders WHERE payment_status = 'PAID' AND order_status != 'CANCELLED'")) { rs.next(); return rs.getDouble(1);
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
 

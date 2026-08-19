@@ -317,8 +317,10 @@ public class WebServer {
                 String body = readBody(exchange);
                 Product p = new Product();
                 p.setVendorId(vendor.getId());
-                p.setCategoryId(parseInt(body, "categoryId"));
-                p.setBrandId(parseInt(body, "brandId"));
+                int catId = parseInt(body, "categoryId");
+                p.setCategoryId(catId > 0 ? catId : null);
+                int brandId = parseInt(body, "brandId");
+                p.setBrandId(brandId > 0 ? brandId : null);
                 p.setName(jsonStr(body, "name"));
                 p.setDescription(jsonStr(body, "description"));
                 p.setPrice(parseDouble(body, "price"));
@@ -346,8 +348,14 @@ public class WebServer {
                 Product p = new Product();
                 String name = jsonStr(body, "name");
                 if (!name.isEmpty()) p.setName(name);
-                if (body.contains("categoryId")) p.setCategoryId(parseInt(body, "categoryId"));
-                if (body.contains("brandId")) p.setBrandId(parseInt(body, "brandId"));
+                if (body.contains("categoryId")) {
+                    int catId = parseInt(body, "categoryId");
+                    p.setCategoryId(catId > 0 ? catId : null);
+                }
+                if (body.contains("brandId")) {
+                    int brandId = parseInt(body, "brandId");
+                    p.setBrandId(brandId > 0 ? brandId : null);
+                }
                 String desc = jsonStr(body, "description");
                 if (!desc.isEmpty()) p.setDescription(desc);
                 double price = parseDouble(body, "price");
@@ -556,13 +564,13 @@ public class WebServer {
                     respondJson(exchange, json("success", false, "message", e.getMessage()));
                 }
             } else if ("PUT".equals(method) && path.matches("/api/orders/\\d+/status")) {
-                int orderId = Integer.parseInt(path.substring(path.lastIndexOf("/") - 8, path.lastIndexOf("/")));
+                int orderId = Integer.parseInt(path.split("/")[3]);
                 String body = readBody(exchange);
                 String status = jsonStr(body, "status");
                 new OrderService().updateOrderStatus(orderId, status);
                 respondJson(exchange, "{\"success\":true,\"message\":\"Status updated\"}");
             } else if ("POST".equals(method) && path.matches("/api/orders/\\d+/cancel")) {
-                int orderId = Integer.parseInt(path.substring(path.lastIndexOf("/") - 7, path.lastIndexOf("/")));
+                int orderId = Integer.parseInt(path.split("/")[3]);
                 new OrderService().cancelOrder(orderId);
                 respondJson(exchange, "{\"success\":true,\"message\":\"Order cancelled\"}");
             } else { sendMethodNotAllowed(exchange); }
@@ -615,7 +623,7 @@ public class WebServer {
             } else if ("PUT".equals(method) && path.matches("/api/vendors/\\d+/status")) {
                 Integer userId = getUserId(exchange);
                 if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
-                int id = Integer.parseInt(path.substring(path.lastIndexOf("/") - 8, path.lastIndexOf("/")));
+                int id = Integer.parseInt(path.split("/")[3]);
                 String body = readBody(exchange);
                 String status = jsonStr(body, "status");
                 new VendorService().updateApprovalStatus(id, status);
@@ -625,6 +633,22 @@ public class WebServer {
                 if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 Vendor v = new VendorService().getVendorByUserId(userId);
                 respondJson(exchange, v != null ? json("success", true, "vendor", vendorJson(v)) : "{\"success\":false,\"message\":\"No vendor profile\"}");
+            } else if ("PUT".equals(method) && path.equals("/api/vendors/me")) {
+                Integer userId = getUserId(exchange);
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
+                Vendor existing = new VendorService().getVendorByUserId(userId);
+                if (existing == null) { respondJson(exchange, "{\"success\":false,\"message\":\"No vendor profile\"}", 404); return; }
+                String body = readBody(exchange);
+                Vendor v = new Vendor();
+                v.setBusinessName(jsonStr(body, "businessName"));
+                v.setDescription(jsonStr(body, "description"));
+                v.setAddress(jsonStr(body, "address"));
+                v.setCity(jsonStr(body, "city"));
+                v.setState(jsonStr(body, "state"));
+                v.setPincode(jsonStr(body, "pincode"));
+                new VendorService().updateVendor(existing.getId(), v);
+                Vendor updated = new VendorService().getVendorByUserId(userId);
+                respondJson(exchange, json("success", true, "vendor", vendorJson(updated)));
             } else { sendMethodNotAllowed(exchange); }
         }
     }
