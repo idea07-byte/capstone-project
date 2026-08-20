@@ -123,6 +123,9 @@ public class WebServer {
                 byte[] data = Files.readAllBytes(filePath);
                 exchange.getResponseHeaders().set("Content-Type", ct);
                 exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                if (filePath.getFileName().toString().matches(".*-[A-Za-z0-9]+\\.[a-z]+$")) {
+                    exchange.getResponseHeaders().set("Cache-Control", "public, max-age=31536000, immutable");
+                }
                 exchange.sendResponseHeaders(200, data.length);
                 try (OutputStream os = exchange.getResponseBody()) { os.write(data); }
             } else if (!path.startsWith("/api/")) {
@@ -188,8 +191,7 @@ public class WebServer {
             String resp;
             if (user != null && user.getPassword().equals(password)) {
                 String token = createToken(user.getId());
-                resp = json("success", true, "message", "Login successful",
-                    "user", userJson(user), "token", token);
+                resp = "{\"success\":true,\"message\":\"Login successful\",\"user\":" + userJson(user) + ",\"token\":\"" + esc(token) + "\"}";
             } else {
                 resp = "{\"success\":false,\"message\":\"Invalid email or password\"}";
             }
@@ -242,8 +244,7 @@ public class WebServer {
                 new VendorService().registerVendor(vendor);
             }
             String token = createToken(user.getId());
-            respondJson(exchange, json("success", true, "message", "Registration successful",
-                "user", userJson(user), "token", token));
+            respondJson(exchange, "{\"success\":true,\"message\":\"Registration successful\",\"user\":" + userJson(user) + ",\"token\":\"" + esc(token) + "\"}");
         }
     }
 
@@ -265,7 +266,7 @@ public class WebServer {
             if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Not authenticated\"}", 401); return; }
             User user = new UserService().getUserById(userId);
             if (user == null) { respondJson(exchange, "{\"success\":false,\"message\":\"User not found\"}", 404); return; }
-            respondJson(exchange, json("success", true, "user", userJson(user)));
+            respondJson(exchange, "{\"success\":true,\"user\":" + userJson(user) + "}");
         }
     }
 
