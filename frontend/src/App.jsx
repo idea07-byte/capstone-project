@@ -68,6 +68,22 @@ function ProductImage({ src, alt, style }) {
 const CartCtx = createContext({ cartCount: 0, refreshCart: () => {} });
 function useCart() { return useContext(CartCtx); }
 
+function BrandLogo({ size = 20, light = false }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: size, fontWeight: 800, color: light ? '#fff' : '#0f172a', letterSpacing: -0.5 }}>
+      <span style={{
+        width: size + 2,
+        height: size + 2,
+        borderRadius: '50%',
+        background: 'conic-gradient(from 0deg, #f97316, #ef4444, #8b5cf6, #3b82f6, #10b981, #f97316)',
+        display: 'inline-block',
+        flexShrink: 0
+      }} />
+      <span>BuyIt</span>
+    </div>
+  );
+}
+
 function RequireRole({ user, role, children }) {
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== role) {
@@ -80,8 +96,12 @@ function RequireRole({ user, role, children }) {
 function LoginPage({ addToast, onAuth }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focusEmail, setFocusEmail] = useState(false);
+  const [focusPass, setFocusPass] = useState(false);
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -89,30 +109,152 @@ function LoginPage({ addToast, onAuth }) {
       const res = await api('/auth/login', { method: 'POST', body: { email: email.trim(), password: password.trim() } });
       if (!res.success) { addToast(res.message || 'Login failed', 'error'); return; }
       onAuth(res.token, res.user);
-      addToast('Login successful!', 'success');
+      addToast('Welcome back! 🎉', 'success');
       navigate(res.user.role === 'ADMIN' ? '/admin' : res.user.role === 'VENDOR' ? '/vendor' : '/store', { replace: true });
     } catch (err) { addToast(err.message, 'error'); }
     finally { setLoading(false); }
   };
+
   const fill = (e, em, pw) => { e.preventDefault(); setEmail(em); setPassword(pw); };
+
+  const s = {
+    page: { display: 'flex', minHeight: '100vh', background: '#f0f0f0', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', 'Segoe UI', sans-serif", padding: '20px' },
+    wrapper: { display: 'flex', width: '100%', maxWidth: 960, minHeight: 580, borderRadius: 24, overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.25)', background: '#fff' },
+    left: { flex: 1, background: 'linear-gradient(150deg, #1a1008 0%, #2d1a08 40%, #1c1209 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 40px', position: 'relative', overflow: 'hidden', minWidth: 0 },
+    leftGlow: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 340, height: 340, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.06)', pointerEvents: 'none' },
+    leftGlow2: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 520, height: 520, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.03)', pointerEvents: 'none' },
+    tagline: { fontSize: 13, color: 'rgba(255,255,255,0.45)', letterSpacing: 0.3, zIndex: 1 },
+    heroText: { zIndex: 1 },
+    h1: { fontSize: 46, fontWeight: 800, color: '#fff', lineHeight: 1.1, margin: '0 0 8px 0', letterSpacing: -1 },
+    heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 },
+    phoneWrap: { position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', width: 220, zIndex: 1 },
+    phone: { width: '100%', borderRadius: 20, display: 'block', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.6))' },
+    right: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 48px', background: '#fff', minWidth: 320 },
+    rightTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    signUpBtn: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: '#555', cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', textDecoration: 'none' },
+    formArea: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0, paddingTop: 16 },
+    heading: { fontSize: 36, fontWeight: 700, color: '#111', margin: '0 0 28px 0', letterSpacing: -0.8 },
+    inputWrap: { position: 'relative', marginBottom: 14 },
+    input: (focused) => ({ width: '100%', padding: '14px 16px', fontSize: 15, border: `1.5px solid ${focused ? '#f97316' : '#e5e7eb'}`, borderRadius: 10, outline: 'none', background: '#fafafa', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit' }),
+    inputPassStyle: (focused) => ({ width: '100%', padding: '14px 44px 14px 16px', fontSize: 15, border: `1.5px solid ${focused ? '#f97316' : '#e5e7eb'}`, borderRadius: 10, outline: 'none', background: '#fafafa', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit' }),
+    eyeBtn: { position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, fontSize: 18, lineHeight: 1, display: 'flex' },
+    forgotRow: { textAlign: 'right', marginBottom: 22 },
+    forgot: { fontSize: 13, color: '#f97316', cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', fontWeight: 500 },
+    signInBtn: (loading) => ({ width: '100%', padding: '15px', fontSize: 16, fontWeight: 600, color: '#fff', background: loading ? '#f9a96e' : 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)', border: 'none', borderRadius: 12, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'opacity 0.2s, transform 0.1s', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(249,115,22,0.35)' }),
+    demoBox: { marginTop: 22, padding: '14px 16px', background: '#fafafa', borderRadius: 10, border: '1px solid #f3f4f6' },
+    demoTitle: { fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+    demoLink: { display: 'block', fontSize: 12, color: '#6366f1', cursor: 'pointer', marginBottom: 4, background: 'none', border: 'none', fontFamily: 'inherit', textAlign: 'left', padding: 0, textDecoration: 'underline' },
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid #f3f4f6' },
+    footerNote: { fontSize: 12, color: '#9ca3af' },
+    footerLink: { fontSize: 12, color: '#6b7280' },
+    registerLink: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginTop: 16 },
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-logo">BuyIt</div>
-        <p className="auth-sub">Sign in to your account</p>
-        <form onSubmit={handleSubmit}>
-          <div className="field"><input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-          <div className="field"><input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required /></div>
-          <button type="submit" className="btn-full" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
-        </form>
-        <div className="demo-creds">
-          <p><strong>Demo Credentials:</strong></p>
-          <a href="#" onClick={e => fill(e, 'admin@buyit.com', 'Admin@123')}>Admin: admin@buyit.com / Admin@123</a>
-          <a href="#" onClick={e => fill(e, 'vendor1@buyit.com', 'Vendor@123')}>Vendor: vendor1@buyit.com / Vendor@123</a>
-          <a href="#" onClick={e => fill(e, 'customer@buyit.com', 'Customer@123')}>Customer: customer@buyit.com / Customer@123</a>
+    <div style={s.page}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div style={s.wrapper}>
+        {/* LEFT HERO PANEL */}
+        <div style={s.left}>
+          <div style={s.leftGlow} />
+          <div style={s.leftGlow2} />
+          <p style={s.tagline}>Your one-stop shop — quality products delivered fast.</p>
+          <div style={s.heroText}>
+            <h1 style={s.h1}>Shop<br />smarter,<br />live better</h1>
+            <p style={s.heroSub}>Thousands of products, unbeatable prices.</p>
+          </div>
+          <div style={s.phoneWrap}>
+            <img src="/login-hero.jpg" alt="BuyIt App" style={s.phone} />
+          </div>
+          {/* Bottom spacer so phone doesn't overlap text */}
+          <div style={{ height: 180 }} />
         </div>
-        <p className="auth-link">Don't have an account? <Link to="/register">Register</Link></p>
+
+        {/* RIGHT FORM PANEL */}
+        <div style={s.right}>
+          <div style={s.rightTop}>
+            <BrandLogo size={20} />
+            <Link to="/register" style={s.signUpBtn}>
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              Sign Up
+            </Link>
+          </div>
+
+          <div style={s.formArea}>
+            <h2 style={s.heading}>Sign In</h2>
+            <form onSubmit={handleSubmit} autoComplete="on">
+              <div style={s.inputWrap}>
+                <input
+                  id="login-email"
+                  type="email"
+                  placeholder="Email or Username"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setFocusEmail(true)}
+                  onBlur={() => setFocusEmail(false)}
+                  style={s.input(focusEmail)}
+                  required
+                />
+              </div>
+              <div style={s.inputWrap}>
+                <input
+                  id="login-password"
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setFocusPass(true)}
+                  onBlur={() => setFocusPass(false)}
+                  style={s.inputPassStyle(focusPass)}
+                  required
+                />
+                <button type="button" style={s.eyeBtn} onClick={() => setShowPass(p => !p)} tabIndex={-1} aria-label="Toggle password">
+                  {showPass
+                    ? <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    : <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  }
+                </button>
+              </div>
+              <div style={s.forgotRow}>
+                <button type="button" style={s.forgot}>Forgot password?</button>
+              </div>
+              <button
+                id="login-submit"
+                type="submit"
+                style={s.signInBtn(loading)}
+                disabled={loading}
+                onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '0.9'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+                onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                {loading
+                  ? <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Signing in...</>
+                  : <><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Sign In</>
+                }
+              </button>
+            </form>
+
+            <div style={s.demoBox}>
+              <div style={s.demoTitle}>Quick Demo Access</div>
+              <button style={s.demoLink} onClick={e => fill(e, 'admin@buyit.com', 'Admin@123')}>👑 Admin — admin@buyit.com</button>
+              <button style={s.demoLink} onClick={e => fill(e, 'vendor1@buyit.com', 'Vendor@123')}>🏪 Vendor — vendor1@buyit.com</button>
+              <button style={s.demoLink} onClick={e => fill(e, 'customer@buyit.com', 'Customer@123')}>🛍️ Customer — customer@buyit.com</button>
+            </div>
+
+            <p style={s.registerLink}>
+              Don&apos;t have an account?{' '}
+              <Link to="/register" style={{ color: '#f97316', fontWeight: 600, textDecoration: 'none' }}>Create one →</Link>
+            </p>
+          </div>
+
+          <div style={s.footer}>
+            <span style={s.footerNote}>© 2025 BuyIt Inc.</span>
+            <span style={s.footerLink}>Contact Us</span>
+          </div>
+        </div>
       </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -130,45 +272,127 @@ function RegisterPage({ addToast, onAuth }) {
   const [pincode, setPincode] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
-    e.preventDefault(); setLoading(true);
+    e.preventDefault();
+    setLoading(true);
     try {
       const body = { name: name.trim(), email: email.trim(), phone: phone.trim(), password: password.trim(), role };
-      if (role === 'VENDOR') { body.businessName = businessName.trim(); body.description = description.trim(); body.city = city.trim(); body.state = state.trim(); body.pincode = pincode.trim(); }
+      if (role === 'VENDOR') {
+        body.businessName = businessName.trim();
+        body.description = description.trim();
+        body.city = city.trim();
+        body.state = state.trim();
+        body.pincode = pincode.trim();
+      }
       const res = await api('/auth/register', { method: 'POST', body });
       if (!res.success) { addToast(res.message || 'Registration failed', 'error'); return; }
       onAuth(res.token, res.user);
-      addToast('Registration successful!', 'success');
+      addToast('Account created successfully! 🎉', 'success');
       navigate(role === 'VENDOR' ? '/vendor' : '/store', { replace: true });
     } catch (err) { addToast(err.message, 'error'); }
     finally { setLoading(false); }
   };
+
+  const s = {
+    page: { display: 'flex', minHeight: '100vh', background: '#f0f0f0', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', 'Segoe UI', sans-serif", padding: '20px' },
+    wrapper: { display: 'flex', width: '100%', maxWidth: 1020, minHeight: 620, borderRadius: 24, overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.25)', background: '#fff' },
+    left: { flex: 1, background: 'linear-gradient(150deg, #1a1008 0%, #2d1a08 40%, #1c1209 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 40px', position: 'relative', overflow: 'hidden', minWidth: 0 },
+    leftGlow: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 340, height: 340, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.06)', pointerEvents: 'none' },
+    leftGlow2: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 520, height: 520, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.03)', pointerEvents: 'none' },
+    tagline: { fontSize: 13, color: 'rgba(255,255,255,0.45)', letterSpacing: 0.3, zIndex: 1 },
+    heroText: { zIndex: 1 },
+    h1: { fontSize: 44, fontWeight: 800, color: '#fff', lineHeight: 1.15, margin: '0 0 8px 0', letterSpacing: -1 },
+    heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.45)', margin: 0 },
+    phoneWrap: { position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', width: 220, zIndex: 1 },
+    phone: { width: '100%', borderRadius: 20, display: 'block', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.6))' },
+    right: { flex: 1.15, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '36px 44px', background: '#fff', minWidth: 320, maxHeight: '90vh', overflowY: 'auto' },
+    rightTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    signUpBtn: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: '#555', cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'inherit', textDecoration: 'none' },
+    formArea: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+    heading: { fontSize: 32, fontWeight: 800, color: '#111', margin: '0 0 16px 0', letterSpacing: -0.8 },
+    roleTabs: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: '#f1f5f9', padding: 4, borderRadius: 12, marginBottom: 16 },
+    roleBtn: (active) => ({ padding: '10px', fontSize: 14, fontWeight: 700, border: 'none', borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s', background: active ? 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)' : 'transparent', color: active ? '#fff' : '#64748b', boxShadow: active ? '0 2px 10px rgba(249,115,22,0.3)' : 'none' }),
+    inputWrap: { marginBottom: 10 },
+    input: { width: '100%', padding: '12px 16px', fontSize: 14, border: '1.5px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#fafafa', color: '#111', boxSizing: 'border-box', transition: 'border-color 0.2s', fontFamily: 'inherit' },
+    submitBtn: (loading) => ({ width: '100%', padding: '14px', fontSize: 15, fontWeight: 700, color: '#fff', background: loading ? '#f9a96e' : 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)', border: 'none', borderRadius: 12, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(249,115,22,0.35)', marginTop: 8 }),
+    footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid #f3f4f6', marginTop: 16 },
+    footerNote: { fontSize: 12, color: '#9ca3af' },
+    footerLink: { fontSize: 12, color: '#6b7280' },
+    registerLink: { fontSize: 13, color: '#6b7280', textAlign: 'center', marginTop: 14 },
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-logo">BuyIt</div>
-        <p className="auth-sub">Create your account</p>
-        <div className="field-row" style={{ marginBottom: 16 }}>
-          <button type="button" className={role === 'CUSTOMER' ? 'btn-full' : 'btn-full btn-secondary'} onClick={() => setRole('CUSTOMER')}>Customer</button>
-          <button type="button" className={role === 'VENDOR' ? 'btn-full' : 'btn-full btn-secondary'} onClick={() => setRole('VENDOR')}>Vendor</button>
+    <div style={s.page}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <div style={s.wrapper}>
+        {/* LEFT HERO PANEL */}
+        <div style={s.left}>
+          <div style={s.leftGlow} />
+          <div style={s.leftGlow2} />
+          <p style={s.tagline}>Join thousands of buyers & merchants.</p>
+          <div style={s.heroText}>
+            <h1 style={s.h1}>Start<br />selling &<br />shopping today</h1>
+            <p style={s.heroSub}>Seamless marketplace experience built for speed.</p>
+          </div>
+          <div style={s.phoneWrap}>
+            <img src="/login-hero.jpg" alt="BuyIt App" style={s.phone} />
+          </div>
+          <div style={{ height: 160 }} />
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="field"><input type="text" placeholder="Full Name *" value={name} onChange={e => setName(e.target.value)} required /></div>
-          <div className="field"><input type="email" placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-          <div className="field"><input type="tel" placeholder="Phone" value={phone} onChange={e => setPhone(e.target.value)} /></div>
-          <div className="field"><input type="password" placeholder="Password *" value={password} onChange={e => setPassword(e.target.value)} required /></div>
-          {role === 'VENDOR' && (<>
-            <div className="field"><input type="text" placeholder="Business Name *" value={businessName} onChange={e => setBusinessName(e.target.value)} required /></div>
-            <div className="field"><input type="text" placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} /></div>
-            <div className="field-row">
-              <input type="text" placeholder="City *" value={city} onChange={e => setCity(e.target.value)} required style={{ flex: 1 }} />
-              <input type="text" placeholder="State *" value={state} onChange={e => setState(e.target.value)} required style={{ flex: 1 }} />
+
+        {/* RIGHT FORM PANEL */}
+        <div style={s.right}>
+          <div style={s.rightTop}>
+            <BrandLogo size={20} />
+            <Link to="/login" style={s.signUpBtn}>
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Sign In
+            </Link>
+          </div>
+
+          <div style={s.formArea}>
+            <h2 style={s.heading}>Create Account</h2>
+
+            <div style={s.roleTabs}>
+              <button type="button" style={s.roleBtn(role === 'CUSTOMER')} onClick={() => setRole('CUSTOMER')}>🛍️ Customer</button>
+              <button type="button" style={s.roleBtn(role === 'VENDOR')} onClick={() => setRole('VENDOR')}>🏪 Vendor / Seller</button>
             </div>
-            <div className="field"><input type="text" placeholder="Pincode *" value={pincode} onChange={e => setPincode(e.target.value)} required /></div>
-          </>)}
-          <button type="submit" className="btn-full" disabled={loading}>{loading ? 'Creating Account...' : 'Create Account'}</button>
-        </form>
-        <p className="auth-link">Already have an account? <Link to="/login">Sign In</Link></p>
+
+            <form onSubmit={handleSubmit} autoComplete="on">
+              <div style={s.inputWrap}><input style={s.input} type="text" placeholder="Full Name *" value={name} onChange={e => setName(e.target.value)} required /></div>
+              <div style={s.inputWrap}><input style={s.input} type="email" placeholder="Email Address *" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+              <div style={s.inputWrap}><input style={s.input} type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} /></div>
+              <div style={s.inputWrap}><input style={s.input} type="password" placeholder="Password *" value={password} onChange={e => setPassword(e.target.value)} required /></div>
+
+              {role === 'VENDOR' && (
+                <>
+                  <div style={s.inputWrap}><input style={s.input} type="text" placeholder="Business / Store Name *" value={businessName} onChange={e => setBusinessName(e.target.value)} required /></div>
+                  <div style={s.inputWrap}><input style={s.input} type="text" placeholder="Short Description" value={description} onChange={e => setDescription(e.target.value)} /></div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                    <input style={s.input} type="text" placeholder="City *" value={city} onChange={e => setCity(e.target.value)} required />
+                    <input style={s.input} type="text" placeholder="State *" value={state} onChange={e => setState(e.target.value)} required />
+                  </div>
+                  <div style={s.inputWrap}><input style={s.input} type="text" placeholder="Pincode *" value={pincode} onChange={e => setPincode(e.target.value)} required /></div>
+                </>
+              )}
+
+              <button type="submit" style={s.submitBtn(loading)} disabled={loading}>
+                {loading ? 'Creating Account...' : (role === 'VENDOR' ? 'Register as Merchant' : 'Create Customer Account')}
+              </button>
+            </form>
+
+            <p style={s.registerLink}>
+              Already have an account?{' '}
+              <Link to="/login" style={{ color: '#f97316', fontWeight: 600, textDecoration: 'none' }}>Sign In here →</Link>
+            </p>
+          </div>
+
+          <div style={s.footer}>
+            <span style={s.footerNote}>© 2025 BuyIt Inc.</span>
+            <span style={s.footerLink}>Terms & Privacy</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -189,18 +413,18 @@ function CustomerLayout({ user, onLogout }) {
       <div className="app-layout">
         <header className="top-bar">
           <div className="top-bar-left">
-            <Link to="/store" className="brand">BuyIt</Link>
-            <form onSubmit={handleSearch} style={{ display: 'flex' }}>
-              <input className="search-box" type="text" placeholder="Search products..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <Link to="/store" style={{ textDecoration: 'none' }}><BrandLogo size={22} /></Link>
+            <form onSubmit={handleSearch} style={{ display: 'flex', flex: 1, maxWidth: 400 }}>
+              <input className="search-box" type="text" placeholder="Search products, brands..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </form>
             <Link to="/store" className={'nav-pill' + (location.pathname === '/store' ? ' active' : '')}>Store</Link>
             <Link to="/orders" className={'nav-pill' + (location.pathname === '/orders' ? ' active' : '')}>Orders</Link>
           </div>
           <div className="top-bar-right">
             <Link to="/cart" className={'nav-pill' + (location.pathname === '/cart' ? ' active' : '')}>
-              \uD83D\uDED2 Cart{cartCount > 0 && <span className="badge">{cartCount}</span>}
+              🛒 Cart{cartCount > 0 && <span className="badge">{cartCount}</span>}
             </Link>
-            <span className="user-pill">{user?.name}</span>
+            <span className="user-pill">👤 {user?.name}</span>
             <button className="btn-logout" onClick={onLogout}>Logout</button>
           </div>
         </header>
@@ -253,7 +477,7 @@ function StorePage({ addToast }) {
 
   const addToCart = async (e, productId) => {
     e.stopPropagation();
-    try { await api('/cart', { method: 'POST', body: { productId, quantity: 1 } }); addToast('Added to cart', 'success'); refreshCart(); }
+    try { await api('/cart', { method: 'POST', body: { productId, quantity: 1 } }); addToast('Added to cart! 🛍️', 'success'); refreshCart(); }
     catch (err) { addToast(err.message, 'error'); }
   };
 
@@ -262,19 +486,79 @@ function StorePage({ addToast }) {
 
   return (
     <div className="store">
+      {/* HERO BANNER */}
+      <div style={{
+        background: 'linear-gradient(150deg, #1a1008 0%, #2d1a08 50%, #1c1209 100%)',
+        borderRadius: 24,
+        padding: '2.5rem 3rem',
+        color: '#fff',
+        marginBottom: '2rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.12)'
+      }}>
+        <div style={{
+          position: 'absolute',
+          right: -40,
+          top: -40,
+          width: 250,
+          height: 250,
+          borderRadius: '50%',
+          border: '1px solid rgba(255,255,255,0.06)',
+          pointerEvents: 'none'
+        }} />
+        <div style={{ zIndex: 1, maxWidth: 540 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#f97316', textTransform: 'uppercase', letterSpacing: 1 }}>Exclusive Marketplace</span>
+          <h1 style={{ fontSize: 36, fontWeight: 800, margin: '8px 0', letterSpacing: -0.5, lineHeight: 1.2 }}>Discover Top Deals & Trending Products</h1>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, margin: 0 }}>Shop verified vendor collections at unbeatable prices with fast door-step delivery.</p>
+        </div>
+        <div style={{ zIndex: 1, display: 'flex', gap: 12 }}>
+          <span style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(10px)',
+            padding: '12px 20px',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <strong style={{ display: 'block', fontSize: 22, color: '#f97316' }}>100%</strong>
+            <small style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>Verified</small>
+          </span>
+          <span style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(10px)',
+            padding: '12px 20px',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <strong style={{ display: 'block', fontSize: 22, color: '#ef4444' }}>Fast</strong>
+            <small style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>Shipping</small>
+          </span>
+        </div>
+      </div>
+
       <div className="store-filters">
-        <input className="filter-search" type="text" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadProducts()} />
+        <input className="filter-search" type="text" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && loadProducts()} style={{ flex: 1.5 }} />
         <select value={category} onChange={e => setCategory(e.target.value)}><option value="">All Categories</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
         <select value={brand} onChange={e => setBrand(e.target.value)}><option value="">All Brands</option>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
-        <input type="number" placeholder="Min Price" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ width: 100 }} />
-        <input type="number" placeholder="Max Price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ width: 100 }} />
+        <input type="number" placeholder="Min ₹" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ width: 100 }} />
+        <input type="number" placeholder="Max ₹" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ width: 100 }} />
         <select value={sort} onChange={e => setSort(e.target.value)}>
-          <option value="">Sort By</option><option value="price_asc">Price: Low to High</option><option value="price_desc">Price: High to Low</option>
-          <option value="name_asc">Name: A-Z</option><option value="name_desc">Name: Z-A</option><option value="rating">Rating</option>
+          <option value="">Sort By</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="name_asc">Name: A-Z</option>
+          <option value="name_desc">Name: Z-A</option>
+          <option value="rating">Top Rated</option>
         </select>
         <button className="btn-primary" onClick={loadProducts}>Search</button>
       </div>
-      {loading ? <Loader /> : products.length === 0 ? <EmptyState message="No products found" /> : (
+
+      {loading ? <Loader /> : products.length === 0 ? <EmptyState message="No products found matching your filters" /> : (
         <div className="product-grid">
           {products.map(p => (
             <div key={p.id} className="product-card" onClick={() => navigate('/store/product/' + p.id)}>
@@ -285,7 +569,7 @@ function StorePage({ addToast }) {
               <div className="product-info">
                 <span className="p-category">{p.categoryName}</span>
                 <h3>{p.name}</h3>
-                <span className="p-vendor">by {p.vendorName}</span>
+                <span className="p-vendor">Sold by {p.vendorName}</span>
                 {p.averageRating > 0 && <span className="p-rating"><StarRating rating={p.averageRating} /> ({p.reviewCount})</span>}
                 <div className="p-price">
                   <span className="final">{fmt(finalPrice(p))}</span>
@@ -598,16 +882,23 @@ function VendorLayout({ user, onLogout }) {
   const [vendorInfo, setVendorInfo] = useState(null);
   useEffect(() => { api('/vendors/me').then(d => setVendorInfo(d.vendor || d)).catch(() => {}); }, []);
   const nav = [
-    { path: '/vendor', label: 'Dashboard' },
-    { path: '/vendor/products', label: 'Products' },
-    { path: '/vendor/orders', label: 'Orders' },
-    { path: '/vendor/profile', label: 'Profile' },
+    { path: '/vendor', label: '📊 Dashboard' },
+    { path: '/vendor/products', label: '📦 Products' },
+    { path: '/vendor/orders', label: '🛍️ Orders' },
+    { path: '/vendor/profile', label: '⚙️ Profile' },
   ];
   return (
     <div className="dashboard">
       <aside className="dash-sidebar">
-        <div className="dash-sidebar-header"><Link to="/vendor" className="brand" style={{ color: '#fff', textDecoration: 'none' }}>BuyIt</Link></div>
-        <div className="dash-welcome"><p>Welcome,</p><strong>{vendorInfo?.businessName || user?.name}</strong></div>
+        <div className="dash-sidebar-header">
+          <Link to="/vendor" style={{ textDecoration: 'none' }}>
+            <BrandLogo size={20} light={true} />
+          </Link>
+        </div>
+        <div className="dash-welcome">
+          <p>Merchant Portal</p>
+          <strong>{vendorInfo?.businessName || user?.name}</strong>
+        </div>
         <nav className="sidebar-nav">
           {nav.map(n => <Link key={n.path} to={n.path} className={'sidebar-nav-item' + (location.pathname === n.path ? ' active' : '')}>{n.label}</Link>)}
         </nav>
@@ -801,19 +1092,26 @@ function VendorProfile({ addToast }) {
 function AdminLayout({ user, onLogout }) {
   const location = useLocation();
   const nav = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/customers', label: 'Customers' },
-    { path: '/admin/vendors', label: 'Vendors' },
-    { path: '/admin/products', label: 'Products' },
-    { path: '/admin/categories', label: 'Categories' },
-    { path: '/admin/brands', label: 'Brands' },
-    { path: '/admin/orders', label: 'Orders' },
+    { path: '/admin', label: '📊 Dashboard' },
+    { path: '/admin/customers', label: '👥 Customers' },
+    { path: '/admin/vendors', label: '🏪 Vendors' },
+    { path: '/admin/products', label: '📦 Products' },
+    { path: '/admin/categories', label: '🏷️ Categories' },
+    { path: '/admin/brands', label: '✨ Brands' },
+    { path: '/admin/orders', label: '🛍️ Orders' },
   ];
   return (
     <div className="dashboard">
       <aside className="dash-sidebar">
-        <div className="dash-sidebar-header"><Link to="/admin" className="brand" style={{ color: '#fff', textDecoration: 'none' }}>BuyIt Admin</Link></div>
-        <div className="dash-welcome"><p>Welcome,</p><strong>{user?.name}</strong></div>
+        <div className="dash-sidebar-header">
+          <Link to="/admin" style={{ textDecoration: 'none' }}>
+            <BrandLogo size={20} light={true} />
+          </Link>
+        </div>
+        <div className="dash-welcome">
+          <p>Administrator</p>
+          <strong>{user?.name}</strong>
+        </div>
         <nav className="sidebar-nav">
           {nav.map(n => <Link key={n.path} to={n.path} className={'sidebar-nav-item' + (location.pathname === n.path ? ' active' : '')}>{n.label}</Link>)}
         </nav>
