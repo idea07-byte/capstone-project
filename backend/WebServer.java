@@ -66,7 +66,7 @@ public class WebServer {
         server.createContext("/api/coupons", new SafeHandler(new CouponHandler()));
         server.createContext("/api/admin", new SafeHandler(new AdminHandler()));
         server.createContext("/api/notifications", new SafeHandler(new NotificationHandler()));
-        server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(10));
+        server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(32));
         server.start();
 
         System.out.println("====================================");
@@ -111,6 +111,10 @@ public class WebServer {
     }
 
     static class StaticFileHandler implements HttpHandler {
+        private static final Map<String, byte[]> fileCache = new ConcurrentHashMap<>();
+        private static final Map<String, String> typeCache = new ConcurrentHashMap<>();
+        private static volatile byte[] cachedReactShell = null;
+
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
@@ -118,13 +122,23 @@ public class WebServer {
             Path root = webRoot();
             Path filePath = root.resolve(path.substring(1)).normalize();
             if (!filePath.startsWith(root)) { sendNotFound(exchange, path); return; }
-            if (Files.exists(filePath) && !Files.isDirectory(filePath)) {
-                String ct = getContentType(filePath.toString());
-                byte[] data = Files.readAllBytes(filePath);
+            
+            byte[] data = fileCache.get(path);
+            String ct = typeCache.get(path);
+            if (data == null && Files.exists(filePath) && !Files.isDirectory(filePath)) {
+                ct = getContentType(filePath.toString());
+                data = Files.readAllBytes(filePath);
+                fileCache.put(path, data);
+                typeCache.put(path, ct);
+            }
+
+            if (data != null) {
                 exchange.getResponseHeaders().set("Content-Type", ct);
                 exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
                 if (filePath.getFileName().toString().matches(".*-[A-Za-z0-9]+\\.[a-z]+$")) {
                     exchange.getResponseHeaders().set("Cache-Control", "public, max-age=31536000, immutable");
+                } else {
+                    exchange.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
                 }
                 exchange.sendResponseHeaders(200, data.length);
                 try (OutputStream os = exchange.getResponseBody()) { os.write(data); }
@@ -136,23 +150,28 @@ public class WebServer {
         }
 
         private void sendReactShell(HttpExchange exchange) throws IOException {
-            Path root = webRoot();
-            Optional<Path> js = findAsset(root, ".js");
-            Optional<Path> css = findAsset(root, ".css");
-            if (js.isEmpty()) {
-                String msg = "Build the frontend first: cd frontend && npm install && npm run build";
-                byte[] resp = msg.getBytes();
-                exchange.getResponseHeaders().set("Content-Type", "text/plain");
-                exchange.sendResponseHeaders(500, resp.length);
-                try (OutputStream os = exchange.getResponseBody()) { os.write(resp); }
-                return;
+            byte[] resp = cachedReactShell;
+            if (resp == null) {
+                Path root = webRoot();
+                Optional<Path> js = findAsset(root, ".js");
+                Optional<Path> css = findAsset(root, ".css");
+                if (js.isEmpty()) {
+                    String msg = "Build the frontend first: cd frontend && npm install && npm run build";
+                    byte[] errResp = msg.getBytes();
+                    exchange.getResponseHeaders().set("Content-Type", "text/plain");
+                    exchange.sendResponseHeaders(500, errResp.length);
+                    try (OutputStream os = exchange.getResponseBody()) { os.write(errResp); }
+                    return;
+                }
+                String script = "/" + root.relativize(js.get()).toString().replace("\\", "/");
+                String style = css.map(p -> "<link rel=\"stylesheet\" href=\"/" + root.relativize(p).toString().replace("\\", "/") + "\">").orElse("");
+                String html = "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>BuyIt Marketplace</title>" + style + "</head><body><div id=\"root\"></div><script type=\"module\" src=\"" + script + "\"></script></body></html>";
+                resp = html.getBytes();
+                cachedReactShell = resp;
             }
-            String script = "/" + root.relativize(js.get()).toString().replace("\\", "/");
-            String style = css.map(p -> "<link rel=\"stylesheet\" href=\"/" + root.relativize(p).toString().replace("\\", "/") + "\">").orElse("");
-            String html = "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>BuyIt Marketplace</title>" + style + "</head><body><div id=\"root\"></div><script type=\"module\" src=\"" + script + "\"></script></body></html>";
-            byte[] resp = html.getBytes();
             exchange.getResponseHeaders().set("Content-Type", "text/html");
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Cache-Control", "no-cache");
             exchange.sendResponseHeaders(200, resp.length);
             try (OutputStream os = exchange.getResponseBody()) { os.write(resp); }
         }
@@ -283,9 +302,6 @@ public class WebServer {
                     int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
                     Product p = new ProductService().getProductById(id);
                     if (p == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Product not found\"}", 404); return; }
-                    ReviewService rs = new ReviewService();
-                    p.setAverageRating(rs.getAverageRating(id));
-                    p.setReviewCount(rs.getReviewCount(id));
                     respondJson(exchange, json("success", true, "product", productJson(p)));
                 } else {
                     Map<String, String> params = parseQuery(query);
@@ -296,14 +312,10 @@ public class WebServer {
                     String search = params.get("search");
                     String sort = params.get("sort");
                     List<Product> products = new ProductService().searchProducts(search, catId, brandId, minP, maxP, sort);
-                    ReviewService rs = new ReviewService();
                     StringBuilder sb = new StringBuilder("[");
                     for (int i = 0; i < products.size(); i++) {
-                        Product p = products.get(i);
-                        p.setAverageRating(rs.getAverageRating(p.getId()));
-                        p.setReviewCount(rs.getReviewCount(p.getId()));
                         if (i > 0) sb.append(",");
-                        sb.append(productJson(p));
+                        sb.append(productJson(products.get(i)));
                     }
                     sb.append("]");
                     respondJson(exchange, sb.toString());
@@ -495,8 +507,13 @@ public class WebServer {
             } else if ("DELETE".equals(method)) {
                 String body = readBody(exchange);
                 int productId = parseInt(body, "productId");
-                cs.removeFromCart(userId, productId);
-                respondJson(exchange, "{\"success\":true,\"message\":\"Removed from cart\"}");
+                if (productId > 0) {
+                    cs.removeFromCart(userId, productId);
+                    respondJson(exchange, "{\"success\":true,\"message\":\"Removed from cart\"}");
+                } else {
+                    cs.clearCart(userId);
+                    respondJson(exchange, "{\"success\":true,\"message\":\"Cart cleared\"}");
+                }
             } else { sendMethodNotAllowed(exchange); }
         }
     }

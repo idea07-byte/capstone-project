@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductService {
+    private static volatile List<Product> cachedAllProducts = null;
+
+    public static void clearCache() {
+        cachedAllProducts = null;
+    }
 
     public int addProduct(Product product) {
         String sql = "INSERT INTO products (vendor_id, category_id, brand_id, name, description, price, discount, stock_quantity, sku, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -25,6 +30,7 @@ public class ProductService {
             stmt.setString(10, product.getImage());
             stmt.setString(11, product.getStatus() != null ? product.getStatus() : "ACTIVE");
             stmt.executeUpdate();
+            clearCache();
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) return keys.getInt(1);
             }
@@ -35,20 +41,28 @@ public class ProductService {
     }
 
     public List<Product> getAllProducts() {
-        return queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.status = 'ACTIVE' ORDER BY p.id DESC", null);
+        List<Product> cached = cachedAllProducts;
+        if (cached != null) return cached;
+        List<Product> list = queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.status = 'ACTIVE' GROUP BY p.id, v.business_name, c.name, b.name ORDER BY p.id DESC", null);
+        cachedAllProducts = java.util.Collections.unmodifiableList(list);
+        return cachedAllProducts;
     }
 
     public List<Product> getProductsByVendor(int vendorId) {
-        return queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.vendor_id = ? ORDER BY p.id DESC", stmt -> stmt.setInt(1, vendorId));
+        return queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.vendor_id = ? GROUP BY p.id, v.business_name, c.name, b.name ORDER BY p.id DESC", stmt -> stmt.setInt(1, vendorId));
     }
 
     public Product getProductById(int id) {
-        List<Product> list = queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.id = ?", stmt -> stmt.setInt(1, id));
+        List<Product> list = queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.id = ? GROUP BY p.id, v.business_name, c.name, b.name", stmt -> stmt.setInt(1, id));
         return list.isEmpty() ? null : list.get(0);
     }
 
     public List<Product> searchProducts(String query, Integer categoryId, Integer brandId, Double minPrice, Double maxPrice, String sortBy) {
-        StringBuilder sql = new StringBuilder("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.status = 'ACTIVE'");
+        if ((query == null || query.trim().isEmpty()) && categoryId == null && brandId == null && minPrice == null && maxPrice == null && (sortBy == null || sortBy.isEmpty() || "newest".equals(sortBy))) {
+            return getAllProducts();
+        }
+
+        StringBuilder sql = new StringBuilder("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.status = 'ACTIVE'");
 
         List<Object> params = new ArrayList<>();
         if (query != null && !query.trim().isEmpty()) {
@@ -61,13 +75,15 @@ public class ProductService {
         if (minPrice != null) { sql.append(" AND p.price >= ?"); params.add(minPrice); }
         if (maxPrice != null) { sql.append(" AND p.price <= ?"); params.add(maxPrice); }
 
+        sql.append(" GROUP BY p.id, v.business_name, c.name, b.name");
+
         if (sortBy != null) {
             sql.append(switch (sortBy) {
                 case "price_asc" -> " ORDER BY p.price ASC";
                 case "price_desc" -> " ORDER BY p.price DESC";
                 case "name_asc" -> " ORDER BY p.name ASC";
                 case "name_desc" -> " ORDER BY p.name DESC";
-                case "rating" -> " ORDER BY p.id DESC";
+                case "rating" -> " ORDER BY avg_rating DESC, p.id DESC";
                 case "newest" -> " ORDER BY p.created_at DESC";
                 default -> " ORDER BY p.id DESC";
             });
@@ -109,7 +125,9 @@ public class ProductService {
             stmt.setString(10, product.getImage());
             stmt.setString(11, product.getStatus());
             stmt.setInt(12, id);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) clearCache();
+            return ok;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update product: " + e.getMessage(), e);
         }
@@ -120,7 +138,9 @@ public class ProductService {
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) clearCache();
+            return ok;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to remove product: " + e.getMessage(), e);
         }
@@ -148,6 +168,7 @@ public class ProductService {
             stmt.setInt(3, amount);
             int updated = stmt.executeUpdate();
             if (updated == 0) throw new SQLException("Not enough stock for product " + productId);
+            clearCache();
         }
     }
 
@@ -170,7 +191,7 @@ public class ProductService {
     }
 
     public List<Product> getLowStockProducts(int vendorId, int threshold) {
-        return queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.vendor_id = ? AND p.stock_quantity <= ? ORDER BY p.stock_quantity ASC", stmt -> { stmt.setInt(1, vendorId); stmt.setInt(2, threshold); });
+        return queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.vendor_id = ? AND p.stock_quantity <= ? GROUP BY p.id, v.business_name, c.name, b.name ORDER BY p.stock_quantity ASC", stmt -> { stmt.setInt(1, vendorId); stmt.setInt(2, threshold); });
     }
 
     @FunctionalInterface
@@ -209,6 +230,8 @@ public class ProductService {
         try { p.setVendorName(rs.getString("vendor_name")); } catch (SQLException e) {}
         try { p.setCategoryName(rs.getString("category_name")); } catch (SQLException e) {}
         try { p.setBrandName(rs.getString("brand_name")); } catch (SQLException e) {}
+        try { p.setAverageRating(Math.round(rs.getDouble("avg_rating") * 10.0) / 10.0); } catch (SQLException ignored) {}
+        try { p.setReviewCount(rs.getInt("review_count")); } catch (SQLException ignored) {}
         return p;
     }
 }

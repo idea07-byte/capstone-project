@@ -5,9 +5,15 @@ import model.Category;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CategoryService {
+    private static volatile List<Category> cachedCategories = null;
+
+    public static void clearCache() {
+        cachedCategories = null;
+    }
 
     public int addCategory(Category category) {
         String sql = "INSERT INTO categories (name, description, image, status) VALUES (?, ?, ?, ?)";
@@ -18,22 +24,30 @@ public class CategoryService {
             stmt.setString(3, category.getImage());
             stmt.setString(4, category.getStatus() != null ? category.getStatus() : "ACTIVE");
             stmt.executeUpdate();
+            clearCache();
             try (ResultSet keys = stmt.getGeneratedKeys()) { keys.next(); return keys.getInt(1); }
         } catch (SQLException e) { throw new RuntimeException("Failed to add category: " + e.getMessage(), e); }
     }
 
     public List<Category> getAllCategories() {
+        List<Category> cached = cachedCategories;
+        if (cached != null) return cached;
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT * FROM categories WHERE status = 'ACTIVE' ORDER BY name";
         try (Connection conn = Database.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) categories.add(mapCategory(rs));
+            cachedCategories = Collections.unmodifiableList(categories);
         } catch (SQLException e) { throw new RuntimeException("Failed to fetch categories: " + e.getMessage(), e); }
-        return categories;
+        return cachedCategories;
     }
 
     public Category getCategoryById(int id) {
+        List<Category> all = getAllCategories();
+        for (Category c : all) {
+            if (c.getId() == id) return c;
+        }
         String sql = "SELECT * FROM categories WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -52,7 +66,9 @@ public class CategoryService {
             stmt.setString(3, category.getImage());
             stmt.setString(4, category.getStatus());
             stmt.setInt(5, id);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) clearCache();
+            return ok;
         } catch (SQLException e) { throw new RuntimeException("Failed to update category: " + e.getMessage(), e); }
     }
 
@@ -61,7 +77,9 @@ public class CategoryService {
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) clearCache();
+            return ok;
         } catch (SQLException e) { throw new RuntimeException("Failed to delete category: " + e.getMessage(), e); }
     }
 

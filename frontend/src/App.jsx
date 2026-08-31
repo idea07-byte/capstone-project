@@ -59,10 +59,14 @@ function StarRating({ rating }) {
   return <span className="review-stars">{[1,2,3,4,5].map(i => <span key={i} style={{ color: i <= r ? '#f5a623' : '#ccc' }}>{i <= r ? '\u2605' : '\u2606'}</span>)}</span>;
 }
 
+let _cachedCats = null;
+let _cachedBrds = null;
+
 function ProductImage({ src, alt, style }) {
   const [err, setErr] = useState(false);
-  if (src && !err) return <img src={src} alt={alt || ''} style={style} onError={() => setErr(true)} />;
-  return <div className="img-placeholder" style={style}>\uD83D\uDCE6</div>;
+  useEffect(() => { setErr(false); }, [src]);
+  if (src && !err) return <img src={src} alt={alt || ''} style={style} onError={() => setErr(true)} loading="lazy" decoding="async" />;
+  return <div className="img-placeholder" style={style}>📦</div>;
 }
 
 const CartCtx = createContext({ cartCount: 0, refreshCart: () => {} });
@@ -450,10 +454,18 @@ function StorePage({ addToast }) {
   const location = useLocation();
 
   useEffect(() => {
+    if (_cachedCats && _cachedBrds) {
+      setCategories(_cachedCats);
+      setBrands(_cachedBrds);
+      return;
+    }
     Promise.all([
-      api('/categories').then(d => setCategories(Array.isArray(d) ? d : [])).catch(() => {}),
-      api('/brands').then(d => setBrands(Array.isArray(d) ? d : [])).catch(() => {}),
-    ]);
+      _cachedCats ? Promise.resolve(_cachedCats) : api('/categories').then(d => { const a = Array.isArray(d) ? d : []; _cachedCats = a; return a; }).catch(() => []),
+      _cachedBrds ? Promise.resolve(_cachedBrds) : api('/brands').then(d => { const a = Array.isArray(d) ? d : []; _cachedBrds = a; return a; }).catch(() => []),
+    ]).then(([cats, brds]) => {
+      setCategories(cats);
+      setBrands(brds);
+    });
   }, []);
 
   const loadProducts = useCallback(async () => {
@@ -471,9 +483,14 @@ function StorePage({ addToast }) {
       setProducts(Array.isArray(data) ? data : []);
     } catch (err) { addToast(err.message, 'error'); }
     finally { setLoading(false); }
-  }, [category, brand, minPrice, maxPrice, sort, location.search, addToast]);
+  }, [category, brand, minPrice, maxPrice, sort, location.search, search, addToast]);
 
-  useEffect(() => { loadProducts(); }, [loadProducts]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadProducts();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [loadProducts]);
 
   const addToCart = async (e, productId) => {
     e.stopPropagation();
@@ -677,6 +694,7 @@ function CartPage({ addToast }) {
   const { refreshCart } = useCart();
   const [cart, setCart] = useState({ items: [], total: 0, count: 0 });
   const [loading, setLoading] = useState(true);
+  const [clearing, setClearing] = useState(false);
   const navigate = useNavigate();
   const loadCart = useCallback(async () => {
     setLoading(true);
@@ -685,44 +703,143 @@ function CartPage({ addToast }) {
     finally { setLoading(false); }
   }, [addToast]);
   useEffect(() => { loadCart(); }, [loadCart]);
+
   const updateQty = async (productId, quantity) => {
     try { await api('/cart', { method: 'PUT', body: { productId, quantity } }); loadCart(); refreshCart(); }
     catch (err) { addToast(err.message, 'error'); }
   };
+
   const removeItem = async (productId) => {
-    try { await api('/cart', { method: 'DELETE', body: { productId } }); addToast('Removed', 'success'); loadCart(); refreshCart(); }
+    try { await api('/cart', { method: 'DELETE', body: { productId } }); addToast('Item removed from cart', 'success'); loadCart(); refreshCart(); }
     catch (err) { addToast(err.message, 'error'); }
   };
+
+  const handleClearCart = async () => {
+    if (!window.confirm('Are you sure you want to remove all items from your cart?')) return;
+    setClearing(true);
+    try {
+      await api('/cart', { method: 'DELETE', body: { productId: 0 } });
+      addToast('Cart cleared', 'success');
+      loadCart();
+      refreshCart();
+    } catch (err) { addToast(err.message, 'error'); }
+    finally { setClearing(false); }
+  };
+
   if (loading) return <Loader />;
   const items = cart.items || [];
+  const totalItemCount = items.reduce((acc, i) => acc + (i.quantity || 1), 0);
+
   return (
     <div className="cart-page">
-      <h1>Shopping Cart</h1>
-      {items.length === 0 ? <EmptyState message="Your cart is empty" /> : (
-        <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <div className="cart-items" style={{ flex: 2, minWidth: 300 }}>
-            {items.map(item => (
-              <div key={item.id} className="cart-item">
-                <div className="ci-img"><ProductImage src={item.productImage} alt={item.productName} style={{ width: 80, height: 80 }} /></div>
-                <div className="ci-info"><h3>{item.productName}</h3><span className="ci-vendor">by {item.vendorName}</span></div>
-                <span className="ci-price">{fmt(item.price)}</span>
-                <div className="ci-qty">
-                  <button onClick={() => updateQty(item.productId, Math.max(1, item.quantity - 1))}>-</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => updateQty(item.productId, item.quantity + 1)}>+</button>
-                </div>
-                <span className="ci-subtotal">{fmt(item.subtotal)}</span>
-                <button className="btn-remove" onClick={() => removeItem(item.productId)}>\u00D7</button>
+      <div className="cart-page-header">
+        <div>
+          <h1>Shopping Cart <span className="cart-badge-count">{totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}</span></h1>
+          <p className="cart-subtitle">Review items in your cart and proceed to express checkout</p>
+        </div>
+        {items.length > 0 && (
+          <button className="btn-clear-cart" onClick={handleClearCart} disabled={clearing}>
+            🗑️ Clear Cart
+          </button>
+        )}
+      </div>
+
+      {items.length === 0 ? (
+        <div className="cart-empty-box">
+          <div className="cart-empty-icon">🛒</div>
+          <h2>Your Cart is Empty</h2>
+          <p>Explore our wide collection of trending products and add items to your cart.</p>
+          <button className="btn-primary btn-lg" onClick={() => navigate('/store')}>
+            Explore Store Catalog →
+          </button>
+        </div>
+      ) : (
+        <div className="cart-main-layout">
+          <div className="cart-items-container">
+            <div className="cart-free-shipping-banner">
+              <span className="banner-icon">⚡</span>
+              <div>
+                <strong>FREE Express Shipping Unlocked!</strong>
+                <span>All items in your bag qualify for free door-step expedited delivery.</span>
               </div>
-            ))}
+            </div>
+
+            <div className="cart-items">
+              {items.map(item => (
+                <div key={item.id} className="cart-item">
+                  <div className="ci-img" onClick={() => navigate('/store/product/' + item.productId)} style={{ cursor: 'pointer' }} title="View product details">
+                    <ProductImage src={item.productImage} alt={item.productName} />
+                  </div>
+                  <div className="ci-info">
+                    <h3 onClick={() => navigate('/store/product/' + item.productId)} style={{ cursor: 'pointer' }}>
+                      {item.productName}
+                    </h3>
+                    <span className="ci-vendor">Sold by: <strong>{item.vendorName || 'BuyIt Verified Merchant'}</strong></span>
+                    <div className="ci-price-wrap">
+                      <span className="ci-unit-price">{fmt(item.price)} each</span>
+                      {item.stockQuantity > 0 && item.stockQuantity < 10 && (
+                        <span className="ci-low-stock">Only {item.stockQuantity} left in stock</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="ci-qty">
+                    <button onClick={() => updateQty(item.productId, Math.max(1, item.quantity - 1))} title="Decrease quantity">-</button>
+                    <span>{item.quantity}</span>
+                    <button onClick={() => updateQty(item.productId, item.quantity + 1)} title="Increase quantity">+</button>
+                  </div>
+                  <div className="ci-subtotal-box">
+                    <span className="ci-subtotal-label">Subtotal</span>
+                    <span className="ci-subtotal">{fmt(item.subtotal)}</span>
+                  </div>
+                  <button className="btn-remove" onClick={() => removeItem(item.productId)} title="Remove item from cart" aria-label="Remove item">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="cart-perks">
+              <div className="perk-item">
+                <span>🛡️</span>
+                <div><strong>100% Genuine</strong><p>Authentic brand guarantee</p></div>
+              </div>
+              <div className="perk-item">
+                <span>🔄</span>
+                <div><strong>7 Days Return</strong><p>Hassle-free easy returns</p></div>
+              </div>
+              <div className="perk-item">
+                <span>🔒</span>
+                <div><strong>Secure Checkout</strong><p>256-bit SSL encrypted</p></div>
+              </div>
+            </div>
           </div>
-          <div className="cart-summary" style={{ flex: 1, minWidth: 250 }}>
+
+          <div className="cart-summary">
             <h2>Order Summary</h2>
-            <div className="summary-row"><span>Items ({cart.count || items.length})</span><span>{fmt(cart.total)}</span></div>
-            <div className="summary-row"><span>Shipping</span><span>Free</span></div>
-            <div className="total"><span>Total</span><span>{fmt(cart.total)}</span></div>
-            <button className="btn-primary btn-lg" style={{ width: '100%', marginTop: 16 }} onClick={() => navigate('/checkout')}>Proceed to Checkout</button>
-            <button className="btn-secondary" style={{ width: '100%', marginTop: 8 }} onClick={() => navigate('/store')}>Continue Shopping</button>
+            <div className="summary-row">
+              <span>Items Subtotal ({totalItemCount} pcs)</span>
+              <span>{fmt(cart.total)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Delivery Charges</span>
+              <span style={{ color: '#10b981', fontWeight: 700 }}>FREE</span>
+            </div>
+            <div className="summary-row">
+              <span>Estimated Taxes & Packaging</span>
+              <span>₹0.00</span>
+            </div>
+            <div className="total">
+              <span>Estimated Total</span>
+              <span>{fmt(cart.total)}</span>
+            </div>
+            <button className="btn-primary btn-lg btn-full" style={{ marginTop: 20 }} onClick={() => navigate('/checkout')}>
+              Proceed to Checkout →
+            </button>
+            <button className="btn-secondary btn-full" style={{ marginTop: 10 }} onClick={() => navigate('/store')}>
+              ← Continue Shopping
+            </button>
           </div>
         </div>
       )}
@@ -772,7 +889,7 @@ function CheckoutPage({ addToast }) {
     const items = (cart.items || []).map(i => ({ productId: i.productId, quantity: i.quantity }));
     if (!items.length) { addToast('Cart is empty', 'error'); return; }
     setPlacing(true);
-    try { await api('/orders', { method: 'POST', body: { items, addressId: selectedAddress, paymentMethod, discountAmount } }); addToast('Order placed!', 'success'); refreshCart(); navigate('/orders'); }
+    try { await api('/orders', { method: 'POST', body: { items, addressId: selectedAddress, paymentMethod, discountAmount } }); addToast('Order placed successfully! 🎉', 'success'); refreshCart(); navigate('/orders'); }
     catch (err) { addToast(err.message, 'error'); }
     finally { setPlacing(false); }
   };
@@ -791,40 +908,53 @@ function CheckoutPage({ addToast }) {
           ))}
           {showAddressForm ? (
             <form className="address-card" onSubmit={saveAddress} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <input placeholder="Full Name" value={addrForm.fullName} onChange={e => setAddrForm({ ...addrForm, fullName: e.target.value })} required />
-              <input placeholder="Phone" value={addrForm.phone} onChange={e => setAddrForm({ ...addrForm, phone: e.target.value })} />
-              <input placeholder="Address Line" value={addrForm.addressLine} onChange={e => setAddrForm({ ...addrForm, addressLine: e.target.value })} required />
+              <input placeholder="Full Name *" value={addrForm.fullName} onChange={e => setAddrForm({ ...addrForm, fullName: e.target.value })} required />
+              <input placeholder="Phone Number *" value={addrForm.phone} onChange={e => setAddrForm({ ...addrForm, phone: e.target.value })} required />
+              <input placeholder="Address Line (Street, Flat/House No.) *" value={addrForm.addressLine} onChange={e => setAddrForm({ ...addrForm, addressLine: e.target.value })} required />
               <div className="field-row">
-                <input placeholder="City" value={addrForm.city} onChange={e => setAddrForm({ ...addrForm, city: e.target.value })} required style={{ flex: 1 }} />
-                <input placeholder="State" value={addrForm.state} onChange={e => setAddrForm({ ...addrForm, state: e.target.value })} style={{ flex: 1 }} />
+                <input placeholder="City *" value={addrForm.city} onChange={e => setAddrForm({ ...addrForm, city: e.target.value })} required style={{ flex: 1 }} />
+                <input placeholder="State *" value={addrForm.state} onChange={e => setAddrForm({ ...addrForm, state: e.target.value })} style={{ flex: 1 }} />
               </div>
-              <input placeholder="Pincode" value={addrForm.pincode} onChange={e => setAddrForm({ ...addrForm, pincode: e.target.value })} />
+              <input placeholder="Pincode *" value={addrForm.pincode} onChange={e => setAddrForm({ ...addrForm, pincode: e.target.value })} required />
               <div className="field-row">
                 <button type="submit" className="btn-primary">Save Address</button>
                 <button type="button" className="btn-secondary" onClick={() => setShowAddressForm(false)}>Cancel</button>
               </div>
             </form>
           ) : <button className="btn-secondary" onClick={() => setShowAddressForm(true)}>+ Add New Address</button>}
-          <h2 style={{ marginTop: 24 }}>Payment Method</h2>
+          <h2 style={{ marginTop: 28 }}>Payment Method</h2>
           {['COD', 'UPI', 'CARD', 'NETBANKING'].map(m => (
-            <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
+            <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: paymentMethod === m ? '#fff7ed' : '#fff', border: `1.5px solid ${paymentMethod === m ? '#f97316' : '#e2e8f0'}`, borderRadius: 10, marginBottom: 8, cursor: 'pointer', transition: 'all 0.2s' }}>
               <input type="radio" name="payment" value={m} checked={paymentMethod === m} onChange={() => setPaymentMethod(m)} />
-              {m === 'COD' ? 'Cash on Delivery' : m === 'UPI' ? 'UPI' : m === 'CARD' ? 'Credit/Debit Card' : 'Net Banking'}
+              <strong style={{ fontSize: 14 }}>{m === 'COD' ? '💵 Cash on Delivery' : m === 'UPI' ? '⚡ Instant UPI (GPay / PhonePe / Paytm)' : m === 'CARD' ? '💳 Credit / Debit Card' : '🏦 Net Banking'}</strong>
             </label>
           ))}
         </div>
         <div className="checkout-right">
           <h2>Order Summary</h2>
-          {(cart.items || []).map(i => <div key={i.id} className="summary-row"><span>{i.productName} x{i.quantity}</span><span>{fmt(i.subtotal)}</span></div>)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+            {(cart.items || []).map(i => (
+              <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ width: 46, height: 46, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  <ProductImage src={i.productImage} alt={i.productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{i.productName}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>Qty: {i.quantity} × {fmt(i.price)}</div>
+                </div>
+                <span style={{ fontWeight: 700, fontSize: 13 }}>{fmt(i.subtotal)}</span>
+              </div>
+            ))}
+          </div>
           <div className="coupon-row">
-            <input type="text" placeholder="Coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
+            <input type="text" placeholder="Coupon code (e.g. WELCOME10)" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
             <button className="btn-secondary" onClick={applyCoupon}>Apply</button>
           </div>
           <div className="summary-row"><span>Subtotal</span><span>{fmt(cart.total)}</span></div>
-          {discountAmount > 0 && <div className="summary-row discount"><span>Discount</span><span>-{fmt(discountAmount)}</span></div>}
-          <div className="summary-row"><span>Shipping</span><span>Free</span></div>
+          {discountAmount > 0 && <div className="summary-row discount"><span>Discount Applied</span><span>-{fmt(discountAmount)}</span></div>}
+          <div className="summary-row"><span>Shipping</span><span style={{ color: '#10b981', fontWeight: 700 }}>FREE</span></div>
           <div className="total"><span>Total</span><span>{fmt(finalTotal)}</span></div>
-          <div className="checkout-actions">
+          <div className="checkout-actions" style={{ marginTop: 20 }}>
             <button className="btn-secondary" onClick={() => navigate('/cart')}>Back to Cart</button>
             <button className="btn-primary btn-lg" onClick={placeOrder} disabled={placing}>{placing ? 'Placing Order...' : 'Place Order'}</button>
           </div>

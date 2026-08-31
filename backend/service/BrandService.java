@@ -5,9 +5,15 @@ import model.Brand;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BrandService {
+    private static volatile List<Brand> cachedBrands = null;
+
+    public static void clearCache() {
+        cachedBrands = null;
+    }
 
     public int addBrand(Brand brand) {
         String sql = "INSERT INTO brands (name, description, logo, status) VALUES (?, ?, ?, ?)";
@@ -18,22 +24,30 @@ public class BrandService {
             stmt.setString(3, brand.getLogo());
             stmt.setString(4, brand.getStatus() != null ? brand.getStatus() : "ACTIVE");
             stmt.executeUpdate();
+            clearCache();
             try (ResultSet keys = stmt.getGeneratedKeys()) { keys.next(); return keys.getInt(1); }
         } catch (SQLException e) { throw new RuntimeException("Failed to add brand: " + e.getMessage(), e); }
     }
 
     public List<Brand> getAllBrands() {
+        List<Brand> cached = cachedBrands;
+        if (cached != null) return cached;
         List<Brand> brands = new ArrayList<>();
         String sql = "SELECT * FROM brands WHERE status = 'ACTIVE' ORDER BY name";
         try (Connection conn = Database.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) brands.add(mapBrand(rs));
+            cachedBrands = Collections.unmodifiableList(brands);
         } catch (SQLException e) { throw new RuntimeException("Failed to fetch brands: " + e.getMessage(), e); }
-        return brands;
+        return cachedBrands;
     }
 
     public Brand getBrandById(int id) {
+        List<Brand> all = getAllBrands();
+        for (Brand b : all) {
+            if (b.getId() == id) return b;
+        }
         String sql = "SELECT * FROM brands WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -52,7 +66,9 @@ public class BrandService {
             stmt.setString(3, brand.getLogo());
             stmt.setString(4, brand.getStatus());
             stmt.setInt(5, id);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) clearCache();
+            return ok;
         } catch (SQLException e) { throw new RuntimeException("Failed to update brand: " + e.getMessage(), e); }
     }
 
@@ -61,7 +77,9 @@ public class BrandService {
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) clearCache();
+            return ok;
         } catch (SQLException e) { throw new RuntimeException("Failed to delete brand: " + e.getMessage(), e); }
     }
 

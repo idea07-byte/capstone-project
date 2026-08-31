@@ -6,12 +6,22 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Properties;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class Database {
     private static String URL;
     private static String USER;
     private static String PASSWORD;
+
+    private static final int MAX_POOL_SIZE = 12;
+    private static final BlockingQueue<Connection> pool = new ArrayBlockingQueue<>(MAX_POOL_SIZE);
+    private static int activeCount = 0;
 
     static {
         loadProperties();
@@ -45,8 +55,87 @@ public class Database {
         }
     }
 
-    public static Connection getConnection() throws SQLException {
+    private static Connection createRealConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+
+    public static Connection getConnection() throws SQLException {
+        Connection realConn = null;
+        while (true) {
+            realConn = pool.poll();
+            if (realConn == null) {
+                synchronized (Database.class) {
+                    if (activeCount < MAX_POOL_SIZE) {
+                        activeCount++;
+                        try {
+                            realConn = createRealConnection();
+                            break;
+                        } catch (SQLException e) {
+                            activeCount--;
+                            throw e;
+                        }
+                    }
+                }
+                try {
+                    realConn = pool.poll(3, TimeUnit.SECONDS);
+                    if (realConn == null) {
+                        return createRealConnection();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new SQLException("Interrupted waiting for DB connection", e);
+                }
+            }
+
+            try {
+                if (realConn != null && !realConn.isClosed() && realConn.isValid(2)) {
+                    break;
+                }
+            } catch (Exception ignored) {}
+
+            if (realConn != null) {
+                try { realConn.close(); } catch (Exception ignored) {}
+                synchronized (Database.class) { activeCount--; }
+            }
+        }
+
+        final Connection finalRealConn = realConn;
+        return (Connection) Proxy.newProxyInstance(
+            Database.class.getClassLoader(),
+            new Class<?>[]{Connection.class},
+            new InvocationHandler() {
+                private boolean closed = false;
+
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    if ("close".equals(method.getName())) {
+                        if (!closed) {
+                            closed = true;
+                            if (!finalRealConn.isClosed()) {
+                                if (!pool.offer(finalRealConn)) {
+                                    try { finalRealConn.close(); } catch (Exception ignored) {}
+                                    synchronized (Database.class) { activeCount--; }
+                                }
+                            } else {
+                                synchronized (Database.class) { activeCount--; }
+                            }
+                        }
+                        return null;
+                    }
+                    if ("isClosed".equals(method.getName())) {
+                        return closed || finalRealConn.isClosed();
+                    }
+                    if (closed) {
+                        throw new SQLException("Connection has already been closed.");
+                    }
+                    try {
+                        return method.invoke(finalRealConn, args);
+                    } catch (java.lang.reflect.InvocationTargetException e) {
+                        throw e.getCause();
+                    }
+                }
+            }
+        );
     }
 
     public static void close(AutoCloseable resource) {
@@ -414,40 +503,55 @@ public class Database {
 
         stmt.executeUpdate("""
             INSERT INTO products (id, vendor_id, category_id, brand_id, name, description, price, discount, stock_quantity, sku, image, status) VALUES
-            (1, 1, 1, 1, 'Samsung Galaxy S24 Ultra', 'Premium flagship smartphone with S Pen and AI features', 129999.00, 10, 25, 'SAMS24U-256', 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop', 'ACTIVE'),
-            (2, 1, 1, 2, 'iPhone 15 Pro Max', 'Apple flagship with A17 Pro chip and titanium design', 159900.00, 5, 20, 'APPL15PM-256', 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop', 'ACTIVE'),
-            (3, 1, 10, 6, 'HP Pavilion 15 Laptop', '15.6 inch FHD, Intel i7, 16GB RAM, 512GB SSD', 72999.00, 15, 15, 'HP-PAV15-I7', 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop', 'ACTIVE'),
-            (4, 1, 10, 7, 'Lenovo IdeaPad Slim 5', '14 inch FHD, AMD Ryzen 7, 16GB RAM, 512GB SSD', 64999.00, 12, 18, 'LEN-IS5-R7', 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=400&h=400&fit=crop', 'ACTIVE'),
-            (5, 1, 1, 8, 'Philips TAH7508 Headphones', 'Over-ear wireless headphones with ANC', 3999.00, 20, 50, 'PHI-TAH7508', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop', 'ACTIVE'),
-            (6, 2, 2, 3, 'Nike Air Max 270', 'Men running shoes with Max Air cushioning', 13995.00, 10, 35, 'NIKE-AM270-BLK', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop', 'ACTIVE'),
-            (7, 2, 2, 4, 'Adidas Ultraboost Light', 'Premium running shoes with Boost technology', 16999.00, 8, 30, 'ADI-UBL-LT', 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400&h=400&fit=crop', 'ACTIVE'),
-            (8, 2, 2, 3, 'Nike Dri-FIT T-Shirt', 'Moisture-wicking athletic t-shirt for men', 2499.00, 15, 100, 'NIKE-DRF-TEE', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop', 'ACTIVE'),
-            (9, 2, 2, 4, 'Adidas Classic Backpack', 'Durable everyday backpack for travel and work', 3499.00, 0, 45, 'ADI-BP-CL', 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop', 'ACTIVE'),
-            (10, 3, 3, 5, 'Prestige Iris Mixer Grinder', '750W mixer grinder with 3 stainless steel jars', 3495.00, 20, 40, 'PRE-IRIS-750', 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=400&h=400&fit=crop', 'ACTIVE'),
-            (11, 3, 3, 8, 'Philips Air Fryer 4.1L', 'Rapid Air technology for healthy cooking', 9995.00, 15, 25, 'PHI-AF41', 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&h=400&fit=crop', 'ACTIVE'),
-            (12, 3, 3, 5, 'Prestige Induction Cooktop', '1900W cooktop with Indian menu option', 2799.00, 10, 55, 'PRE-IC-1900', 'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=400&h=400&fit=crop', 'ACTIVE'),
-            (13, 3, 3, 8, 'Philips Steam Iron 2200W', 'Powerful steam iron with non-stick soleplate', 1899.00, 12, 35, 'PHI-SI-2200', 'https://images.unsplash.com/photo-1540544093-b0880061e1a5?w=400&h=400&fit=crop', 'ACTIVE'),
-            (14, 4, 4, 10, 'Atomic Habits by James Clear', 'An Easy & Proven Way to Build Good Habits', 450.00, 20, 200, 'PB-ATOM-HAB', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=400&fit=crop', 'ACTIVE'),
-            (15, 4, 4, 10, 'The Psychology of Money', 'Timeless lessons on wealth and happiness', 399.00, 15, 180, 'PB-PSY-MON', 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=400&fit=crop', 'ACTIVE'),
-            (16, 4, 4, 10, 'Rich Dad Poor Dad', 'What the rich teach their kids about money', 350.00, 10, 150, 'PB-RICH-DAD', 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=400&h=400&fit=crop', 'ACTIVE'),
-            (17, 4, 4, 10, 'Sapiens: A Brief History of Humankind', 'A bold and thought-provoking narrative', 500.00, 12, 120, 'PB-SAPIENS', 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=400&h=400&fit=crop', 'ACTIVE'),
-            (18, 5, 5, 3, 'Nike Football', 'Strike Training Football Size 5', 1299.00, 0, 60, 'NIKE-FB-S5', 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&h=400&fit=crop', 'ACTIVE'),
-            (19, 5, 5, 4, 'Adidas Yoga Mat', 'Non-slip exercise mat for yoga and fitness', 2499.00, 15, 40, 'ADI-YM-NS', 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=400&h=400&fit=crop', 'ACTIVE'),
-            (20, 5, 5, 3, 'Nike Gym Duffel Bag', 'Large sports duffel bag with multiple compartments', 4499.00, 10, 25, 'NIKE-GYM-DB', 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop', 'ACTIVE'),
-            (21, 1, 1, 1, 'Samsung Galaxy Tab S9', '11 inch AMOLED display, Snapdragon 8 Gen 2', 74999.00, 8, 15, 'SAMS-TAB-S9', 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop', 'ACTIVE'),
-            (22, 1, 9, 2, 'AirPods Pro 2nd Gen', 'Active Noise Cancellation with USB-C charging', 24900.00, 5, 40, 'APPL-APP2', 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=400&h=400&fit=crop', 'ACTIVE'),
-            (23, 2, 6, 9, 'Lakme Absolute Skin Dew Serum', 'Hydrating serum with hyaluronic acid', 899.00, 25, 80, 'LAK-ASD-01', 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop', 'ACTIVE'),
-            (24, 2, 6, 9, 'Lakme 9 to 5 Primer + Matte', 'Long-lasting foundation with built-in primer', 799.00, 20, 70, 'LAK-9T5-PM', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop', 'ACTIVE'),
-            (25, 3, 7, 5, 'Prestige Stainless Steel Water Bottle', '1 litre insulated bottle, keeps water cold/hot', 899.00, 0, 90, 'PRE-SS-WB', 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop', 'ACTIVE'),
-            (26, 5, 8, 4, 'Adidas Sports Water Bottle', '750ml BPA-free squeeze bottle for sports', 599.00, 10, 65, 'ADI-SWB-750', 'https://images.unsplash.com/photo-1570831739435-6601aa3fa4fb?w=400&h=400&fit=crop', 'ACTIVE'),
-            (27, 3, 3, 5, 'Prestige Hard Anodised Cookware Set', '5 piece cookware set for modern kitchens', 4999.00, 18, 20, 'PRE-HA-SET5', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop', 'ACTIVE'),
-            (28, 1, 1, 8, 'Philips Hue Smart Bulb', 'WiFi enabled color changing smart LED bulb', 2499.00, 15, 45, 'PHI-HUE-B22', 'https://images.unsplash.com/photo-1775876201255-509501deb444?w=400&h=400&fit=crop', 'ACTIVE'),
-            (29, 4, 4, 10, 'Think and Grow Rich', 'Classic motivational book by Napoleon Hill', 299.00, 0, 160, 'PB-TGR-NH', 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=400&fit=crop', 'ACTIVE'),
-            (30, 2, 2, 3, 'Nike Running Shorts', 'Dri-FIT running shorts with built-in liner', 1999.00, 10, 55, 'NIKE-RS-DF', 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400&h=400&fit=crop', 'ACTIVE')
+            (1, 1, 1, 1, 'Samsung Galaxy S24 Ultra', 'Premium flagship smartphone with S Pen and Galaxy AI features, 200MP camera and titanium build', 129999.00, 10, 25, 'SAMS24U-256', 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (2, 1, 9, 2, 'iPhone 15 Pro Max', 'Apple flagship with A17 Pro chip, titanium frame, Action button, and 5x optical zoom camera', 159900.00, 5, 20, 'APPL15PM-256', 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (3, 1, 10, 6, 'HP Pavilion 15 Laptop', '15.6 inch FHD IPS display, Intel Core i7 13th Gen, 16GB RAM, 512GB NVMe SSD, Backlit keyboard', 72999.00, 15, 15, 'HP-PAV15-I7', 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (4, 1, 10, 7, 'Lenovo IdeaPad Slim 5', '14 inch 2.8K OLED display, AMD Ryzen 7 7730U, 16GB LPDDR5, 512GB SSD, Ultra-lightweight aluminium chassis', 64999.00, 12, 18, 'LEN-IS5-R7', 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (5, 1, 1, 8, 'Philips TAH7508 Headphones', 'Over-ear wireless headphones with Hybrid Active Noise Cancellation, 60-hour battery life and Hi-Res Audio', 3999.00, 20, 50, 'PHI-TAH7508', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (6, 2, 2, 3, 'Nike Air Max 270', 'Men lifestyle running sneakers featuring Nike biggest heel Air unit yet for a super-soft ride', 13995.00, 10, 35, 'NIKE-AM270-BLK', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (7, 2, 2, 4, 'Adidas Ultraboost Light', 'Next-generation running shoes engineered with Light BOOST cushioning for epic energy return', 16999.00, 8, 30, 'ADI-UBL-LT', 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (8, 2, 2, 3, 'Nike Dri-FIT T-Shirt', 'Breathable moisture-wicking athletic short-sleeve training shirt for workouts and casual wear', 2499.00, 15, 100, 'NIKE-DRF-TEE', 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (9, 2, 2, 4, 'Adidas Classic Backpack', 'Durable everyday laptop backpack with padded shoulder straps and water-resistant coated bottom', 3499.00, 0, 45, 'ADI-BP-CL', 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (10, 3, 3, 5, 'Prestige Iris Mixer Grinder', '750W heavy-duty motor mixer grinder with 3 stainless steel jars and multi-utility juice jar', 3495.00, 20, 40, 'PRE-IRIS-750', 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (11, 3, 3, 8, 'Philips Air Fryer 4.1L', 'Rapid Air technology for delicious crispy fries with up to 90% less fat and touch control panel', 9995.00, 15, 25, 'PHI-AF41', 'https://images.unsplash.com/photo-1584990347449-a2a51f33f679?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (12, 3, 3, 5, 'Prestige Induction Cooktop', '1900W electromagnetic induction cooktop with Indian menu preset and automatic voltage regulator', 2799.00, 10, 55, 'PRE-IC-1900', 'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (13, 3, 3, 8, 'Philips Steam Iron 2200W', 'Powerful steam boost iron with non-stick ceramic soleplate and continuous anti-calc system', 1899.00, 12, 35, 'PHI-SI-2200', 'https://images.unsplash.com/photo-1540544093-b0880061e1a5?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (14, 4, 4, 10, 'Atomic Habits by James Clear', 'An Easy & Proven Way to Build Good Habits & Break Bad Ones. International million-copy bestseller', 450.00, 20, 200, 'PB-ATOM-HAB', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (15, 4, 4, 10, 'The Psychology of Money', 'Timeless lessons on wealth, greed, and happiness by Morgan Housel. Must-read personal finance classic', 399.00, 15, 180, 'PB-PSY-MON', 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (16, 4, 4, 10, 'Rich Dad Poor Dad', 'What the rich teach their kids about money that the poor and middle class do not! by Robert Kiyosaki', 350.00, 10, 150, 'PB-RICH-DAD', 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (17, 4, 4, 10, 'Sapiens: A Brief History of Humankind', 'A groundbreaking narrative of human history and civilization by Yuval Noah Harari', 500.00, 12, 120, 'PB-SAPIENS', 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (18, 5, 5, 3, 'Nike Strike Training Football', 'High-visibility match and training football size 5 with textured casing for consistent touch', 1299.00, 0, 60, 'NIKE-FB-S5', 'https://images.unsplash.com/photo-1614632537423-1e6c2e7e0aab?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (19, 5, 5, 4, 'Adidas Yoga Mat Pro', '6mm extra-thick textured non-slip exercise mat with carrying strap for yoga, pilates and fitness', 2499.00, 15, 40, 'ADI-YM-NS', 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (20, 5, 5, 3, 'Nike Gym Duffel Bag', 'Spacious water-resistant sports training duffel bag with dedicated shoe compartment', 4499.00, 10, 25, 'NIKE-GYM-DB', 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (21, 1, 10, 1, 'Samsung Galaxy Tab S9', '11 inch Dynamic AMOLED 2X 120Hz display, Snapdragon 8 Gen 2, included S Pen and IP68 water resistance', 74999.00, 8, 15, 'SAMS-TAB-S9', 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (22, 1, 9, 2, 'AirPods Pro 2nd Gen', 'Apple flagship earbuds with Active Noise Cancellation, Adaptive Audio, Transparency mode, USB-C MagSafe case', 24900.00, 5, 40, 'APPL-APP2', 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (23, 2, 6, 9, 'Lakme Absolute Skin Dew Serum', 'Deeply hydrating facial serum infused with Hyaluronic Acid and Vitamin E for instant glass skin glow', 899.00, 25, 80, 'LAK-ASD-01', 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (24, 2, 6, 9, 'Lakme 9 to 5 Primer + Matte', 'Flawless coverage liquid foundation with built-in primer for a 16-hour shine-free matte finish', 799.00, 20, 70, 'LAK-9T5-PM', 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (25, 3, 7, 5, 'Prestige Stainless Steel Bottle', '1000ml double-wall vacuum insulated flask bottle keeps drinks cold 24h or hot 18h', 899.00, 0, 90, 'PRE-SS-WB', 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (26, 5, 8, 4, 'Adidas Sports Squeeze Bottle', '750ml BPA-free ergonomically shaped sports water bottle with fast-flow leakproof valve', 599.00, 10, 65, 'ADI-SWB-750', 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (27, 3, 3, 5, 'Prestige Hard Anodised Cookware', '5 piece premium non-toxic cookware set with induction bottoms and heat-resistant silicone handles', 4999.00, 18, 20, 'PRE-HA-SET5', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (28, 1, 1, 8, 'Philips Hue Smart Bulb', '16 Million colors smart LED bulb compatible with Alexa, Google Home and Apple HomeKit via Wi-Fi', 2499.00, 15, 45, 'PHI-HUE-B22', 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (29, 4, 4, 10, 'Think and Grow Rich', 'Napoleon Hill legendary classic blueprint to success, wealth creation and personal achievement', 299.00, 0, 160, 'PB-TGR-NH', 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (30, 2, 2, 3, 'Nike Dri-FIT Running Shorts', 'Lightweight stretch performance running shorts with internal brief liner and secure zip pocket', 1999.00, 10, 55, 'NIKE-RS-DF', 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (31, 1, 1, 2, 'Apple Watch Ultra 2', 'Rugged 49mm titanium case, precision dual-frequency GPS, 3000 nits display, and 36-hour battery life', 89900.00, 8, 12, 'APPL-AWU2', 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (32, 1, 1, 8, 'Sony WH-1000XM5 Headphones', 'Industry-leading noise canceling wireless headphones with 8 microphones, LDAC audio, and 30h battery', 29990.00, 15, 25, 'SONY-WH5', 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (33, 1, 10, 6, 'Logitech MX Master 3S Mouse', 'Ultra-fast MagSpeed scrolling, 8K DPI any-surface tracking, quiet clicks, and ergonomic palm rest', 8995.00, 10, 40, 'LOGI-MX3S', 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (34, 1, 10, 7, 'Keychron K2 Mechanical Keyboard', 'Wireless 75% layout mechanical keyboard with hot-swappable Gateron switches and RGB backlight', 7499.00, 12, 30, 'KEY-K2-RGB', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (35, 1, 1, 1, 'Samsung 55-inch Crystal 4K UHD TV', 'Crystal Processor 4K, HDR10+, PurColor technology, Motion Xcelerator and Q-Symphony smart TV', 44990.00, 22, 10, 'SAMS-TV-55', 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (36, 1, 1, 1, 'Sony Alpha A7 IV Mirrorless Camera', '33MP full-frame Exmor R sensor, 4K 60p video, Real-time Eye AF, and 5-axis optical image stabilization', 214990.00, 5, 8, 'SONY-A7M4', 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (37, 1, 10, 2, 'Apple iPad Air M2 11-inch', 'Stunning Liquid Retina display, Apple M2 chip, 12MP Ultra Wide front camera with Center Stage, 128GB', 59900.00, 6, 15, 'APPL-IPAD-M2', 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (38, 3, 3, 5, 'DeLonghi Espresso Coffee Maker', '15-bar professional pressure pump espresso and cappuccino maker with manual milk frothing wand', 18990.00, 15, 14, 'DEL-ESP-15', 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (39, 2, 2, 3, 'Nike Pegasus 40 Running Shoes', 'Engineered mesh upper with responsive React foam and dual Zoom Air units for daily distance runs', 10495.00, 18, 30, 'NIKE-PEG40', 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (40, 3, 3, 8, 'Dyson V12 Cordless Vacuum', 'Laser Slim Fluffy cleaner head illuminates microscopic dust with powerful 150AW suction power', 47900.00, 10, 12, 'DYS-V12-SL', 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (41, 2, 2, 4, 'Classic Polarized Sunglasses', 'Timeless retro sunglasses with UV400 polarized scratch-resistant lenses and lightweight frame', 1899.00, 25, 60, 'POL-SUN-CL', 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (42, 3, 3, 5, 'Smart Temperature Travel Tumbler', 'LED touch temperature display, double-wall stainless steel, 500ml leak-proof tea and coffee flask', 2199.00, 10, 50, 'SMART-TUMB-5', 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (43, 5, 5, 3, 'Resistance Workout Bands Set', 'Heavy-duty 5-tube resistance exercise bands with foam handles, door anchor and ankle straps', 1299.00, 20, 75, 'RES-BAND-5', 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (44, 2, 6, 9, 'Lakme Vitamin C Glow Cream', 'Nourishing lightweight day cream with 99% pure Vitamin C complex for intense hydration and radiance', 649.00, 15, 90, 'LAK-VITC-CRM', 'https://images.unsplash.com/photo-1608248597359-bb583597d396?w=600&auto=format&fit=crop&q=80', 'ACTIVE'),
+            (45, 4, 4, 10, 'Deep Work by Cal Newport', 'Rules for Focused Success in a Distracted World. Transformative productivity and focus guide', 420.00, 10, 140, 'PB-DEEP-WORK', 'https://images.unsplash.com/photo-1532012164546-f432f2e3edd4?w=600&auto=format&fit=crop&q=80', 'ACTIVE')
             ON CONFLICT (id) DO NOTHING
             """);
 
-        stmt.executeUpdate("ALTER SEQUENCE products_id_seq RESTART WITH 31");
+        stmt.executeUpdate("ALTER SEQUENCE products_id_seq RESTART WITH 46");
 
         stmt.executeUpdate("""
             INSERT INTO coupons (code, discount_type, discount_value, minimum_amount, maximum_discount, start_date, expiry_date, usage_limit, status) VALUES
@@ -455,6 +559,47 @@ public class Database {
             ('FLAT200', 'FIXED', 200.00, 2000.00, 200.00, '2025-01-01', '2026-12-31', 500, 'ACTIVE'),
             ('SUMMER15', 'PERCENTAGE', 15.00, 1000.00, 500.00, '2025-01-01', '2026-12-31', 300, 'ACTIVE')
             ON CONFLICT (code) DO NOTHING
+            """);
+
+        stmt.executeUpdate("""
+            INSERT INTO cart (id, customer_id) VALUES
+            (1, 7),
+            (2, 1),
+            (3, 8)
+            ON CONFLICT (id) DO NOTHING
+            """);
+
+        stmt.executeUpdate("ALTER SEQUENCE cart_id_seq RESTART WITH 4");
+
+        stmt.executeUpdate("""
+            INSERT INTO cart_items (id, cart_id, product_id, quantity, price) VALUES
+            (1, 1, 2, 1, 151905.00),
+            (2, 1, 6, 1, 12595.50),
+            (3, 1, 22, 1, 23655.00),
+            (4, 1, 33, 1, 8095.50),
+            (5, 1, 14, 2, 360.00),
+            (6, 1, 9, 1, 3499.00),
+            (7, 1, 23, 2, 674.25),
+            (8, 1, 27, 1, 4099.18),
+            (9, 2, 1, 1, 116999.10),
+            (10, 2, 11, 1, 8495.75),
+            (11, 2, 31, 1, 82708.00),
+            (12, 2, 34, 1, 6599.12)
+            ON CONFLICT (id) DO NOTHING
+            """);
+
+        stmt.executeUpdate("ALTER SEQUENCE cart_items_id_seq RESTART WITH 13");
+
+        stmt.executeUpdate("""
+            INSERT INTO reviews (product_id, customer_id, rating, comment, status) VALUES
+            (1, 7, 5, 'Superb phone! The camera quality is breathtaking and battery life easily lasts two full days.', 'ACTIVE'),
+            (2, 8, 5, 'The titanium finish feels amazing and the 5x optical zoom is stunning!', 'ACTIVE'),
+            (6, 9, 5, 'Most comfortable sneakers I have ever worn for daily walking and workouts.', 'ACTIVE'),
+            (11, 7, 4, 'Air fryer makes snacks super crispy with barely any oil! Highly recommend.', 'ACTIVE'),
+            (14, 10, 5, 'Life-changing book. The 1% better every day concept is immensely powerful.', 'ACTIVE'),
+            (22, 7, 5, 'Noise cancellation on these AirPods Pro is magical on daily commutes.', 'ACTIVE'),
+            (33, 8, 5, 'The best ergonomic mouse ever built. The MagSpeed scroll wheel is legendary.', 'ACTIVE')
+            ON CONFLICT (id) DO NOTHING
             """);
 
         System.out.println("Seed data inserted successfully.");
