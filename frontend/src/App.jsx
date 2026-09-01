@@ -609,83 +609,424 @@ function ProductDetailsPage({ addToast }) {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewHover, setReviewHover] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [addingCart, setAddingCart] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [pRes, rRes] = await Promise.all([api('/products/' + id), api('/reviews/' + id).catch(() => [])]);
-      setProduct(pRes.product || pRes); setReviews(Array.isArray(rRes) ? rRes : []);
-    } catch (err) { addToast(err.message, 'error'); }
-    finally { setLoading(false); }
+      const [pRes, rRes] = await Promise.all([
+        api('/products/' + id),
+        api('/reviews/' + id).catch(() => [])
+      ]);
+      const rawProd = pRes.product !== undefined ? pRes.product : pRes;
+      const pObj = typeof rawProd === 'string' ? JSON.parse(rawProd) : rawProd;
+      setProduct(pObj);
+      setReviews(Array.isArray(rRes) ? rRes : []);
+
+      if (pObj && pObj.categoryId) {
+        api('/products?category=' + pObj.categoryId)
+          .then(list => {
+            if (Array.isArray(list)) {
+              setRelated(list.filter(item => item.id !== pObj.id).slice(0, 4));
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   }, [id, addToast]);
-  useEffect(() => { load(); }, [load]);
-  const addToCart = async () => {
-    try { await api('/cart', { method: 'POST', body: { productId: Number(id), quantity: qty } }); addToast('Added to cart', 'success'); refreshCart(); }
-    catch (err) { addToast(err.message, 'error'); }
+
+  useEffect(() => {
+    load();
+    window.scrollTo(0, 0);
+  }, [load]);
+
+  const addToCart = async (redirect = false) => {
+    setAddingCart(true);
+    try {
+      await api('/cart', { method: 'POST', body: { productId: Number(id), quantity: qty } });
+      addToast('Added ' + qty + ' item' + (qty > 1 ? 's' : '') + ' to cart 🛒', 'success');
+      refreshCart();
+      if (redirect) navigate('/cart');
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setAddingCart(false);
+    }
   };
+
+  const toggleWishlist = () => {
+    setWishlisted(!wishlisted);
+    addToast(!wishlisted ? 'Added to your Wishlist ❤️' : 'Removed from Wishlist', 'info');
+  };
+
   const submitReview = async (e) => {
-    e.preventDefault(); if (!reviewComment.trim()) { addToast('Please enter a comment', 'error'); return; }
+    e.preventDefault();
+    if (!reviewComment.trim()) {
+      addToast('Please enter a review comment', 'error');
+      return;
+    }
     setSubmitting(true);
-    try { await api('/reviews', { method: 'POST', body: { productId: Number(id), rating: reviewRating, comment: reviewComment.trim() } }); addToast('Review submitted', 'success'); setReviewComment(''); setReviewRating(5); load(); }
-    catch (err) { addToast(err.message, 'error'); }
-    finally { setSubmitting(false); }
+    try {
+      await api('/reviews', {
+        method: 'POST',
+        body: { productId: Number(id), rating: reviewRating, comment: reviewComment.trim() }
+      });
+      addToast('Thank you for your review! ⭐', 'success');
+      setReviewComment('');
+      setReviewRating(5);
+      load();
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
   if (loading) return <Loader />;
   if (!product) return <EmptyState message="Product not found" />;
-  const fp = (!product.discount || product.discount <= 0) ? product.price : Math.max(0, product.price * (1 - product.discount / 100));
+
+  const fp = (!product.discount || product.discount <= 0)
+    ? product.price
+    : Math.max(0, product.price * (1 - product.discount / 100));
   const dp = (!product.discount || product.discount <= 0) ? 0 : Math.round(product.discount);
+  const savings = product.price - fp;
+  const isOutOfStock = !product.stockQuantity || product.stockQuantity <= 0;
+
   return (
-    <div className="product-details">
-      <button className="btn-back" onClick={() => navigate(-1)}>\u2190 Back</button>
-      <div className="pd-layout">
-        <div className="pd-image"><ProductImage src={product.image} alt={product.name} style={{ width: '100%', maxHeight: 400, objectFit: 'contain' }} /></div>
-        <div className="pd-info">
-          <span className="pd-cat">{product.categoryName}</span>
-          <h1>{product.name}</h1>
-          <span className="pd-vendor">Sold by {product.vendorName}</span>
-          {product.averageRating > 0 && <div className="pd-rating"><StarRating rating={product.averageRating} /> <span>({product.reviewCount} reviews)</span></div>}
-          <div className="pd-price">
-            <span className="big-price">{fmt(fp)}</span>
-            {dp > 0 && <span className="old-price">{fmt(product.price)}</span>}
-            {dp > 0 && <span className="off-tag">{dp}% off</span>}
-          </div>
-          <p className="pd-stock">{product.stockQuantity > 0 ? 'In Stock (' + product.stockQuantity + ' available)' : 'Out of Stock'}</p>
-          {product.sku && <p className="note">SKU: {product.sku}</p>}
-          {product.description && <p className="pd-desc">{product.description}</p>}
-          <div className="pd-actions">
-            <div className="qty-ctrl">
-              <button onClick={() => setQty(Math.max(1, qty - 1))}>-</button>
-              <span>{qty}</span>
-              <button onClick={() => setQty(Math.min(product.stockQuantity, qty + 1))}>+</button>
+    <div className="product-details-container">
+      {/* Top Breadcrumb Bar */}
+      <div className="pd-breadcrumb-bar">
+        <button className="btn-back-link" onClick={() => navigate(-1)}>
+          <span className="back-arrow">←</span> Back to Store
+        </button>
+        <div className="pd-breadcrumbs">
+          <Link to="/store">Store</Link>
+          <span className="sep">/</span>
+          <span>{product.categoryName || 'Products'}</span>
+          {product.brandName && (
+            <>
+              <span className="sep">/</span>
+              <span>{product.brandName}</span>
+            </>
+          )}
+          <span className="sep">/</span>
+          <span className="current">{product.name}</span>
+        </div>
+      </div>
+
+      {/* Main Two-Column Showcase */}
+      <div className="pd-main-grid">
+        {/* Left Column: Image Gallery & Guarantees */}
+        <div className="pd-gallery-column">
+          <div className="pd-image-card">
+            {dp > 0 && <div className="pd-discount-badge">-{dp}% OFF</div>}
+            {product.categoryName && <div className="pd-category-pill">{product.categoryName}</div>}
+            <button
+              className={`pd-wishlist-btn ${wishlisted ? 'active' : ''}`}
+              onClick={toggleWishlist}
+              title="Save to wishlist"
+            >
+              {wishlisted ? '❤️' : '🤍'}
+            </button>
+            <div className="pd-image-wrapper">
+              <ProductImage
+                src={product.image}
+                alt={product.name}
+              />
             </div>
-            <button className="btn-primary btn-lg" onClick={addToCart} disabled={product.stockQuantity <= 0}>Add to Cart</button>
+          </div>
+
+          {/* Value Props & Trust Badges */}
+          <div className="pd-trust-card">
+            <div className="trust-item">
+              <div className="trust-icon">🚚</div>
+              <div>
+                <strong>Free Express Shipping</strong>
+                <p>Delivery across India within 2-4 business days</p>
+              </div>
+            </div>
+            <div className="trust-item">
+              <div className="trust-icon">🔄</div>
+              <div>
+                <strong>7-Day Replacement</strong>
+                <p>Hassle-free replacement for damaged items</p>
+              </div>
+            </div>
+            <div className="trust-item">
+              <div className="trust-icon">🛡️</div>
+              <div>
+                <strong>100% Genuine Warranty</strong>
+                <p>Authentic brand item with warranty support</p>
+              </div>
+            </div>
+            <div className="trust-item">
+              <div className="trust-icon">💳</div>
+              <div>
+                <strong>Secure Payment Options</strong>
+                <p>UPI, Cards, Net Banking & Cash on Delivery</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Product Info & Purchase Actions */}
+        <div className="pd-info-column">
+          {product.brandName && (
+            <div className="pd-brand-badge">
+              <span>🏷️ Brand: <strong>{product.brandName}</strong></span>
+            </div>
+          )}
+
+          <h1 className="pd-title">{product.name}</h1>
+
+          <div className="pd-meta-row">
+            <div className="pd-rating-box">
+              <StarRating rating={product.averageRating || 5} />
+              <span className="pd-rating-num">
+                {product.averageRating > 0 ? Number(product.averageRating).toFixed(1) : '5.0'}
+              </span>
+              <a href="#reviews" className="pd-reviews-link">
+                ({product.reviewCount || reviews.length} {(product.reviewCount || reviews.length) === 1 ? 'review' : 'reviews'})
+              </a>
+            </div>
+            <div className="pd-vendor-chip">
+              <span>🏪 Sold by <strong>{product.vendorName || 'TechHub Electronics'}</strong></span>
+              <span className="verified-check" title="Verified Seller">✓</span>
+            </div>
+          </div>
+
+          <div className="pd-divider" />
+
+          {/* Pricing Box */}
+          <div className="pd-price-box">
+            <div className="pd-price-main">
+              <span className="pd-final-price">{fmt(fp)}</span>
+              {dp > 0 && <span className="pd-old-price">{fmt(product.price)}</span>}
+            </div>
+            {dp > 0 && (
+              <div className="pd-savings-badge">
+                You Save {fmt(savings)} ({dp}% off)
+              </div>
+            )}
+            <span className="pd-tax-text">Inclusive of all applicable taxes & duties</span>
+          </div>
+
+          {/* Stock Status Indicator */}
+          <div className="pd-stock-row">
+            {isOutOfStock ? (
+              <span className="stock-pill stock-out">🔴 Currently Out of Stock</span>
+            ) : product.stockQuantity <= 5 ? (
+              <span className="stock-pill stock-low">🟠 Only {product.stockQuantity} items left in stock - order soon!</span>
+            ) : (
+              <span className="stock-pill stock-in">🟢 In Stock ({product.stockQuantity} available)</span>
+            )}
+            {product.sku && <span className="pd-sku-chip">SKU: {product.sku}</span>}
+          </div>
+
+          {/* Product Description */}
+          {product.description && (
+            <div className="pd-desc-block">
+              <h3>About this item</h3>
+              <p>{product.description}</p>
+            </div>
+          )}
+
+          {/* Specifications Matrix */}
+          <div className="pd-specs-table">
+            <div className="spec-row">
+              <span className="spec-label">Brand</span>
+              <span className="spec-val">{product.brandName || 'Standard'}</span>
+            </div>
+            <div className="spec-row">
+              <span className="spec-label">Category</span>
+              <span className="spec-val">{product.categoryName || 'General'}</span>
+            </div>
+            <div className="spec-row">
+              <span className="spec-label">Item SKU</span>
+              <span className="spec-val">{product.sku || 'N/A'}</span>
+            </div>
+            <div className="spec-row">
+              <span className="spec-label">Seller</span>
+              <span className="spec-val">{product.vendorName || 'TechHub Electronics'}</span>
+            </div>
+          </div>
+
+          {/* Purchase Actions Panel */}
+          <div className="pd-actions-panel">
+            {!isOutOfStock && (
+              <div className="pd-qty-group">
+                <label>Quantity</label>
+                <div className="pd-qty-stepper">
+                  <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} disabled={qty <= 1}>-</button>
+                  <span className="qty-number">{qty}</span>
+                  <button type="button" onClick={() => setQty(Math.min(product.stockQuantity, qty + 1))} disabled={qty >= product.stockQuantity}>+</button>
+                </div>
+              </div>
+            )}
+
+            <div className="pd-btn-group">
+              <button
+                className="btn-add-cart-main"
+                onClick={() => addToCart(false)}
+                disabled={isOutOfStock || addingCart}
+              >
+                🛒 {addingCart ? 'Adding...' : 'Add to Cart'}
+              </button>
+              <button
+                className="btn-buy-now-main"
+                onClick={() => addToCart(true)}
+                disabled={isOutOfStock}
+              >
+                ⚡ Buy Now
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div className="reviews-section">
-        <h2>Reviews</h2>
-        <form className="review-form" onSubmit={submitReview}>
-          <div className="field-row">
-            <select value={reviewRating} onChange={e => setReviewRating(Number(e.target.value))}>
-              {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} Star{r > 1 ? 's' : ''}</option>)}
-            </select>
+
+      {/* Customer Reviews Section */}
+      <div className="pd-reviews-container" id="reviews">
+        <div className="pd-section-header">
+          <div>
+            <h2>Customer Reviews & Ratings</h2>
+            <p className="section-sub">Real feedback from verified buyers across India</p>
           </div>
-          <div className="field"><textarea placeholder="Write your review..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} rows={3} /></div>
-          <button type="submit" className="btn-primary" disabled={submitting}>{submitting ? 'Submitting...' : 'Submit Review'}</button>
-        </form>
-        <div className="reviews-list">
-          {reviews.length === 0 ? <p className="note">No reviews yet</p> : reviews.map(r => (
-            <div key={r.id} className="review-card">
-              <div className="review-header"><strong>{r.customerName}</strong><StarRating rating={r.rating} /><span className="note">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span></div>
-              <p>{r.comment}</p>
-            </div>
-          ))}
+          <div className="pd-rating-summary-pill">
+            <span className="avg-num">{product.averageRating > 0 ? Number(product.averageRating).toFixed(1) : '5.0'}</span>
+            <StarRating rating={product.averageRating || 5} />
+            <span className="count-label">Based on {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}</span>
+          </div>
+        </div>
+
+        <div className="pd-reviews-grid">
+          {/* Write a Review Card */}
+          <div className="pd-write-review-card">
+            <h3>Write a Review</h3>
+            <p className="write-hint">Share your thoughts with other shoppers</p>
+            <form onSubmit={submitReview}>
+              <div className="rating-select-row">
+                <label>Your Rating:</label>
+                <div className="star-picker">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      type="button"
+                      key={star}
+                      className={`star-btn ${(reviewHover || reviewRating) >= star ? 'active' : ''}`}
+                      onMouseEnter={() => setReviewHover(star)}
+                      onMouseLeave={() => setReviewHover(0)}
+                      onClick={() => setReviewRating(star)}
+                    >
+                      ★
+                    </button>
+                  ))}
+                  <span className="star-label">
+                    {['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][(reviewHover || reviewRating) - 1]}
+                  </span>
+                </div>
+              </div>
+
+              <div className="field-block">
+                <label>Your Experience / Comments</label>
+                <textarea
+                  placeholder="What did you like or dislike? How was the build quality, performance, and packaging?"
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn-submit-review" disabled={submitting}>
+                {submitting ? 'Submitting...' : 'Post Review'}
+              </button>
+            </form>
+          </div>
+
+          {/* Customer Reviews List */}
+          <div className="pd-reviews-list-card">
+            <h3>Buyer Feedback ({reviews.length})</h3>
+            {reviews.length === 0 ? (
+              <div className="no-reviews-box">
+                <div className="no-rev-icon">💬</div>
+                <h4>No reviews yet</h4>
+                <p>Be the first customer to review <strong>{product.name}</strong>!</p>
+              </div>
+            ) : (
+              <div className="reviews-scroll-list">
+                {reviews.map((r) => {
+                  const initial = (r.customerName || 'Customer').charAt(0).toUpperCase();
+                  return (
+                    <div key={r.id} className="review-item-card">
+                      <div className="rev-user-header">
+                        <div className="user-avatar-circle">{initial}</div>
+                        <div className="user-info-text">
+                          <div className="user-name-line">
+                            <strong>{r.customerName || 'Verified Shopper'}</strong>
+                            <span className="verified-badge">✓ Verified Buyer</span>
+                          </div>
+                          <div className="user-meta-sub">
+                            <StarRating rating={r.rating} />
+                            <span className="rev-date">
+                              {r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recently'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="rev-comment-body">{r.comment}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Related Products Carousel / Grid */}
+      {related.length > 0 && (
+        <div className="pd-related-container">
+          <div className="pd-section-header">
+            <div>
+              <h2>Similar Products in {product.categoryName || 'Store'}</h2>
+              <p className="section-sub">Customers who viewed this item also looked at</p>
+            </div>
+          </div>
+          <div className="related-products-grid">
+            {related.map((item) => {
+              const itemFp = (!item.discount || item.discount <= 0)
+                ? item.price
+                : Math.max(0, item.price * (1 - item.discount / 100));
+              return (
+                <div key={item.id} className="related-card" onClick={() => { navigate('/store/product/' + item.id); window.scrollTo(0, 0); }}>
+                  <div className="related-img-box">
+                    <ProductImage src={item.image} alt={item.name} />
+                  </div>
+                  <div className="related-content">
+                    <span className="related-cat">{item.categoryName}</span>
+                    <h4 className="related-title">{item.name}</h4>
+                    <div className="related-price-row">
+                      <span className="rel-final">{fmt(itemFp)}</span>
+                      {item.discount > 0 && <span className="rel-old">{fmt(item.price)}</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1529,6 +1870,7 @@ function App() {
         <Route element={<RequireRole user={user} role="CUSTOMER"><CustomerLayout user={user} onLogout={handleLogout} /></RequireRole>}>
           <Route path="/store"             element={<StorePage          addToast={addToast} />} />
           <Route path="/store/product/:id" element={<ProductDetailsPage addToast={addToast} />} />
+          <Route path="/products/:id"       element={<ProductDetailsPage addToast={addToast} />} />
           <Route path="/cart"              element={<CartPage           addToast={addToast} />} />
           <Route path="/checkout"          element={<CheckoutPage       addToast={addToast} />} />
           <Route path="/orders"            element={<OrdersPage         addToast={addToast} />} />
