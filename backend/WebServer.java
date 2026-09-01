@@ -302,7 +302,7 @@ public class WebServer {
                     int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
                     Product p = new ProductService().getProductById(id);
                     if (p == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Product not found\"}", 404); return; }
-                    respondJson(exchange, json("success", true, "product", productJson(p)));
+                    respondJson(exchange, "{\"success\":true,\"product\":" + productJson(p) + "}");
                 } else {
                     Map<String, String> params = parseQuery(query);
                     Integer catId = params.containsKey("category") ? Integer.parseInt(params.get("category")) : null;
@@ -966,6 +966,7 @@ public class WebServer {
                 String s = val == null ? "null" : val.toString();
                 if ("true".equals(s) || "false".equals(s)) sb.append(s);
                 else if (s.equals("null")) sb.append("null");
+                else if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) sb.append(s);
                 else if (s.matches("-?\\d+\\.?\\d*")) sb.append(s);
                 else sb.append("\"").append(esc(s)).append("\"");
             }
