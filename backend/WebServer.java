@@ -470,7 +470,6 @@ public class WebServer {
             Integer userId = getUserId(exchange);
             if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
             String method = exchange.getRequestMethod();
-            String path = exchange.getRequestURI().getPath();
             CartService cs = new CartService();
 
             if ("GET".equals(method)) {
@@ -525,7 +524,6 @@ public class WebServer {
             Integer userId = getUserId(exchange);
             if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
             String method = exchange.getRequestMethod();
-            String body = readBody(exchange);
 
             if ("GET".equals(method)) {
                 respondJson(exchange, "{\"items\":[],\"message\":\"Wishlist feature - add items via POST\"}");

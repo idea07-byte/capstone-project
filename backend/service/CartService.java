@@ -67,9 +67,9 @@ public class CartService {
     }
 
     public boolean updateCartItem(int customerId, int productId, int quantity) {
-        String sql = "UPDATE ci SET quantity = ? FROM cart_items ci INNER JOIN cart c ON ci.cart_id = c.id WHERE c.customer_id = ? AND ci.product_id = ?";
+        String sql = "UPDATE cart_items SET quantity = ? WHERE product_id = ? AND cart_id = (SELECT id FROM cart WHERE customer_id = ?)";
         try (Connection conn = Database.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("UPDATE cart_items SET quantity = ? WHERE product_id = ? AND cart_id = (SELECT id FROM cart WHERE customer_id = ?)")) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, quantity);
             stmt.setInt(2, productId);
             stmt.setInt(3, customerId);
@@ -78,9 +78,9 @@ public class CartService {
     }
 
     public boolean removeFromCart(int customerId, int productId) {
-        String sql = "DELETE FROM ci USING cart c WHERE ci.cart_id = c.id AND c.customer_id = ? AND ci.product_id = ?";
+        String sql = "DELETE FROM cart_items WHERE product_id = ? AND cart_id = (SELECT id FROM cart WHERE customer_id = ?)";
         try (Connection conn = Database.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("DELETE FROM cart_items WHERE product_id = ? AND cart_id = (SELECT id FROM cart WHERE customer_id = ?)")) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, productId);
             stmt.setInt(2, customerId);
             return stmt.executeUpdate() > 0;

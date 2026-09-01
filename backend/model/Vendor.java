@@ -16,7 +16,6 @@ public class Vendor {
     private Timestamp createdAt;
     private String ownerEmail;
     private String ownerPhone;
-    private String ownerNameFromUser;
 
     public Vendor() {}
 

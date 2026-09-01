@@ -605,3 +605,4 @@ public class Database {
         System.out.println("Seed data inserted successfully.");
     }
 }
+

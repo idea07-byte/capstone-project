@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traditional ER Diagram (Peter Chen Notation) — BuyIt Marketplace</title>
+  <style>
+    :root {
+      --bg: #0b1329;
+      --panel-bg: rgba(15, 23, 42, 0.95);
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --entity-strong: #0284c7;
+      --entity-weak: #0d9488;
+      --rel-bg: #d97706;
+      --id-rel-bg: #ea580c;
+      --pk-gold: #fef08a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .brand .badge {
+      background: #0369a1;
+      color: #bae6fd;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      border: 1px solid #38bdf8;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-group {
+      display: flex;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 2px;
+      border: 1px solid var(--card-border);
+    }
+
+    .btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      color: #fff;
+      background: #334155;
+    }
+
+    .btn.active {
+      background: #0284c7;
+      color: #fff;
+    }
+
+    .btn-icon {
+      padding: 6px 10px;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    main:active {
+      cursor: grabbing;
+    }
+
+    #svg-container {
+      width: 100%;
+      height: 100%;
+      transform-origin: 0 0;
+      transition: transform 0.05s ease-out;
+    }
+
+    /* Floating Legend Overlay */
+    .legend-floating {
+      position: absolute;
+      bottom: 20px;
+      left: 24px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 0.8rem;
+      z-index: 50;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+
+    .legend-floating h4 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shape-sample {
+      display: inline-block;
+    }
+
+    .sample-rect { width: 18px; height: 12px; background: #0284c7; border: 1.5px solid #38bdf8; border-radius: 2px; }
+    .sample-drect { width: 18px; height: 12px; background: #0d9488; border: 2px double #2dd4bf; border-radius: 2px; }
+    .sample-diamond { width: 12px; height: 12px; background: #d97706; border: 1.5px solid #fde047; transform: rotate(45deg); margin: 0 3px; }
+    .sample-ddiamond { width: 12px; height: 12px; background: #ea580c; border: 2px double #fdba74; transform: rotate(45deg); margin: 0 3px; }
+    .sample-oval { width: 18px; height: 11px; background: #1e293b; border: 1.5px solid #64748b; border-radius: 50%; }
+    .sample-pkoval { width: 18px; height: 11px; background: #3b2d08; border: 1.5px solid #eab308; border-radius: 50%; }
+    .sample-derived { width: 18px; height: 11px; background: #1e293b; border: 1.5px dashed #94a3b8; border-radius: 50%; }
+
+    /* Detail Drawer */
+    .drawer {
+      position: absolute;
+      top: 0;
+      right: -380px;
+      width: 360px;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(12px);
+      border-left: 1px solid var(--card-border);
+      box-shadow: -10px 0 25px rgba(0,0,0,0.5);
+      z-index: 150;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+
+    .drawer.open { right: 0; }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+    }
+
+    .drawer-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .drawer-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.25rem;
+    }
+
+    .attr-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e293b;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      font-size: 0.8rem;
+      margin: 3px;
+    }
+
+    .attr-chip.pk {
+      border-color: #eab308;
+      background: #2d2616;
+      color: #fef08a;
+      font-weight: 700;
+    }
+
+    .attr-chip.derived {
+      border-style: dashed;
+      color: #94a3b8;
+    }
+
+    .nav-hints {
+      position: absolute;
+      bottom: 20px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>BuyIt Marketplace — ER Diagram</h1>
+      <span class="badge">Chen's Geometric Notation</span>
+    </div>
+
+    <div class="controls">
+      <!-- Subsystem Filter -->
+      <div class="btn-group" id="filter-group">
+        <button class="btn active" data-filter="all">All Modules</button>
+        <button class="btn" data-filter="identity">Users & Vendors</button>
+        <button class="btn" data-filter="catalog">Catalog</button>
+        <button class="btn" data-filter="cart">Cart & Wishlist</button>
+        <button class="btn" data-filter="orders">Orders & Pay</button>
+      </div>
+
+      <!-- Toggle Attributes -->
+      <div class="btn-group">
+        <button class="btn" id="btn-toggle-attrs" title="Toggle attribute ovals to reduce visual clutter">
+          <span id="attr-icon">◉</span> Attributes: ON
+        </button>
+      </div>
+
+      <!-- Zoom Controls -->
+      <div class="btn-group">
+        <button class="btn btn-icon" id="btn-zoom-in" title="Zoom In">+</button>
+        <button class="btn btn-icon" id="btn-zoom-out" title="Zoom Out">−</button>
+        <button class="btn btn-icon" id="btn-reset" title="Reset View">⟲</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="viewport">
+    <div id="svg-container">
+      <!-- Inline SVG embedding er_diagram_traditional.svg -->
+      <object id="svg-object" type="image/svg+xml" data="er_diagram_traditional.svg" style="width: 2800px; height: 1900px; pointer-events: all;"></object>
+    </div>
+
+    <!-- Floating Legend -->
+    <div class="legend-floating">
+      <h4>Peter Chen Notation Shapes</h4>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="shape-sample sample-rect"></span> <span><strong>Rectangle</strong>: Strong Entity</span></div>
+        <div class="legend-item"><span class="shape-sample sample-drect"></span> <span><strong>Double Rect</strong>: Weak Entity</span></div>
+        <div class="legend-item"><span class="shape-sample sample-diamond"></span> <span><strong>Diamond</strong>: Relationship</span></div>
+        <div class="legend-item"><span class="shape-sample sample-ddiamond"></span> <span><strong>Double Diamond</strong>: Ident. Rel</span></div>
+        <div class="legend-item"><span class="shape-sample sample-pkoval"></span> <span><strong>Underlined Oval</strong>: Primary Key</span></div>
+        <div class="legend-item"><span class="shape-sample sample-oval"></span> <span><strong>Oval</strong>: Standard Attribute</span></div>
+        <div class="legend-item"><span class="shape-sample sample-derived"></span> <span><strong>Dashed Oval</strong>: Derived Attribute</span></div>
+        <div class="legend-item"><span style="color:#fbbf24; font-weight:700; font-family:monospace;">[ 1 ] [ N ]</span> <span><strong>Cardinality Ratios</strong></span></div>
+      </div>
+    </div>
+
+    <!-- Navigation Hints -->
+    <div class="nav-hints">
+      <span>🖱️ <strong>Scroll</strong> to Zoom</span>
+      <span>✋ <strong>Click & Drag</strong> to Pan</span>
+      <span>🔍 <strong>Click Nodes</strong> for Details</span>
+    </div>
+
+    <!-- Slide-out Details Drawer -->
+    <div class="drawer" id="drawer">
+      <div class="drawer-header">
+        <h3 class="drawer-title" id="drawer-title">Entity Details</h3>
+        <button class="drawer-close" id="drawer-close">&times;</button>
+      </div>
+      <div id="drawer-content">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Pan & Zoom Engine
+    const viewport = document.getElementById('viewport');
+    const container = document.getElementById('svg-container');
+    const svgObj = document.getElementById('svg-object');
+    
+    let scale = 0.55;
+    let pointX = 30;
+    let pointY = 10;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let showAttributes = true;
+
+    function updateTransform() {
+      container.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    }
+
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.drawer') || e.target.closest('.legend-floating')) return;
+      isDragging = true;
+      startX = e.clientX - pointX;
+      startY = e.clientY - pointY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      pointX = e.clientX - startX;
+      pointY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const xs = (e.clientX - pointX) / scale;
+      const ys = (e.clientY - pointY) / scale;
+      const delta = -e.deltaY;
+      if (delta > 0) {
+        scale = Math.min(scale * 1.15, 3.0);
+      } else {
+        scale = Math.max(scale / 1.15, 0.2);
+      }
+      pointX = e.clientX - xs * scale;
+      pointY = e.clientY - ys * scale;
+      updateTransform();
+    }, { passive: false });
+
+    // Buttons
+    document.getElementById('btn-zoom-in').addEventListener('click', () => {
+      scale = Math.min(scale * 1.25, 3.0);
+      updateTransform();
+    });
+    document.getElementById('btn-zoom-out').addEventListener('click', () => {
+      scale = Math.max(scale / 1.25, 0.2);
+      updateTransform();
+    });
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      scale = 0.55;
+      pointX = 30;
+      pointY = 10;
+      updateTransform();
+    });
+
+    // Toggle Attributes
+    const toggleBtn = document.getElementById('btn-toggle-attrs');
+    toggleBtn.addEventListener('click', () => {
+      showAttributes = !showAttributes;
+      toggleBtn.innerHTML = showAttributes ? '<span id="attr-icon">◉</span> Attributes: ON' : '<span id="attr-icon">○</span> Attributes: OFF';
+      toggleBtn.classList.toggle('active', !showAttributes);
+
+      try {
+        const svgDoc = svgObj.contentDocument;
+        if (svgDoc) {
+          const ovals = svgDoc.querySelectorAll('ellipse, .attr-line, .attr-pk, .attr-oval, .attr-derived, .attr-pk-label, .attr-label, .attr-derived-label');
+          ovals.forEach(el => {
+            if (!el.closest('.legend-floating')) {
+              el.style.display = showAttributes ? '' : 'none';
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('SVG document not yet ready or cross-origin:', err);
+      }
+    });
+
+    // Subsystem Filters
+    const filterButtons = document.querySelectorAll('#filter-group .btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.getAttribute('data-filter');
+
+        // Focus & Zoom to modules
+        if (filter === 'all') {
+          scale = 0.55; pointX = 30; pointY = 10;
+        } else if (filter === 'identity') {
+          scale = 0.95; pointX = -120; pointY = -50;
+        } else if (filter === 'catalog') {
+          scale = 0.85; pointX = -900; pointY = -50;
+        } else if (filter === 'cart') {
+          scale = 0.95; pointX = -120; pointY = -450;
+        } else if (filter === 'orders') {
+          scale = 0.85; pointX = -450; pointY = -850;
+        }
+        updateTransform();
+      });
+    });
+
+    // Entity Details Data
+    const entityData = {
+      'User': {
+        type: 'Strong Entity (Rectangle)',
+        desc: 'Core actor who can be a customer, vendor, or administrator.',
+        pk: ['id (SERIAL)', 'email (UNIQUE)'],
+        attrs: ['name', 'phone', 'password', 'role (CUSTOMER, VENDOR, ADMIN)', 'status', 'created_at', 'updated_at'],
+        relations: ['Operates 1:1 Vendor', 'Has_Saved 1:N Address', 'Owns_Cart 1:1 Cart', 'Owns_Wishlist 1:1 Wishlist', 'Places 1:N Orders', 'Writes 1:N Reviews', 'Notified_By 1:N Notifications']
+      },
+      'Vendor': {
+        type: 'Strong Entity (Rectangle)',
+        desc: 'Approved seller profile operating in the marketplace.',
+        pk: ['id (SERIAL)'],
+        fk: ['user_id -> User(id)'],
+        attrs: ['business_name', 'owner_name', 'description', 'address', 'city', 'state', 'pincode', 'approval_status', 'created_at'],
+        relations: ['Operated by 1:1 User', 'Supplies 1:N Products', 'Fulfills 1:N OrderItems']
+      },
+      'Product': {
+        type: 'Strong Entity (Rectangle)',
+        desc: 'Item available for purchase in marketplace catalog.',
+        pk: ['id (SERIAL)'],
+        fk: ['vendor_id -> Vendor(id)', 'category_id -> Category(id)', 'brand_id -> Brand(id)'],
+        attrs: ['name', 'description', 'price', 'discount', 'stock_quantity', 'sku', 'image', 'status', 'created_at'],
+        derived: ['discounted_price = price * (1 - discount/100)'],
+        relations: ['Supplied by Vendor', 'Classified in Category', 'Manufactured by Brand', 'Has_Gallery 1:N ProductImage', 'Appears in CartItem & WishlistItem', 'Ordered in OrderItem', 'Receives 1:N Reviews']
+      },
+      'Order': {
+        type: 'Strong Entity (Rectangle)',
+        desc: 'Customer purchase transaction containing multiple multi-vendor line items.',
+        pk: ['id (SERIAL)'],
+        fk: ['customer_id -> User(id)', 'address_id -> Address(id)'],
+        attrs: ['total_amount', 'shipping_amount', 'discount_amount', 'payment_status', 'order_status', 'created_at'],
+        derived: ['final_amount = total_amount + shipping - discount'],
+        relations: ['Placed by Customer', 'Delivered to Address', 'Consists_Of 1:N OrderItems', 'Settled_With 1:1 Payment', 'Applies 1:1 Coupon']
+      }
+    };
+
+    const drawer = document.getElementById('drawer');
+    const drawerTitle = document.getElementById('drawer-title');
+    const drawerContent = document.getElementById('drawer-content');
+    const drawerClose = document.getElementById('drawer-close');
+
+    drawerClose.addEventListener('click', () => {
+      drawer.classList.remove('open');
+    });
+
+    function showEntityDetail(name) {
+      const data = entityData[name];
+      if (!data) return;
+      drawerTitle.textContent = name;
+      let html = `
+        <div style="margin-bottom: 12px;">
+          <span style="background:#0284c7; color:#fff; font-size:0.75rem; padding:3px 8px; border-radius:4px; font-weight:700;">${data.type}</span>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px; line-height:1.4;">${data.desc}</p>
+        </div>
+        
+        <h4 style="font-size:0.8rem; text-transform:uppercase; color:#fbbf24; margin-top:12px;">Primary / Unique Keys</h4>
+        <div style="margin-bottom:10px;">
+          ${data.pk.map(k => `<span class="attr-chip pk"><u>${k}</u></span>`).join('')}
+        </div>
+      `;
+
+      if (data.fk) {
+        html += `
+          <h4 style="font-size:0.8rem; text-transform:uppercase; color:#38bdf8; margin-top:12px;">Foreign Keys</h4>
+          <div style="margin-bottom:10px;">
+            ${data.fk.map(k => `<span class="attr-chip">${k}</span>`).join('')}
+          </div>
+        `;
+      }
+
+      html += `
+        <h4 style="font-size:0.8rem; text-transform:uppercase; color:#94a3b8; margin-top:12px;">Attributes</h4>
+        <div style="margin-bottom:10px;">
+          ${data.attrs.map(k => `<span class="attr-chip">${k}</span>`).join('')}
+        </div>
+      `;
+
+      if (data.derived) {
+        html += `
+          <h4 style="font-size:0.8rem; text-transform:uppercase; color:#cbd5e1; margin-top:12px;">Derived Attributes</h4>
+          <div style="margin-bottom:10px;">
+            ${data.derived.map(k => `<span class="attr-chip derived">- - ${k} - -</span>`).join('')}
+          </div>
+        `;
+      }
+
+      html += `
+        <h4 style="font-size:0.8rem; text-transform:uppercase; color:#2dd4bf; margin-top:12px;">Relationships</h4>
+        <ul style="font-size:0.8rem; color:var(--text-muted); margin-left:16px; margin-top:6px; line-height:1.6;">
+          ${data.relations.map(r => `<li>${r}</li>`).join('')}
+        </ul>
+      `;
+
+      drawerContent.innerHTML = html;
+      drawer.classList.add('open');
+    }
+
+    // Connect SVG entity clicks after load
+    svgObj.addEventListener('load', () => {
+      try {
+        const svgDoc = svgObj.contentDocument;
+        if (!svgDoc) return;
+        ['User', 'Vendor', 'Product', 'Order'].forEach(entity => {
+          const g = svgDoc.getElementById('entity-' + entity.toLowerCase());
+          if (g) {
+            g.style.cursor = 'pointer';
+            g.addEventListener('click', () => showEntityDetail(entity));
+          }
+        });
+      } catch (err) {
+        console.warn('SVG setup error:', err);
+      }
+    });
+
+    // Initial setup
+    updateTransform();
+  </script>
+</body>
+</html>
