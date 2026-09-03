@@ -28,6 +28,22 @@ public class WebServer {
         }
     }
 
+    private static Path imageRoot() {
+        try {
+            Path codeSource = Paths.get(WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            Path root = codeSource.getParent();
+            Path p1 = root.resolve("amazon-capstone/product-images").toAbsolutePath().normalize();
+            if (Files.isDirectory(p1)) return p1;
+            Path p2 = Paths.get("amazon-capstone/product-images").toAbsolutePath().normalize();
+            if (Files.isDirectory(p2)) return p2;
+            Path p3 = Paths.get("../amazon-capstone/product-images").toAbsolutePath().normalize();
+            if (Files.isDirectory(p3)) return p3;
+            return p1;
+        } catch (Exception e) {
+            return Paths.get("amazon-capstone/product-images").toAbsolutePath().normalize();
+        }
+    }
+
     public static String createToken(int userId) {
         String token = UUID.randomUUID().toString();
         sessionTokens.put(token, userId);
@@ -50,6 +66,7 @@ public class WebServer {
     public static void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/", new SafeHandler(new StaticFileHandler()));
+        server.createContext("/product-images", new SafeHandler(new ProductImageHandler()));
         server.createContext("/api/auth/login", new SafeHandler(new LoginHandler()));
         server.createContext("/api/auth/register", new SafeHandler(new RegisterHandler()));
         server.createContext("/api/auth/logout", new SafeHandler(new LogoutHandler()));
@@ -118,6 +135,10 @@ public class WebServer {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
+            if (path.startsWith("/product-images/")) {
+                new ProductImageHandler().handle(exchange);
+                return;
+            }
             if (path.equals("/") || path.isEmpty()) { sendReactShell(exchange); return; }
             Path root = webRoot();
             Path filePath = root.resolve(path.substring(1)).normalize();
@@ -194,6 +215,84 @@ public class WebServer {
             if (fp.endsWith(".gif")) return "image/gif";
             if (fp.endsWith(".svg")) return "image/svg+xml";
             if (fp.endsWith(".ico")) return "image/x-icon";
+            return "application/octet-stream";
+        }
+    }
+
+    static class ProductImageHandler implements HttpHandler {
+        private static final Map<String, byte[]> imgCache = new ConcurrentHashMap<>();
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "*");
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            String path = exchange.getRequestURI().getPath();
+            String prefix = "/product-images/";
+            if (!path.startsWith(prefix) || path.length() <= prefix.length()) {
+                sendNotFound(exchange, path);
+                return;
+            }
+
+            String subPath = path.substring(prefix.length());
+            Path imgRoot = imageRoot();
+            Path targetFile = imgRoot.resolve(subPath).normalize();
+
+            if (!targetFile.startsWith(imgRoot)) {
+                sendNotFound(exchange, path);
+                return;
+            }
+
+            if (!Files.exists(targetFile) || Files.isDirectory(targetFile)) {
+                Path parent = targetFile.getParent();
+                Path fallback = null;
+                if (parent != null && Files.isDirectory(parent)) {
+                    try (Stream<Path> files = Files.list(parent)) {
+                        fallback = files.filter(f -> !Files.isDirectory(f) &&
+                            (f.toString().endsWith(".jpg") || f.toString().endsWith(".png") || f.toString().endsWith(".jpeg") || f.toString().endsWith(".webp")))
+                            .findFirst().orElse(null);
+                    }
+                }
+                if (fallback != null && Files.exists(fallback)) {
+                    targetFile = fallback;
+                }
+            }
+
+            if (!Files.exists(targetFile) || Files.isDirectory(targetFile)) {
+                sendNotFound(exchange, path);
+                return;
+            }
+
+            String ct = getContentType(targetFile.toString());
+            byte[] data = imgCache.get(targetFile.toString());
+            if (data == null) {
+                data = Files.readAllBytes(targetFile);
+                if (data.length < 5 * 1024 * 1024) {
+                    imgCache.put(targetFile.toString(), data);
+                }
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", ct);
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Cache-Control", "public, max-age=86400, immutable");
+            exchange.sendResponseHeaders(200, data.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(data);
+            }
+        }
+
+        private String getContentType(String fp) {
+            String lower = fp.toLowerCase();
+            if (lower.endsWith(".png")) return "image/png";
+            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+            if (lower.endsWith(".webp")) return "image/webp";
+            if (lower.endsWith(".gif")) return "image/gif";
+            if (lower.endsWith(".svg")) return "image/svg+xml";
             return "application/octet-stream";
         }
     }
@@ -341,6 +440,9 @@ public class WebServer {
                 p.setStockQuantity(parseInt(body, "stockQuantity"));
                 p.setSku(jsonStr(body, "sku"));
                 p.setImage(jsonStr(body, "image"));
+                List<String> imgs = jsonStrList(body, "images");
+                if (imgs.isEmpty() && !p.getImage().isEmpty()) imgs.add(p.getImage());
+                p.setImages(imgs);
                 p.setStatus("ACTIVE");
                 int id = new ProductService().addProduct(p);
                 respondJson(exchange, json("success", true, "message", "Product added", "id", String.valueOf(id)));
@@ -381,6 +483,9 @@ public class WebServer {
                 if (!sku.isEmpty()) p.setSku(sku);
                 String img = jsonStr(body, "image");
                 if (!img.isEmpty()) p.setImage(img);
+                if (body.contains("\"images\"")) {
+                    p.setImages(jsonStrList(body, "images"));
+                }
                 String status = jsonStr(body, "status");
                 if (!status.isEmpty()) p.setStatus(status);
                 boolean ok = new ProductService().updateProduct(id, p);
@@ -880,6 +985,29 @@ public class WebServer {
         try { return Double.parseDouble(jsonStr(json, key)); } catch (Exception e) { return 0; }
     }
 
+    static List<String> jsonStrList(String json, String key) {
+        List<String> list = new ArrayList<>();
+        String search = "\"" + key + "\":";
+        int start = json.indexOf(search);
+        if (start == -1) return list;
+        start += search.length();
+        while (start < json.length() && Character.isWhitespace(json.charAt(start))) start++;
+        if (start < json.length() && json.charAt(start) == '[') {
+            int end = json.indexOf(']', start);
+            if (end != -1) {
+                String raw = json.substring(start + 1, end);
+                for (String part : raw.split(",")) {
+                    String s = part.trim();
+                    if (s.startsWith("\"") && s.endsWith("\"") && s.length() >= 2) {
+                        s = s.substring(1, s.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
+                    }
+                    if (!s.isEmpty()) list.add(s);
+                }
+            }
+        }
+        return list;
+    }
+
     static List<String> splitJsonObjects(String array) {
         List<String> objects = new ArrayList<>();
         int depth = 0, start = -1;
@@ -906,11 +1034,24 @@ public class WebServer {
     }
 
     static String productJson(Product p) {
+        StringBuilder imgArray = new StringBuilder("[");
+        List<String> imgs = p.getImages();
+        if (imgs != null && !imgs.isEmpty()) {
+            for (int i = 0; i < imgs.size(); i++) {
+                if (i > 0) imgArray.append(",");
+                imgArray.append("\"").append(esc(imgs.get(i))).append("\"");
+            }
+        } else if (p.getImage() != null && !p.getImage().isEmpty()) {
+            imgArray.append("\"").append(esc(p.getImage())).append("\"");
+        }
+        imgArray.append("]");
+
         return "{\"id\":" + p.getId() + ",\"vendorId\":" + p.getVendorId() + ",\"categoryId\":" + (p.getCategoryId() != null ? p.getCategoryId() : "null") + ",\"brandId\":" + (p.getBrandId() != null ? p.getBrandId() : "null") +
             ",\"name\":\"" + esc(p.getName()) + "\",\"description\":\"" + esc(p.getDescription() != null ? p.getDescription() : "") +
             "\",\"price\":" + p.getPrice() + ",\"discount\":" + p.getDiscount() + ",\"stockQuantity\":" + p.getStockQuantity() +
             ",\"sku\":\"" + esc(p.getSku() != null ? p.getSku() : "") + "\",\"image\":\"" + esc(p.getImage() != null ? p.getImage() : "") +
-            "\",\"status\":\"" + (p.getStatus() != null ? p.getStatus() : "ACTIVE") +
+            "\",\"images\":" + imgArray.toString() +
+            ",\"status\":\"" + (p.getStatus() != null ? p.getStatus() : "ACTIVE") +
             "\",\"vendorName\":\"" + esc(p.getVendorName() != null ? p.getVendorName() : "") +
             "\",\"categoryName\":\"" + esc(p.getCategoryName() != null ? p.getCategoryName() : "") +
             "\",\"brandName\":\"" + esc(p.getBrandName() != null ? p.getBrandName() : "") +
