@@ -2,7 +2,7 @@
 chcp 65001 >nul
 echo Building BuyIt Marketplace...
 
-set JAVA_BIN=C:\Program Files\Java\jdk-26.0.2\bin
+set JAVA_BIN=C:\Program Files\Java\jdk-26.0.2.1\bin
 set LIB_DIR=lib
 set OUT_DIR=..\out
 set RES_DIR=resources
