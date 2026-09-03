@@ -450,6 +450,8 @@ function StorePage({ addToast }) {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [sort, setSort] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 24;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -575,30 +577,88 @@ function StorePage({ addToast }) {
         <button className="btn-primary" onClick={loadProducts}>Search</button>
       </div>
 
-      {loading ? <Loader /> : products.length === 0 ? <EmptyState message="No products found matching your filters" /> : (
-        <div className="product-grid">
-          {products.map(p => (
-            <div key={p.id} className="product-card" onClick={() => navigate('/store/product/' + p.id)}>
-              <div className="product-img">
-                <ProductImage src={p.image} alt={p.name} />
-                {discountPct(p) > 0 && <span className="discount-badge">-{discountPct(p)}%</span>}
-              </div>
-              <div className="product-info">
-                <span className="p-category">{p.categoryName}</span>
-                <h3>{p.name}</h3>
-                <span className="p-vendor">Sold by {p.vendorName}</span>
-                {p.averageRating > 0 && <span className="p-rating"><StarRating rating={p.averageRating} /> ({p.reviewCount})</span>}
-                <div className="p-price">
-                  <span className="final">{fmt(finalPrice(p))}</span>
-                  {discountPct(p) > 0 && <span className="original">{fmt(p.price)}</span>}
-                  {discountPct(p) > 0 && <span className="disc-tag">-{discountPct(p)}%</span>}
+      {loading ? <Loader /> : products.length === 0 ? <EmptyState message="No products found matching your filters" /> : (() => {
+        const totalPages = Math.ceil(products.length / PAGE_SIZE) || 1;
+        const startIndex = (page - 1) * PAGE_SIZE;
+        const paginated = products.slice(startIndex, startIndex + PAGE_SIZE);
+
+        const handlePageChange = (newPage) => {
+          setPage(newPage);
+          window.scrollTo({ top: 380, behavior: 'smooth' });
+        };
+
+        return (
+          <>
+            <div className="product-grid">
+              {paginated.map(p => (
+                <div key={p.id} className="product-card" onClick={() => navigate('/store/product/' + p.id)}>
+                  <div className="product-img">
+                    <ProductImage src={p.image} alt={p.name} />
+                    {discountPct(p) > 0 && <span className="discount-badge">-{discountPct(p)}%</span>}
+                  </div>
+                  <div className="product-info">
+                    <span className="p-category">{p.categoryName}</span>
+                    <h3>{p.name}</h3>
+                    <span className="p-vendor">Sold by {p.vendorName}</span>
+                    {p.averageRating > 0 && <span className="p-rating"><StarRating rating={p.averageRating} /> ({p.reviewCount})</span>}
+                    <div className="p-price">
+                      <span className="final">{fmt(finalPrice(p))}</span>
+                      {discountPct(p) > 0 && <span className="original">{fmt(p.price)}</span>}
+                      {discountPct(p) > 0 && <span className="disc-tag">-{discountPct(p)}%</span>}
+                    </div>
+                    <button className="btn-add-cart" onClick={e => addToCart(e, p.id)}>Add to Cart</button>
+                  </div>
                 </div>
-                <button className="btn-add-cart" onClick={e => addToCart(e, p.id)}>Add to Cart</button>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+
+            {totalPages > 1 && (
+              <div className="store-pagination-wrapper">
+                <span className="pagination-stats">
+                  Showing <strong>{startIndex + 1}</strong> – <strong>{Math.min(startIndex + PAGE_SIZE, products.length)}</strong> of <strong>{products.length}</strong> products
+                </span>
+                <div className="store-pagination">
+                  <button
+                    type="button"
+                    className="page-btn"
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page <= 1}
+                  >
+                    ← Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(pNum => pNum === 1 || pNum === totalPages || Math.abs(pNum - page) <= 2)
+                    .reduce((acc, pNum, idx, arr) => {
+                      if (idx > 0 && pNum - arr[idx - 1] > 1) acc.push(-1 * pNum);
+                      acc.push(pNum);
+                      return acc;
+                    }, [])
+                    .map(pNum => pNum < 0 ? (
+                      <span key={pNum} className="page-dots">…</span>
+                    ) : (
+                      <button
+                        key={pNum}
+                        type="button"
+                        className={`page-btn ${pNum === page ? 'active' : ''}`}
+                        onClick={() => handlePageChange(pNum)}
+                      >
+                        {pNum}
+                      </button>
+                    ))}
+                  <button
+                    type="button"
+                    className="page-btn"
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page >= totalPages}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -618,6 +678,11 @@ function ProductDetailsPage({ addToast }) {
   const [submitting, setSubmitting] = useState(false);
   const [addingCart, setAddingCart] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveImgIndex(0);
+  }, [id]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -703,6 +768,10 @@ function ProductDetailsPage({ addToast }) {
   const dp = (!product.discount || product.discount <= 0) ? 0 : Math.round(product.discount);
   const savings = product.price - fp;
   const isOutOfStock = !product.stockQuantity || product.stockQuantity <= 0;
+  const galleryImages = (product?.images && product.images.length > 0)
+    ? product.images
+    : (product?.image ? [product.image] : []);
+  const currentImage = galleryImages[activeImgIndex] || product?.image;
 
   return (
     <div className="product-details-container">
@@ -740,12 +809,50 @@ function ProductDetailsPage({ addToast }) {
             >
               {wishlisted ? '❤️' : '🤍'}
             </button>
-            <div className="pd-image-wrapper">
+            <div className="pd-image-wrapper" style={{ position: 'relative' }}>
               <ProductImage
-                src={product.image}
+                src={currentImage}
                 alt={product.name}
               />
+              {galleryImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="gallery-nav-btn prev"
+                    onClick={(e) => { e.stopPropagation(); setActiveImgIndex(i => (i - 1 + galleryImages.length) % galleryImages.length); }}
+                    title="Previous Image"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="gallery-nav-btn next"
+                    onClick={(e) => { e.stopPropagation(); setActiveImgIndex(i => (i + 1) % galleryImages.length); }}
+                    title="Next Image"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
+
+            {/* Gallery Thumbnails Strip */}
+            {galleryImages.length > 1 && (
+              <div className="pd-thumbnails-strip">
+                {galleryImages.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`pd-thumbnail-item ${idx === activeImgIndex ? 'active' : ''}`}
+                    onClick={() => setActiveImgIndex(idx)}
+                    onMouseEnter={() => setActiveImgIndex(idx)}
+                    title={`View photo ${idx + 1}`}
+                  >
+                    <ProductImage src={imgUrl} alt={`${product.name} view ${idx + 1}`} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Value Props & Trust Badges */}
