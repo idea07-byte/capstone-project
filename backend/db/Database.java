@@ -152,6 +152,22 @@ public class Database {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
+            boolean hasProducts = false;
+            try (java.sql.ResultSet rs = stmt.executeQuery("SELECT count(id) FROM products")) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    hasProducts = true;
+                }
+            } catch (SQLException ignored) {}
+
+            if (hasProducts) {
+                int count = 0;
+                try (java.sql.ResultSet rs = stmt.executeQuery("SELECT count(id) FROM products")) {
+                    if (rs.next()) count = rs.getInt(1);
+                } catch (SQLException ignored) {}
+                System.out.println("Database already initialized with " + count + " products. Preserving catalog data.");
+                return;
+            }
+
             stmt.executeUpdate("DROP TABLE IF EXISTS notifications CASCADE");
             stmt.executeUpdate("DROP TABLE IF EXISTS reviews CASCADE");
             stmt.executeUpdate("DROP TABLE IF EXISTS wishlist_items CASCADE");
@@ -259,6 +275,7 @@ public class Database {
                     id SERIAL PRIMARY KEY,
                     product_id INT NOT NULL,
                     image_url VARCHAR(500) NOT NULL,
+                    is_primary BOOLEAN DEFAULT FALSE,
                     CONSTRAINT fk_product_images_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
                 )
                 """);
@@ -469,20 +486,25 @@ public class Database {
 
         stmt.executeUpdate("""
             INSERT INTO categories (id, name, description, status) VALUES
-            (1, 'Electronics', 'Gadgets, phones, laptops and accessories', 'ACTIVE'),
-            (2, 'Fashion', 'Clothing, footwear and accessories', 'ACTIVE'),
-            (3, 'Home & Kitchen', 'Furniture, appliances and kitchen items', 'ACTIVE'),
-            (4, 'Books', 'Fiction, non-fiction, academic books', 'ACTIVE'),
-            (5, 'Sports', 'Sports equipment and fitness gear', 'ACTIVE'),
-            (6, 'Beauty', 'Skincare, makeup and personal care', 'ACTIVE'),
-            (7, 'Grocery', 'Food items and daily essentials', 'ACTIVE'),
-            (8, 'Toys', 'Toys and games for all ages', 'ACTIVE'),
-            (9, 'Mobile Phones', 'Smartphones and accessories', 'ACTIVE'),
-            (10, 'Computers', 'Laptops, desktops and peripherals', 'ACTIVE')
+            (1, 'Electronics', 'Audio, gadgets, and consumer electronics', 'ACTIVE'),
+            (2, 'Mobiles', 'Smartphones, cases, and mobile gear', 'ACTIVE'),
+            (3, 'Laptops', 'Notebooks, ultrabooks, and PC accessories', 'ACTIVE'),
+            (4, 'Headphones', 'Over-ear, in-ear, and wireless earbuds', 'ACTIVE'),
+            (5, 'Clothing', 'Men and women apparel, shirts, and jackets', 'ACTIVE'),
+            (6, 'Shoes', 'Sneakers, formal shoes, and boots', 'ACTIVE'),
+            (7, 'Watches', 'Analog, digital, and smart watches', 'ACTIVE'),
+            (8, 'Bags', 'Backpacks, handbags, travel duffels', 'ACTIVE'),
+            (9, 'Home & Kitchen', 'Cookware, dining, kitchen essentials', 'ACTIVE'),
+            (10, 'Beauty', 'Skincare, perfumes, and cosmetics', 'ACTIVE'),
+            (11, 'Books', 'Fiction, non-fiction, textbooks, and bestsellers', 'ACTIVE'),
+            (12, 'Toys', 'Action figures, board games, and puzzles', 'ACTIVE'),
+            (13, 'Sports', 'Sporting goods, fitness equipment, activewear', 'ACTIVE'),
+            (14, 'Grocery', 'Pantry essentials, organic foods, snacks', 'ACTIVE'),
+            (15, 'Appliances', 'Kitchen and home electrical appliances', 'ACTIVE')
             ON CONFLICT (id) DO NOTHING
             """);
 
-        stmt.executeUpdate("ALTER SEQUENCE categories_id_seq RESTART WITH 11");
+        stmt.executeUpdate("ALTER SEQUENCE categories_id_seq RESTART WITH 16");
 
         stmt.executeUpdate("""
             INSERT INTO brands (id, name, description, status) VALUES
