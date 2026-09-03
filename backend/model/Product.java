@@ -22,6 +22,7 @@ public class Product {
     private String brandName;
     private double averageRating;
     private int reviewCount;
+    private java.util.List<String> images = new java.util.ArrayList<>();
 
     public Product() {}
 
@@ -71,6 +72,7 @@ public class Product {
     public String getBrandName() { return brandName; }
     public double getAverageRating() { return averageRating; }
     public int getReviewCount() { return reviewCount; }
+    public java.util.List<String> getImages() { return images != null ? images : new java.util.ArrayList<>(); }
 
     public void setId(int id) { this.id = id; }
     public void setVendorId(int vendorId) { this.vendorId = vendorId; }
@@ -83,6 +85,7 @@ public class Product {
     public void setStockQuantity(int stockQuantity) { this.stockQuantity = stockQuantity; }
     public void setSku(String sku) { this.sku = sku; }
     public void setImage(String image) { this.image = image; }
+    public void setImages(java.util.List<String> images) { this.images = images; }
     public void setStatus(String status) { this.status = status; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }

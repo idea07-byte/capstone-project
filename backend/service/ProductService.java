@@ -31,13 +31,17 @@ public class ProductService {
             stmt.setString(11, product.getStatus() != null ? product.getStatus() : "ACTIVE");
             stmt.executeUpdate();
             clearCache();
+            int newId = -1;
             try (ResultSet keys = stmt.getGeneratedKeys()) {
-                if (keys.next()) return keys.getInt(1);
+                if (keys.next()) newId = keys.getInt(1);
             }
+            if (newId > 0 && product.getImages() != null && !product.getImages().isEmpty()) {
+                saveProductImages(conn, newId, product.getImages());
+            }
+            return newId;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to add product: " + e.getMessage(), e);
         }
-        return -1;
     }
 
     public List<Product> getAllProducts() {
@@ -54,7 +58,54 @@ public class ProductService {
 
     public Product getProductById(int id) {
         List<Product> list = queryProducts("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.id = ? GROUP BY p.id, v.business_name, c.name, b.name", stmt -> stmt.setInt(1, id));
-        return list.isEmpty() ? null : list.get(0);
+        if (list.isEmpty()) return null;
+        Product p = list.get(0);
+        List<String> imgs = getProductImages(id);
+        if (p.getImage() != null && !p.getImage().isEmpty() && !imgs.contains(p.getImage())) {
+            imgs.add(0, p.getImage());
+        }
+        p.setImages(imgs);
+        return p;
+    }
+
+    public List<String> getProductImages(int productId) {
+        List<String> images = new ArrayList<>();
+        String sql = "SELECT image_url FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, id ASC";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String u = rs.getString("image_url");
+                    if (u != null && !u.isEmpty() && !images.contains(u)) {
+                        images.add(u);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Failed to get product images: " + e.getMessage());
+        }
+        return images;
+    }
+
+    public void saveProductImages(Connection conn, int productId, List<String> images) {
+        if (images == null || images.isEmpty()) return;
+        String delSql = "DELETE FROM product_images WHERE product_id = ?";
+        String insSql = "INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)";
+        try (PreparedStatement delStmt = conn.prepareStatement(delSql);
+             PreparedStatement insStmt = conn.prepareStatement(insSql)) {
+            delStmt.setInt(1, productId);
+            delStmt.executeUpdate();
+            for (int i = 0; i < images.size(); i++) {
+                insStmt.setInt(1, productId);
+                insStmt.setString(2, images.get(i));
+                insStmt.setBoolean(3, i == 0);
+                insStmt.addBatch();
+            }
+            insStmt.executeBatch();
+        } catch (SQLException e) {
+            System.err.println("Failed to save product images: " + e.getMessage());
+        }
     }
 
     public List<Product> searchProducts(String query, Integer categoryId, Integer brandId, Double minPrice, Double maxPrice, String sortBy) {
@@ -126,7 +177,12 @@ public class ProductService {
             stmt.setString(11, product.getStatus());
             stmt.setInt(12, id);
             boolean ok = stmt.executeUpdate() > 0;
-            if (ok) clearCache();
+            if (ok) {
+                if (product.getImages() != null && !product.getImages().isEmpty()) {
+                    saveProductImages(conn, id, product.getImages());
+                }
+                clearCache();
+            }
             return ok;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update product: " + e.getMessage(), e);
