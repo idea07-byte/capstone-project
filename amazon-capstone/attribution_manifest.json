@@ -1,0 +1,152 @@
+[
+  {
+    "image_id": 1,
+    "product_id": 1,
+    "category": "electronics",
+    "filename": "product_0001.png",
+    "license": "CC BY-SA 3.0",
+    "author": "Appaloosa",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/e/ed/3Beam_CD_Tracking.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:3Beam CD Tracking.png"
+  },
+  {
+    "image_id": 2,
+    "product_id": 2,
+    "category": "mobiles",
+    "filename": "product_0002.jpg",
+    "license": "CC BY 2.0",
+    "author": "Anders Sandberg from Oxford, UK",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/37/Albert-L%C3%A1szl%C3%B3_Barab%C3%A1si_giving_a_presentation_on_23_April_2009_%283472668169%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Albert-László Barabási giving a presentation on 23 April 2009 (3472668169).jpg"
+  },
+  {
+    "image_id": 3,
+    "product_id": 3,
+    "category": "laptops",
+    "filename": "product_0003.jpg",
+    "license": "CC BY-SA 3.0",
+    "author": "Yaohua2000",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/84/20080908091426_-_5100%E8%A5%BF%E8%97%8F%E5%86%B0%E5%B7%9D%E7%9F%BF%E6%B3%89%E6%B0%B4.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:20080908091426 - 5100西藏冰川矿泉水.jpg"
+  },
+  {
+    "image_id": 4,
+    "product_id": 4,
+    "category": "headphones",
+    "filename": "product_0004.jpg",
+    "license": "CC BY 2.5",
+    "author": "JA.Davidson at English Wikipedia",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Bal_Arm.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Bal Arm.JPG"
+  },
+  {
+    "image_id": 5,
+    "product_id": 5,
+    "category": "clothing",
+    "filename": "product_0005.jpg",
+    "license": "CC BY-SA 2.0 uk",
+    "author": "Valerie McGlinchey",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/99/BLW_Shirt.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:BLW Shirt.jpg"
+  },
+  {
+    "image_id": 6,
+    "product_id": 6,
+    "category": "shoes",
+    "filename": "product_0006.jpg",
+    "license": "CC BY-SA 2.5",
+    "author": "FML",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/Aut%C3%B3dromo_de_Interlagos_2004_arquibancada.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Autódromo de Interlagos 2004 arquibancada.jpg"
+  },
+  {
+    "image_id": 7,
+    "product_id": 7,
+    "category": "watches",
+    "filename": "product_0007.jpg",
+    "license": "Public domain",
+    "author": "Naddaka",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/1prestige-8.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:1prestige-8.jpg"
+  },
+  {
+    "image_id": 8,
+    "product_id": 8,
+    "category": "bags",
+    "filename": "product_0008.jpg",
+    "license": "CC BY-SA 3.0",
+    "author": "User:Willem 90",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Eastpak1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Eastpak1.jpg"
+  },
+  {
+    "image_id": 9,
+    "product_id": 9,
+    "category": "home-kitchen",
+    "filename": "product_0009.jpg",
+    "license": "Public domain",
+    "author": "Charles Martin.",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Hanging_Stove_Drier_NGM-v31-p477-A.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Hanging Stove Drier NGM-v31-p477-A.jpg"
+  },
+  {
+    "image_id": 10,
+    "product_id": 10,
+    "category": "beauty",
+    "filename": "product_0010.jpg",
+    "license": "CC BY-SA 3.0",
+    "author": "Deadseaspacare",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/d/d2/16_oz_Salt_in_Red_Jar.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:16 oz Salt in Red Jar.jpg"
+  },
+  {
+    "image_id": 11,
+    "product_id": 11,
+    "category": "books",
+    "filename": "product_0011.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tigerfarm1",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/98/1680_Westminster_House_of_Commons_debates.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:1680 Westminster House of Commons debates.jpg"
+  },
+  {
+    "image_id": 12,
+    "product_id": 12,
+    "category": "toys",
+    "filename": "product_0012.jpg",
+    "license": "CC BY-SA 2.5",
+    "author": "The original uploader was Asterion at English Wikipedia.",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Asterion_-_A_long_long_time_ago.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Asterion - A long long time ago.jpg"
+  },
+  {
+    "image_id": 13,
+    "product_id": 13,
+    "category": "sports",
+    "filename": "product_0013.jpg",
+    "license": "Public domain",
+    "author": "Geremetta Moreno",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Broom_broomball.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Broom broomball.jpg"
+  },
+  {
+    "image_id": 14,
+    "product_id": 14,
+    "category": "grocery",
+    "filename": "product_0014.jpg",
+    "license": "Public domain",
+    "author": "Unknown authorUnknown author or not provided",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/%22Fresh_Fruits_are_Best_in_Season_with_Care...they%27ll_keep_within_reason%22_-_NARA_-_514738.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:\"Fresh Fruits are Best in Season with Care...they'll keep within reason\" - NARA - 514738.jpg"
+  },
+  {
+    "image_id": 15,
+    "product_id": 15,
+    "category": "appliances",
+    "filename": "product_0015.jpg",
+    "license": "Public domain",
+    "author": "Wikimedia Contributor",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Continental_adaptor_plug_original.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "title": "File:Continental adaptor plug original.jpg"
+  }
+]
