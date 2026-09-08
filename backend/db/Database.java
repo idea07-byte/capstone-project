@@ -56,7 +56,18 @@ public class Database {
     }
 
     private static Connection createRealConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        SQLException lastEx = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                return DriverManager.getConnection(URL, USER, PASSWORD);
+            } catch (SQLException e) {
+                lastEx = e;
+                if (attempt < 3) {
+                    try { Thread.sleep(250L * attempt); } catch (InterruptedException ignored) {}
+                }
+            }
+        }
+        throw lastEx != null ? lastEx : new SQLException("Failed to establish DB connection after 3 attempts");
     }
 
     public static Connection getConnection() throws SQLException {
@@ -88,7 +99,7 @@ public class Database {
             }
 
             try {
-                if (realConn != null && !realConn.isClosed() && realConn.isValid(2)) {
+                if (realConn != null && !realConn.isClosed() && realConn.isValid(5)) {
                     break;
                 }
             } catch (Exception ignored) {}

@@ -22,7 +22,20 @@ public class WebServer {
     private static Path webRoot() {
         try {
             Path codeSource = Paths.get(WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            return codeSource.getParent().resolve("frontend/dist").toAbsolutePath().normalize();
+            Path root = codeSource.getParent();
+            if (root != null) {
+                Path p1 = root.resolve("frontend/dist").toAbsolutePath().normalize();
+                if (Files.isDirectory(p1)) return p1;
+            }
+            Path p2 = codeSource.resolve("frontend/dist").toAbsolutePath().normalize();
+            if (Files.isDirectory(p2)) return p2;
+            Path p3 = Paths.get("frontend/dist").toAbsolutePath().normalize();
+            if (Files.isDirectory(p3)) return p3;
+            Path p4 = Paths.get("../frontend/dist").toAbsolutePath().normalize();
+            if (Files.isDirectory(p4)) return p4;
+            Path p5 = Paths.get("./dist").toAbsolutePath().normalize();
+            if (Files.isDirectory(p5)) return p5;
+            return Paths.get("./frontend/dist").toAbsolutePath().normalize();
         } catch (Exception e) {
             return Paths.get("./frontend/dist").toAbsolutePath().normalize();
         }
@@ -82,6 +95,7 @@ public class WebServer {
         server.createContext("/api/reviews", new SafeHandler(new ReviewHandler()));
         server.createContext("/api/coupons", new SafeHandler(new CouponHandler()));
         server.createContext("/api/admin", new SafeHandler(new AdminHandler()));
+        server.createContext("/api/users", new SafeHandler(new UserHandler()));
         server.createContext("/api/notifications", new SafeHandler(new NotificationHandler()));
         server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(32));
         server.start();
@@ -404,13 +418,14 @@ public class WebServer {
                     respondJson(exchange, "{\"success\":true,\"product\":" + productJson(p) + "}");
                 } else {
                     Map<String, String> params = parseQuery(query);
-                    Integer catId = params.containsKey("category") ? Integer.parseInt(params.get("category")) : null;
-                    Integer brandId = params.containsKey("brand") ? Integer.parseInt(params.get("brand")) : null;
-                    Double minP = params.containsKey("minPrice") ? Double.parseDouble(params.get("minPrice")) : null;
-                    Double maxP = params.containsKey("maxPrice") ? Double.parseDouble(params.get("maxPrice")) : null;
+                    Integer catId = params.containsKey("category") && !params.get("category").isEmpty() ? Integer.parseInt(params.get("category")) : null;
+                    Integer brandId = params.containsKey("brand") && !params.get("brand").isEmpty() ? Integer.parseInt(params.get("brand")) : null;
+                    Integer vendorId = params.containsKey("vendorId") && !params.get("vendorId").isEmpty() ? Integer.parseInt(params.get("vendorId")) : null;
+                    Double minP = params.containsKey("minPrice") && !params.get("minPrice").isEmpty() ? Double.parseDouble(params.get("minPrice")) : null;
+                    Double maxP = params.containsKey("maxPrice") && !params.get("maxPrice").isEmpty() ? Double.parseDouble(params.get("maxPrice")) : null;
                     String search = params.get("search");
                     String sort = params.get("sort");
-                    List<Product> products = new ProductService().searchProducts(search, catId, brandId, minP, maxP, sort);
+                    List<Product> products = new ProductService().searchProducts(search, catId, brandId, vendorId, minP, maxP, sort);
                     StringBuilder sb = new StringBuilder("[");
                     for (int i = 0; i < products.size(); i++) {
                         if (i > 0) sb.append(",");
@@ -527,6 +542,16 @@ public class WebServer {
                 c.setStatus("ACTIVE");
                 int id = new CategoryService().addCategory(c);
                 respondJson(exchange, json("success", true, "message", "Category added", "id", String.valueOf(id)));
+            } else if ("PUT".equals(method) && path.matches("/api/categories/\\d+")) {
+                int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
+                String body = readBody(exchange);
+                Category c = new Category();
+                c.setName(jsonStr(body, "name"));
+                c.setDescription(jsonStr(body, "description"));
+                c.setImage(jsonStr(body, "image"));
+                c.setStatus("ACTIVE");
+                boolean ok = new CategoryService().updateCategory(id, c);
+                respondJson(exchange, ok ? "{\"success\":true,\"message\":\"Category updated\"}" : "{\"success\":false,\"message\":\"Not found\"}");
             } else if ("DELETE".equals(method) && path.matches("/api/categories/\\d+")) {
                 int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
                 boolean ok = new CategoryService().deleteCategory(id);
@@ -560,6 +585,16 @@ public class WebServer {
                 b.setStatus("ACTIVE");
                 int id = new BrandService().addBrand(b);
                 respondJson(exchange, json("success", true, "message", "Brand added", "id", String.valueOf(id)));
+            } else if ("PUT".equals(method) && path.matches("/api/brands/\\d+")) {
+                int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
+                String body = readBody(exchange);
+                Brand b = new Brand();
+                b.setName(jsonStr(body, "name"));
+                b.setDescription(jsonStr(body, "description"));
+                b.setLogo(jsonStr(body, "logo"));
+                b.setStatus("ACTIVE");
+                boolean ok = new BrandService().updateBrand(id, b);
+                respondJson(exchange, ok ? "{\"success\":true,\"message\":\"Brand updated\"}" : "{\"success\":false,\"message\":\"Not found\"}");
             } else if ("DELETE".equals(method) && path.matches("/api/brands/\\d+")) {
                 int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
                 boolean ok = new BrandService().deleteBrand(id);
@@ -629,13 +664,42 @@ public class WebServer {
             Integer userId = getUserId(exchange);
             if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
             String method = exchange.getRequestMethod();
+            String query = exchange.getRequestURI().getQuery();
+            WishlistService ws = new WishlistService();
 
             if ("GET".equals(method)) {
-                respondJson(exchange, "{\"items\":[],\"message\":\"Wishlist feature - add items via POST\"}");
+                Map<String, String> params = parseQuery(query);
+                if (params.containsKey("productId") && !params.get("productId").isEmpty()) {
+                    int pId = Integer.parseInt(params.get("productId"));
+                    boolean wishlisted = ws.isWishlisted(userId, pId);
+                    respondJson(exchange, "{\"wishlisted\":" + wishlisted + "}");
+                    return;
+                }
+                List<Product> products = ws.getWishlistProducts(userId);
+                StringBuilder sb = new StringBuilder("{\"items\":[");
+                for (int i = 0; i < products.size(); i++) {
+                    if (i > 0) sb.append(",");
+                    sb.append(productJson(products.get(i)));
+                }
+                sb.append("],\"count\":").append(products.size()).append("}");
+                respondJson(exchange, sb.toString());
             } else if ("POST".equals(method)) {
-                respondJson(exchange, "{\"success\":true,\"message\":\"Added to wishlist\"}");
+                String body = readBody(exchange);
+                int productId = parseInt(body, "productId");
+                if (productId <= 0) { respondJson(exchange, "{\"success\":false,\"message\":\"Invalid product ID\"}", 400); return; }
+                boolean ok = ws.addToWishlist(userId, productId);
+                respondJson(exchange, json("success", ok, "message", ok ? "Added to wishlist" : "Already in wishlist"));
             } else if ("DELETE".equals(method)) {
-                respondJson(exchange, "{\"success\":true,\"message\":\"Removed from wishlist\"}");
+                String body = readBody(exchange);
+                int productId = parseInt(body, "productId");
+                if (productId <= 0) {
+                    Map<String, String> params = parseQuery(query);
+                    if (params.containsKey("productId") && !params.get("productId").isEmpty()) {
+                        productId = Integer.parseInt(params.get("productId"));
+                    }
+                }
+                boolean ok = ws.removeFromWishlist(userId, productId);
+                respondJson(exchange, json("success", ok, "message", ok ? "Removed from wishlist" : "Item not in wishlist"));
             } else { sendMethodNotAllowed(exchange); }
         }
     }
@@ -652,6 +716,29 @@ public class WebServer {
                 if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 OrderService os = new OrderService();
                 User user = new UserService().getUserById(userId);
+                if (path.matches("/api/orders/\\d+")) {
+                    int orderId = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
+                    Order order = os.getOrderById(orderId);
+                    if (order == null) {
+                        respondJson(exchange, "{\"success\":false,\"message\":\"Order not found\"}", 404);
+                        return;
+                    }
+                    if (user.getRole() != Role.ADMIN && order.getCustomerId() != userId) {
+                        if (user.getRole() == Role.VENDOR) {
+                            Vendor vendor = new VendorService().getVendorByUserId(userId);
+                            boolean hasItem = vendor != null && order.getItems().stream().anyMatch(it -> it.getVendorId() == vendor.getId());
+                            if (!hasItem) {
+                                respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 403);
+                                return;
+                            }
+                        } else {
+                            respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 403);
+                            return;
+                        }
+                    }
+                    respondJson(exchange, "{\"success\":true,\"order\":" + orderJson(order) + "}");
+                    return;
+                }
                 List<Order> orders;
                 if (user.getRole() == Role.ADMIN) {
                     orders = os.getAllOrders();
@@ -957,24 +1044,102 @@ public class WebServer {
         }
     }
 
+    static class UserHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleCors(exchange)) return;
+            String method = exchange.getRequestMethod();
+            String path = exchange.getRequestURI().getPath();
+            UserService us = new UserService();
+
+            if ("GET".equals(method)) {
+                if (path.matches("/api/users/\\d+")) {
+                    int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
+                    User u = us.getUserById(id);
+                    if (u != null) {
+                        respondJson(exchange, "{\"success\":true,\"user\":" + userJson(u) + "}");
+                    } else {
+                        respondJson(exchange, "{\"success\":false,\"message\":\"User not found\"}", 404);
+                    }
+                } else {
+                    List<User> users = us.getAllUsers();
+                    Map<String, String> q = parseQuery(exchange.getRequestURI().getQuery());
+                    String roleFilter = q.get("role");
+                    StringBuilder sb = new StringBuilder("[");
+                    int count = 0;
+                    for (User u : users) {
+                        if (roleFilter != null && !roleFilter.isEmpty() && !u.getRole().name().equalsIgnoreCase(roleFilter)) {
+                            continue;
+                        }
+                        if (count > 0) sb.append(",");
+                        sb.append(userJson(u));
+                        count++;
+                    }
+                    sb.append("]");
+                    respondJson(exchange, sb.toString());
+                }
+            } else if ("POST".equals(method)) {
+                String body = readBody(exchange);
+                String name = jsonStr(body, "name");
+                String email = jsonStr(body, "email");
+                String phone = jsonStr(body, "phone");
+                String password = jsonStr(body, "password");
+                String roleStr = jsonStr(body, "role");
+                if (email.isEmpty() || password.isEmpty()) {
+                    respondJson(exchange, "{\"success\":false,\"message\":\"Email and password are required\"}", 400);
+                    return;
+                }
+                if (us.getUserByEmail(email) != null) {
+                    respondJson(exchange, "{\"success\":false,\"message\":\"Email already in use\"}", 400);
+                    return;
+                }
+                User u;
+                String r = roleStr.toUpperCase();
+                if ("ADMIN".equals(r)) {
+                    u = new Admin(0, name, email, phone, password, "ACTIVE", null, null);
+                } else if ("VENDOR".equals(r)) {
+                    u = new VendorUser(0, name, email, phone, password);
+                } else {
+                    u = new Customer(0, name, email, phone, password);
+                }
+                us.addUser(u);
+                respondJson(exchange, json("success", true, "message", "User created", "id", String.valueOf(u.getId())));
+            } else if ("PUT".equals(method) && path.matches("/api/users/\\d+")) {
+                int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
+                String body = readBody(exchange);
+                String status = jsonStr(body, "status");
+                if (!status.isEmpty()) {
+                    us.updateUserStatus(id, status);
+                }
+                respondJson(exchange, "{\"success\":true,\"message\":\"User updated\"}");
+            } else if ("DELETE".equals(method) && path.matches("/api/users/\\d+")) {
+                int id = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
+                boolean ok = us.removeUserById(id);
+                respondJson(exchange, ok ? "{\"success\":true,\"message\":\"User deleted\"}" : "{\"success\":false,\"message\":\"User not found\"}");
+            } else {
+                sendMethodNotAllowed(exchange);
+            }
+        }
+    }
+
+
     // ========== JSON HELPERS ==========
     static String esc(String s) { return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\""); }
 
     static String jsonStr(String json, String key) {
-        String search = "\"" + key + "\":";
-        int start = json.indexOf(search);
-        if (start == -1) return "";
-        start += search.length();
-        if (start >= json.length()) return "";
-        if (json.charAt(start) == '"') {
-            int end = json.indexOf("\"", start + 1);
-            if (end == -1) return "";
-            String val = json.substring(start + 1, end);
-            return val.replace("\\\"", "\"").replace("\\\\", "\\");
-        }
-        int end = start;
-        while (end < json.length() && (Character.isDigit(json.charAt(end)) || json.charAt(end) == '.' || json.charAt(end) == '-' || json.charAt(end) == '+')) end++;
-        return json.substring(start, end);
+        if (json == null || key == null) return "";
+        try {
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile("\"" + java.util.regex.Pattern.quote(key) + "\"\\s*:\\s*(?:\"((?:\\\\\"|[^\"])*)\"|([^,}\\]\\s]+))");
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                if (m.group(1) != null) {
+                    return m.group(1).replace("\\\"", "\"").replace("\\\\", "\\").replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t");
+                }
+                String val = m.group(2);
+                return "null".equalsIgnoreCase(val) ? "" : val;
+            }
+        } catch (Exception ignored) {}
+        return "";
     }
 
     static int parseInt(String json, String key) {
@@ -987,15 +1152,12 @@ public class WebServer {
 
     static List<String> jsonStrList(String json, String key) {
         List<String> list = new ArrayList<>();
-        String search = "\"" + key + "\":";
-        int start = json.indexOf(search);
-        if (start == -1) return list;
-        start += search.length();
-        while (start < json.length() && Character.isWhitespace(json.charAt(start))) start++;
-        if (start < json.length() && json.charAt(start) == '[') {
-            int end = json.indexOf(']', start);
-            if (end != -1) {
-                String raw = json.substring(start + 1, end);
+        if (json == null || key == null) return list;
+        try {
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile("\"" + java.util.regex.Pattern.quote(key) + "\"\\s*:\\s*\\[([^\\]]*)\\]");
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                String raw = m.group(1);
                 for (String part : raw.split(",")) {
                     String s = part.trim();
                     if (s.startsWith("\"") && s.endsWith("\"") && s.length() >= 2) {
@@ -1004,7 +1166,7 @@ public class WebServer {
                     if (!s.isEmpty()) list.add(s);
                 }
             }
-        }
+        } catch (Exception ignored) {}
         return list;
     }
 

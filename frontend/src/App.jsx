@@ -88,6 +88,78 @@ function BrandLogo({ size = 20, light = false }) {
   );
 }
 
+function NotificationBell({ addToast }) {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const data = await api('/notifications');
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unreadCount || 0);
+    } catch { }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 25000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const markAllRead = async () => {
+    try {
+      await api('/notifications/read', { method: 'POST' });
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      if (addToast) addToast('All notifications marked as read', 'info');
+    } catch (err) {
+      if (addToast) addToast(err.message, 'error');
+    }
+  };
+
+  return (
+    <div className="notif-bell-container">
+      <button
+        type="button"
+        className="notif-bell-btn"
+        onClick={() => setOpen(!open)}
+        title="Notifications"
+        aria-label="Notifications"
+      >
+        🔔{unreadCount > 0 && <span className="notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+      </button>
+      {open && (
+        <div className="notif-popover">
+          <div className="notif-header">
+            <h4>Notifications</h4>
+            {unreadCount > 0 && (
+              <button type="button" className="notif-mark-read" onClick={markAllRead}>
+                Mark all read
+              </button>
+            )}
+          </div>
+          <div className="notif-list">
+            {notifications.length === 0 ? (
+              <div className="notif-empty">No notifications yet</div>
+            ) : (
+              notifications.map(n => (
+                <div key={n.id} className={`notif-item ${n.isRead ? 'read' : 'unread'}`}>
+                  <div className="notif-title">{n.title}</div>
+                  <div className="notif-msg">{n.message}</div>
+                  <div className="notif-time">
+                    {n.createdAt ? new Date(n.createdAt).toLocaleDateString() + ' ' + new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RequireRole({ user, role, children }) {
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== role) {
@@ -404,16 +476,28 @@ function RegisterPage({ addToast, onAuth }) {
 
 function CustomerLayout({ user, onLogout }) {
   const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
+
   const refreshCart = useCallback(async () => {
     try { const d = await api('/cart'); setCartCount(d.count || (d.items || []).length || 0); } catch { }
   }, []);
-  useEffect(() => { refreshCart(); }, [refreshCart, location.pathname]);
+
+  const refreshWishlist = useCallback(async () => {
+    try { const d = await api('/wishlist'); setWishlistCount(d.count || (d.items || []).length || 0); } catch { }
+  }, []);
+
+  useEffect(() => {
+    refreshCart();
+    refreshWishlist();
+  }, [refreshCart, refreshWishlist, location.pathname]);
+
   const handleSearch = (e) => { e.preventDefault(); navigate('/store?q=' + encodeURIComponent(searchQuery)); };
+
   return (
-    <CartCtx.Provider value={{ cartCount, refreshCart }}>
+    <CartCtx.Provider value={{ cartCount, refreshCart, wishlistCount, refreshWishlist }}>
       <div className="app-layout">
         <header className="top-bar">
           <div className="top-bar-left">
@@ -423,11 +507,15 @@ function CustomerLayout({ user, onLogout }) {
             </form>
             <Link to="/store" className={'nav-pill' + (location.pathname === '/store' ? ' active' : '')}>Store</Link>
             <Link to="/orders" className={'nav-pill' + (location.pathname === '/orders' ? ' active' : '')}>Orders</Link>
+            <Link to="/wishlist" className={'nav-pill' + (location.pathname === '/wishlist' ? ' active' : '')}>
+              ❤️ Wishlist{wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
+            </Link>
           </div>
-          <div className="top-bar-right">
+          <div className="top-bar-right" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Link to="/cart" className={'nav-pill' + (location.pathname === '/cart' ? ' active' : '')}>
               🛒 Cart{cartCount > 0 && <span className="badge">{cartCount}</span>}
             </Link>
+            <NotificationBell />
             <span className="user-pill">👤 {user?.name}</span>
             <button className="btn-logout" onClick={onLogout}>Logout</button>
           </div>
@@ -439,10 +527,11 @@ function CustomerLayout({ user, onLogout }) {
 }
 
 function StorePage({ addToast }) {
-  const { refreshCart } = useCart();
+  const { refreshCart, refreshWishlist } = useCart();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -454,6 +543,12 @@ function StorePage({ addToast }) {
   const PAGE_SIZE = 24;
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    api('/wishlist').then(d => {
+      setWishlistIds(new Set((d.items || []).map(x => x.id)));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (_cachedCats && _cachedBrds) {
@@ -498,6 +593,28 @@ function StorePage({ addToast }) {
     e.stopPropagation();
     try { await api('/cart', { method: 'POST', body: { productId, quantity: 1 } }); addToast('Added to cart! 🛍️', 'success'); refreshCart(); }
     catch (err) { addToast(err.message, 'error'); }
+  };
+
+  const toggleWishlist = async (e, productId) => {
+    e.stopPropagation();
+    try {
+      if (wishlistIds.has(productId)) {
+        await api('/wishlist?productId=' + productId, { method: 'DELETE' });
+        setWishlistIds(prev => {
+          const next = new Set(prev);
+          next.delete(productId);
+          return next;
+        });
+        addToast('Removed from Wishlist', 'info');
+      } else {
+        await api('/wishlist', { method: 'POST', body: { productId } });
+        setWishlistIds(prev => new Set(prev).add(productId));
+        addToast('Added to Wishlist ❤️', 'success');
+      }
+      if (refreshWishlist) refreshWishlist();
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
   };
 
   const discountPct = (p) => (!p.discount || p.discount <= 0) ? 0 : Math.round(p.discount);
@@ -593,6 +710,14 @@ function StorePage({ addToast }) {
               {paginated.map(p => (
                 <div key={p.id} className="product-card" onClick={() => navigate('/store/product/' + p.id)}>
                   <div className="product-img">
+                    <button
+                      type="button"
+                      className={`product-wishlist-btn ${wishlistIds.has(p.id) ? 'active' : ''}`}
+                      onClick={(e) => toggleWishlist(e, p.id)}
+                      title={wishlistIds.has(p.id) ? "Remove from wishlist" : "Add to wishlist"}
+                    >
+                      {wishlistIds.has(p.id) ? '❤️' : '🤍'}
+                    </button>
                     <ProductImage src={p.image} alt={p.name} />
                     {discountPct(p) > 0 && <span className="discount-badge">-{discountPct(p)}%</span>}
                   </div>
@@ -664,7 +789,7 @@ function StorePage({ addToast }) {
 }
 
 function ProductDetailsPage({ addToast }) {
-  const { refreshCart } = useCart();
+  const { refreshCart, refreshWishlist } = useCart();
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -689,12 +814,18 @@ function ProductDetailsPage({ addToast }) {
     try {
       const [pRes, rRes] = await Promise.all([
         api('/products/' + id),
-        api('/reviews/' + id).catch(() => [])
+        api('/reviews/' + id).catch(() => []),
+        api('/wishlist').then(d => (d.items || []).some(x => x.id === Number(id))).catch(() => false)
       ]);
       const rawProd = pRes.product !== undefined ? pRes.product : pRes;
       const pObj = typeof rawProd === 'string' ? JSON.parse(rawProd) : rawProd;
       setProduct(pObj);
       setReviews(Array.isArray(rRes) ? rRes : []);
+
+      // Wishlist check
+      api('/wishlist').then(d => {
+        setWishlisted((d.items || []).some(x => x.id === Number(id)));
+      }).catch(() => {});
 
       if (pObj && pObj.categoryId) {
         api('/products?category=' + pObj.categoryId)
@@ -731,9 +862,21 @@ function ProductDetailsPage({ addToast }) {
     }
   };
 
-  const toggleWishlist = () => {
-    setWishlisted(!wishlisted);
-    addToast(!wishlisted ? 'Added to your Wishlist ❤️' : 'Removed from Wishlist', 'info');
+  const toggleWishlist = async () => {
+    try {
+      if (wishlisted) {
+        await api('/wishlist?productId=' + id, { method: 'DELETE' });
+        setWishlisted(false);
+        addToast('Removed from Wishlist', 'info');
+      } else {
+        await api('/wishlist', { method: 'POST', body: { productId: Number(id) } });
+        setWishlisted(true);
+        addToast('Added to your Wishlist ❤️', 'success');
+      }
+      if (refreshWishlist) refreshWishlist();
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
   };
 
   const submitReview = async (e) => {
@@ -1455,6 +1598,116 @@ function OrdersPage({ addToast }) {
   );
 }
 
+
+function WishlistPage({ addToast }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { refreshCart, refreshWishlist } = useCart();
+  const navigate = useNavigate();
+
+  const loadWishlist = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api('/wishlist');
+      setItems(data.items || []);
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast]);
+
+  useEffect(() => { loadWishlist(); }, [loadWishlist]);
+
+  const removeFromWishlist = async (productId) => {
+    try {
+      await api('/wishlist?productId=' + productId, { method: 'DELETE' });
+      setItems(prev => prev.filter(i => i.id !== productId));
+      if (refreshWishlist) refreshWishlist();
+      addToast('Item removed from wishlist', 'info');
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
+  };
+
+  const moveToCart = async (product) => {
+    try {
+      await api('/cart', { method: 'POST', body: { productId: product.id, quantity: 1 } });
+      await api('/wishlist?productId=' + product.id, { method: 'DELETE' });
+      setItems(prev => prev.filter(i => i.id !== product.id));
+      refreshCart();
+      if (refreshWishlist) refreshWishlist();
+      addToast(`Moved "${product.name}" to cart! 🛒`, 'success');
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
+  };
+
+  if (loading) return <Loader />;
+
+  return (
+    <div className="wishlist-container">
+      <div className="wishlist-header">
+        <div>
+          <h1>My Wishlist</h1>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: 4 }}>Saved items you love</p>
+        </div>
+        <span className="wishlist-count-pill">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
+      </div>
+
+      {items.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 16 }}>🤍</div>
+          <h2 style={{ fontSize: '1.4rem', color: '#0f172a', marginBottom: 8 }}>Your Wishlist is Empty</h2>
+          <p style={{ color: '#64748b', marginBottom: 24 }}>Explore our store to find and save products you love!</p>
+          <button className="btn-primary" onClick={() => navigate('/store')}>Browse Store</button>
+        </div>
+      ) : (
+        <div className="wishlist-grid">
+          {items.map(p => {
+            const fp = (!p.discount || p.discount <= 0) ? p.price : Math.max(0, p.price * (1 - p.discount / 100));
+            return (
+              <div key={p.id} className="wishlist-card">
+                <div className="wishlist-card-img" onClick={() => navigate('/store/product/' + p.id)}>
+                  <ProductImage src={p.image} alt={p.name} />
+                  <button
+                    type="button"
+                    className="wishlist-remove-btn"
+                    onClick={(e) => { e.stopPropagation(); removeFromWishlist(p.id); }}
+                    title="Remove from wishlist"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="wishlist-card-body">
+                  <span className="wishlist-card-category">{p.categoryName || 'Product'}</span>
+                  <div className="wishlist-card-title" onClick={() => navigate('/store/product/' + p.id)} title={p.name}>
+                    {p.name}
+                  </div>
+                  <div className="wishlist-card-price">
+                    <span className="final">{fmt(fp)}</span>
+                    {p.discount > 0 && <span className="orig">{fmt(p.price)}</span>}
+                  </div>
+                  <div className="wishlist-card-actions">
+                    <button
+                      type="button"
+                      className="btn-primary btn-add-cart"
+                      onClick={() => moveToCart(p)}
+                      disabled={p.stockQuantity <= 0}
+                    >
+                      {p.stockQuantity <= 0 ? 'Out of Stock' : 'Move to Cart'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function VendorLayout({ user, onLogout }) {
   const location = useLocation();
   const [vendorInfo, setVendorInfo] = useState(null);
@@ -1473,9 +1726,12 @@ function VendorLayout({ user, onLogout }) {
             <BrandLogo size={20} light={true} />
           </Link>
         </div>
-        <div className="dash-welcome">
-          <p>Merchant Portal</p>
-          <strong>{vendorInfo?.businessName || user?.name}</strong>
+        <div className="dash-welcome" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p>Merchant Portal</p>
+            <strong>{vendorInfo?.businessName || user?.name}</strong>
+          </div>
+          <NotificationBell />
         </div>
         <nav className="sidebar-nav">
           {nav.map(n => <Link key={n.path} to={n.path} className={'sidebar-nav-item' + (location.pathname === n.path ? ' active' : '')}>{n.label}</Link>)}
@@ -1491,23 +1747,37 @@ function VendorDashboard({ addToast }) {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    Promise.all([
-      api('/products').then(d => setProducts(Array.isArray(d) ? d : [])).catch(() => {}),
-      api('/orders').then(d => setOrders(Array.isArray(d) ? d : [])).catch(() => {}),
-    ]).finally(() => setLoading(false));
+    (async () => {
+      try {
+        const vInfo = await api('/vendors/me').catch(() => null);
+        const v = vInfo?.vendor || vInfo;
+        const vId = v?.id;
+        const [pData, oData] = await Promise.all([
+          api('/products' + (vId ? '?vendorId=' + vId : '')).catch(() => []),
+          api('/orders').catch(() => [])
+        ]);
+        setProducts(Array.isArray(pData) ? pData : []);
+        setOrders(Array.isArray(oData) ? oData : []);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
   if (loading) return <Loader />;
   const totalRevenue = orders.reduce((s, o) => s + Number(o.finalAmount || 0), 0);
   const pendingOrders = orders.filter(o => o.orderStatus === 'PLACED' || o.orderStatus === 'CONFIRMED').length;
+
   return (
     <div>
       <h1>Dashboard</h1>
       <div className="dash-cards">
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDCE6</span><h3>Products</h3><p>{products.length}</p></div>
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDCB3</span><h3>Total Orders</h3><p>{orders.length}</p></div>
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDCB0</span><h3>Revenue</h3><p>{fmt(totalRevenue)}</p></div>
-        <div className="dash-card"><span className="stat-icon">\u23F3</span><h3>Pending</h3><p>{pendingOrders}</p></div>
+        <div className="dash-card"><span className="stat-icon">📦</span><h3>Products</h3><p>{products.length}</p></div>
+        <div className="dash-card"><span className="stat-icon">💳</span><h3>Total Orders</h3><p>{orders.length}</p></div>
+        <div className="dash-card"><span className="stat-icon">💰</span><h3>Revenue</h3><p>{fmt(totalRevenue)}</p></div>
+        <div className="dash-card"><span className="stat-icon">⏳</span><h3>Pending</h3><p>{pendingOrders}</p></div>
       </div>
       <h2 style={{ marginTop: 24 }}>Recent Orders</h2>
       {orders.length === 0 ? <EmptyState message="No orders yet" /> : (
@@ -1529,44 +1799,143 @@ function VendorProducts({ addToast, user }) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [vendorInfo, setVendorInfo] = useState(null);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 15;
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        api('/products').then(d => setProducts(Array.isArray(d) ? d : [])).catch(() => setProducts([])),
-        api('/categories').then(d => setCategories(Array.isArray(d) ? d : [])).catch(() => setCategories([])),
-        api('/brands').then(d => setBrands(Array.isArray(d) ? d : [])).catch(() => setBrands([])),
+      const vInfo = await api('/vendors/me').catch(() => null);
+      const v = vInfo?.vendor || vInfo;
+      setVendorInfo(v);
+      const vId = v?.id || user?.vendorId || user?.id;
+
+      const [pData, cData, bData] = await Promise.all([
+        api('/products' + (vId ? '?vendorId=' + vId : '')).catch(() => []),
+        api('/categories').catch(() => []),
+        api('/brands').catch(() => []),
       ]);
+      setProducts(Array.isArray(pData) ? pData : []);
+      setCategories(Array.isArray(cData) ? cData : []);
+      setBrands(Array.isArray(bData) ? bData : []);
     } finally { setLoading(false); }
-  }, []);
+  }, [user]);
+
   useEffect(() => { load(); }, [load]);
+
   const deleteProduct = async (id) => {
     if (!window.confirm('Delete this product?')) return;
-    try { await api('/products/' + id, { method: 'DELETE' }); addToast('Deleted', 'success'); load(); }
+    try { await api('/products/' + id, { method: 'DELETE' }); addToast('Deleted successfully', 'success'); load(); }
     catch (err) { addToast(err.message, 'error'); }
   };
+
   const saveProduct = async (form) => {
     setSaving(true);
     try {
+      const vId = vendorInfo?.id || user?.vendorId || user?.id;
       if (modal?.editing) await api('/products/' + modal.editing.id, { method: 'PUT', body: form });
-      else await api('/products', { method: 'POST', body: { ...form, vendorId: user?.vendorId || user?.id } });
-      addToast('Product saved', 'success'); setModal(null); load();
+      else await api('/products', { method: 'POST', body: { ...form, vendorId: vId } });
+      addToast('Product saved successfully', 'success');
+      setModal(null);
+      load();
     } catch (err) { addToast(err.message, 'error'); }
     finally { setSaving(false); }
   };
+
+  const filtered = products.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()));
+    const matchCat = !categoryFilter || String(p.categoryId) === String(categoryFilter);
+    return matchSearch && matchCat;
+  });
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const curPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
+
   if (loading) return <Loader />;
+
   return (
     <div>
-      <div className="section-header"><h1>Products</h1><button className="btn-add" onClick={() => setModal({ editing: null })}>+ Add Product</button></div>
-      {products.length === 0 ? <EmptyState message="No products yet" /> : (
-        <table className="data-table">
-          <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Brand</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
-          <tbody>{products.map(p => (
-            <tr key={p.id}><td>{p.id}</td><td>{p.name}</td><td>{p.categoryName}</td><td>{p.brandName}</td><td>{fmt(p.price)}</td><td>{p.stockQuantity}</td>
-              <td><button className="btn-primary" style={{ marginRight: 4 }} onClick={() => setModal({ editing: p })}>Edit</button><button className="btn-cancel" onClick={() => deleteProduct(p.id)}>Delete</button></td>
-            </tr>
-          ))}</tbody>
-        </table>
+      <div className="section-header">
+        <h1>My Products ({products.length})</h1>
+        <button className="btn-add" onClick={() => setModal({ editing: null })}>+ Add Product</button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Filter by name or SKU..."
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1); }}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', flex: 1, minWidth: 200 }}
+        />
+        <select
+          value={categoryFilter}
+          onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1' }}
+        >
+          <option value="">All Categories</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {filtered.length === 0 ? <EmptyState message="No products found" /> : (
+        <>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Thumbnail</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map(p => (
+                <tr key={p.id}>
+                  <td>{p.id}</td>
+                  <td>
+                    <img src={p.image} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4 }} onError={e => e.target.style.display = 'none'} />
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{p.name}</div>
+                    <small style={{ color: '#64748b' }}>{p.sku}</small>
+                  </td>
+                  <td>{p.categoryName}</td>
+                  <td>{p.brandName}</td>
+                  <td>{fmt(p.price)}</td>
+                  <td>
+                    <span style={{ color: p.stockQuantity < 10 ? '#ef4444' : '#16a34a', fontWeight: 600 }}>
+                      {p.stockQuantity}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="btn-primary" style={{ marginRight: 6 }} onClick={() => setModal({ editing: p })}>Edit</button>
+                    <button className="btn-cancel" onClick={() => deleteProduct(p.id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {totalPages > 1 && (
+            <div className="table-pagination">
+              <span>Showing {(curPage - 1) * PAGE_SIZE + 1} to {Math.min(curPage * PAGE_SIZE, filtered.length)} of {filtered.length} products</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="page-btn" disabled={curPage <= 1} onClick={() => setPage(curPage - 1)}>← Prev</button>
+                <span style={{ padding: '6px 12px', fontWeight: 600 }}>Page {curPage} of {totalPages}</span>
+                <button className="page-btn" disabled={curPage >= totalPages} onClick={() => setPage(curPage + 1)}>Next →</button>
+              </div>
+            </div>
+          )}
+        </>
       )}
       {modal && <ProductModal product={modal.editing} categories={categories} brands={brands} saving={saving} onSave={saveProduct} onClose={() => setModal(null)} />}
     </div>
@@ -1601,33 +1970,231 @@ function ProductModal({ product, categories, brands, saving, onSave, onClose }) 
   );
 }
 
+function CategoryModal({ category, saving, onSave, onClose }) {
+  const [name, setName] = useState(category?.name || '');
+  const [description, setDescription] = useState(category?.description || '');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({ name: name.trim(), description: description.trim() });
+  };
+  return (
+    <Modal title={category?.id ? 'Edit Category' : 'Add Category'} onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group"><label>Category Name</label><input value={name} onChange={e => setName(e.target.value)} required /></div>
+        <div className="form-group"><label>Description</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} /></div>
+        <div className="modal-actions">
+          <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function BrandModal({ brand, saving, onSave, onClose }) {
+  const [name, setName] = useState(brand?.name || '');
+  const [description, setDescription] = useState(brand?.description || '');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({ name: name.trim(), description: description.trim() });
+  };
+  return (
+    <Modal title={brand?.id ? 'Edit Brand' : 'Add Brand'} onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group"><label>Brand Name</label><input value={name} onChange={e => setName(e.target.value)} required /></div>
+        <div className="form-group"><label>Description</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} /></div>
+        <div className="modal-actions">
+          <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function OrderDetailsModal({ order, onClose, onStatusUpdate }) {
+  if (!order) return null;
+  const items = order.items || [];
+  const addr = order.shippingAddress || {};
+  return (
+    <Modal title={`Order Details #${order.id}`} onClose={onClose}>
+      <div className="order-details-modal">
+        <div className="order-details-summary">
+          <div>
+            <strong>Status: </strong>
+            <span className={statusClass(order.orderStatus)}>{order.orderStatus}</span>
+          </div>
+          <div>
+            <strong>Date: </strong>
+            {order.createdAt ? new Date(order.createdAt).toLocaleString() : '-'}
+          </div>
+          <div>
+            <strong>Payment: </strong>
+            <span className={statusClass(order.paymentStatus)}>{order.paymentStatus || 'COMPLETED'}</span>
+          </div>
+        </div>
+
+        <div className="order-details-customer">
+          <h4>Customer & Delivery Info</h4>
+          <p><strong>Name:</strong> {order.customerName || '-'}</p>
+          {order.customerEmail && <p><strong>Email:</strong> {order.customerEmail}</p>}
+          {order.customerPhone && <p><strong>Phone:</strong> {order.customerPhone}</p>}
+          {order.shippingAddressString ? (
+            <p><strong>Address:</strong> {order.shippingAddressString}</p>
+          ) : addr.addressLine ? (
+            <p><strong>Address:</strong> {addr.addressLine}, {addr.city}, {addr.state} - {addr.pincode}</p>
+          ) : null}
+        </div>
+
+        <div className="order-details-items">
+          <h4>Ordered Items ({items.length})</h4>
+          <table className="data-table" style={{ marginTop: 8 }}>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it, idx) => (
+                <tr key={idx}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {it.productImage && <img src={it.productImage} alt="" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 4 }} onError={e => e.target.style.display = 'none'} />}
+                      <span>{it.productName || `Product #${it.productId}`}</span>
+                    </div>
+                  </td>
+                  <td>{fmt(it.unitPrice || it.price)}</td>
+                  <td>{it.quantity}</td>
+                  <td>{fmt(it.totalPrice || it.subtotal || ((it.unitPrice || it.price) * it.quantity))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="order-details-totals" style={{ marginTop: 16, padding: '12px', background: '#f8fafc', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span>Subtotal:</span>
+            <span>{fmt(order.totalAmount)}</span>
+          </div>
+          {Number(order.discountAmount) > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: '#16a34a' }}>
+              <span>Discount ({order.couponCode || 'Promo'}):</span>
+              <span>-{fmt(order.discountAmount)}</span>
+            </div>
+          )}
+          {Number(order.shippingFee) > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span>Shipping:</span>
+              <span>{fmt(order.shippingFee)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, borderTop: '1px solid #e2e8f0', paddingTop: 8, marginTop: 8 }}>
+            <span>Final Amount:</span>
+            <span>{fmt(order.finalAmount)}</span>
+          </div>
+        </div>
+
+        {onStatusUpdate && (
+          <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <label style={{ fontWeight: 600 }}>Update Status:</label>
+            <select
+              value={order.orderStatus}
+              onChange={e => onStatusUpdate(order.id, e.target.value)}
+              style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #cbd5e1' }}
+            >
+              {['PLACED','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 function VendorOrders({ addToast }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try { const d = await api('/orders'); setOrders(Array.isArray(d) ? d : []); }
     catch (err) { addToast(err.message, 'error'); }
     finally { setLoading(false); }
   }, [addToast]);
+
   useEffect(() => { load(); }, [load]);
+
   const updateStatus = async (orderId, status) => {
-    try { await api('/orders/' + orderId + '/status', { method: 'PUT', body: { status } }); addToast('Status updated', 'success'); load(); }
-    catch (err) { addToast(err.message, 'error'); }
+    try {
+      await api('/orders/' + orderId + '/status', { method: 'PUT', body: { status } });
+      addToast('Status updated to ' + status, 'success');
+      load();
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(prev => ({ ...prev, orderStatus: status }));
+      }
+    } catch (err) { addToast(err.message, 'error'); }
   };
+
   if (loading) return <Loader />;
+
   return (
     <div>
-      <h1>Orders</h1>
-      {orders.length === 0 ? <EmptyState message="No orders" /> : (
+      <div className="section-header">
+        <h1>Orders ({orders.length})</h1>
+      </div>
+      {orders.length === 0 ? <EmptyState message="No orders received yet" /> : (
         <table className="data-table">
-          <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody>{orders.map(o => (
-            <tr key={o.id}><td>#{o.id}</td><td>{o.customerName}</td><td>{(o.items || []).map(i => i.productName).join(', ')}</td><td>{fmt(o.finalAmount)}</td><td><span className={statusClass(o.orderStatus)}>{o.orderStatus}</span></td>
-              <td><select value={o.orderStatus} onChange={e => updateStatus(o.id, e.target.value)} style={{ padding: '4px 8px' }}>{['PLACED','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map(s => <option key={s} value={s}>{s}</option>)}</select></td>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ))}</tbody>
+          </thead>
+          <tbody>
+            {orders.map(o => (
+              <tr key={o.id}>
+                <td><strong>#{o.id}</strong></td>
+                <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '-'}</td>
+                <td>{o.customerName}</td>
+                <td><strong>{fmt(o.finalAmount)}</strong></td>
+                <td><span className={statusClass(o.orderStatus)}>{o.orderStatus}</span></td>
+                <td>
+                  <button className="btn-secondary" style={{ marginRight: 8, padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => setSelectedOrder(o)}>
+                    View Details
+                  </button>
+                  <select
+                    value={o.orderStatus}
+                    onChange={e => updateStatus(o.id, e.target.value)}
+                    style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1' }}
+                  >
+                    {['PLACED','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
+      )}
+
+      {selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onStatusUpdate={updateStatus}
+        />
       )}
     </div>
   );
@@ -1686,9 +2253,12 @@ function AdminLayout({ user, onLogout }) {
             <BrandLogo size={20} light={true} />
           </Link>
         </div>
-        <div className="dash-welcome">
-          <p>Administrator</p>
-          <strong>{user?.name}</strong>
+        <div className="dash-welcome" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p>Administrator</p>
+            <strong>{user?.name}</strong>
+          </div>
+          <NotificationBell />
         </div>
         <nav className="sidebar-nav">
           {nav.map(n => <Link key={n.path} to={n.path} className={'sidebar-nav-item' + (location.pathname === n.path ? ' active' : '')}>{n.label}</Link>)}
@@ -1710,14 +2280,14 @@ function AdminDashboard({ addToast }) {
     <div>
       <h1>Admin Dashboard</h1>
       <div className="dash-cards">
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDC64</span><h3>Customers</h3><p>{stats.totalCustomers || 0}</p></div>
-        <div className="dash-card"><span className="stat-icon">\uD83C\uDFED</span><h3>Vendors</h3><p>{stats.approvedVendors || 0}</p></div>
-        <div className="dash-card"><span className="stat-icon">\u23F3</span><h3>Pending Vendors</h3><p>{stats.pendingVendors || 0}</p></div>
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDCE6</span><h3>Products</h3><p>{stats.totalProducts || 0}</p></div>
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDCB3</span><h3>Orders</h3><p>{stats.totalOrders || 0}</p></div>
-        <div className="dash-card"><span className="stat-icon">\uD83D\uDCB0</span><h3>Revenue</h3><p>{fmt(stats.totalRevenue || 0)}</p></div>
-        <div className="dash-card"><span className="stat-icon">\u2705</span><h3>Delivered</h3><p>{stats.deliveredOrders || 0}</p></div>
-        <div className="dash-card"><span className="stat-icon">\u274C</span><h3>Cancelled</h3><p>{stats.cancelledOrders || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">👤</span><h3>Customers</h3><p>{stats.totalCustomers || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">🏬</span><h3>Vendors</h3><p>{stats.approvedVendors || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">⏳</span><h3>Pending Vendors</h3><p>{stats.pendingVendors || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">📦</span><h3>Products</h3><p>{stats.totalProducts || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">💳</span><h3>Orders</h3><p>{stats.totalOrders || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">💰</span><h3>Revenue</h3><p>{fmt(stats.totalRevenue || 0)}</p></div>
+        <div className="dash-card"><span className="stat-icon">✅</span><h3>Delivered</h3><p>{stats.deliveredOrders || 0}</p></div>
+        <div className="dash-card"><span className="stat-icon">❌</span><h3>Cancelled</h3><p>{stats.cancelledOrders || 0}</p></div>
       </div>
     </div>
   );
@@ -1738,7 +2308,7 @@ function AdminCustomers({ addToast }) {
     catch (err) { addToast(err.message, 'error'); }
   };
   const deleteUser = async (id) => {
-    if (!window.confirm('Delete?')) return;
+    if (!window.confirm('Delete this user?')) return;
     try { await api('/admin/users/' + id, { method: 'DELETE' }); addToast('Deleted', 'success'); load(); }
     catch (err) { addToast(err.message, 'error'); }
   };
@@ -1796,30 +2366,154 @@ function AdminVendors({ addToast }) {
 
 function AdminProducts({ addToast }) {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+  const [modal, setModal] = useState(null);
+  const [saving, setSaving] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
-    try { const d = await api('/products'); setProducts(Array.isArray(d) ? d : []); }
+    try {
+      const [prods, cats, brds] = await Promise.all([
+        api('/products').catch(() => []),
+        api('/categories').catch(() => []),
+        api('/brands').catch(() => [])
+      ]);
+      setProducts(Array.isArray(prods) ? prods : []);
+      setCategories(Array.isArray(cats) ? cats : []);
+      setBrands(Array.isArray(brds) ? brds : []);
+    }
     catch (err) { addToast(err.message, 'error'); }
     finally { setLoading(false); }
   }, [addToast]);
+
   useEffect(() => { load(); }, [load]);
+
   const deleteProduct = async (id) => {
-    if (!window.confirm('Delete?')) return;
-    try { await api('/products/' + id, { method: 'DELETE' }); addToast('Deleted', 'success'); load(); }
+    if (!window.confirm('Delete this product from catalog?')) return;
+    try { await api('/products/' + id, { method: 'DELETE' }); addToast('Product deleted', 'success'); load(); }
     catch (err) { addToast(err.message, 'error'); }
   };
+
+  const saveProduct = async (form) => {
+    setSaving(true);
+    try {
+      if (modal?.editing) {
+        await api('/products/' + modal.editing.id, { method: 'PUT', body: form });
+        addToast('Product updated successfully', 'success');
+      }
+      setModal(null);
+      load();
+    } catch (err) { addToast(err.message, 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const filtered = products.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()));
+    const matchCat = !categoryFilter || String(p.categoryId) === String(categoryFilter);
+    return matchSearch && matchCat;
+  });
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const curPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
+
   if (loading) return <Loader />;
+
   return (
     <div>
-      <div className="section-header"><h1>Products</h1></div>
-      {products.length === 0 ? <EmptyState message="No products" /> : (
-        <table className="data-table">
-          <thead><tr><th>ID</th><th>Name</th><th>Vendor</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
-          <tbody>{products.map(p => (
-            <tr key={p.id}><td>{p.id}</td><td>{p.name}</td><td>{p.vendorName}</td><td>{p.categoryName}</td><td>{fmt(p.price)}</td><td>{p.stockQuantity}</td><td><button className="btn-cancel" onClick={() => deleteProduct(p.id)}>Delete</button></td></tr>
-          ))}</tbody>
-        </table>
+      <div className="section-header">
+        <h1>Catalog Management ({products.length} Products)</h1>
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          placeholder="Search by name or SKU..."
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1); }}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', flex: 1, minWidth: 200 }}
+        />
+        <select
+          value={categoryFilter}
+          onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
+          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1' }}
+        >
+          <option value="">All Categories</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {filtered.length === 0 ? <EmptyState message="No products match your filter" /> : (
+        <>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Thumbnail</th>
+                <th>Name</th>
+                <th>Vendor</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map(p => (
+                <tr key={p.id}>
+                  <td>{p.id}</td>
+                  <td>
+                    <img src={p.image} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4 }} onError={e => e.target.style.display = 'none'} />
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{p.name}</div>
+                    <small style={{ color: '#64748b' }}>{p.sku}</small>
+                  </td>
+                  <td>{p.vendorName || '-'}</td>
+                  <td>{p.categoryName || '-'}</td>
+                  <td>{fmt(p.price)}</td>
+                  <td>
+                    <span style={{ color: p.stockQuantity < 10 ? '#ef4444' : '#16a34a', fontWeight: 600 }}>
+                      {p.stockQuantity}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="btn-primary" style={{ marginRight: 6 }} onClick={() => setModal({ editing: p })}>Edit</button>
+                    <button className="btn-cancel" onClick={() => deleteProduct(p.id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {totalPages > 1 && (
+            <div className="table-pagination">
+              <span>Showing {(curPage - 1) * PAGE_SIZE + 1} to {Math.min(curPage * PAGE_SIZE, filtered.length)} of {filtered.length} products</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="page-btn" disabled={curPage <= 1} onClick={() => setPage(curPage - 1)}>← Prev</button>
+                <span style={{ padding: '6px 12px', fontWeight: 600 }}>Page {curPage} of {totalPages}</span>
+                <button className="page-btn" disabled={curPage >= totalPages} onClick={() => setPage(curPage + 1)}>Next →</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {modal && (
+        <ProductModal
+          product={modal.editing}
+          categories={categories}
+          brands={brands}
+          saving={saving}
+          onSave={saveProduct}
+          onClose={() => setModal(null)}
+        />
       )}
     </div>
   );
@@ -1832,6 +2526,8 @@ function AdminCategories({ addToast }) {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [saving, setSaving] = useState(false);
+  const [editModal, setEditModal] = useState(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try { const d = await api('/categories'); setCategories(Array.isArray(d) ? d : []); }
@@ -1839,18 +2535,32 @@ function AdminCategories({ addToast }) {
     finally { setLoading(false); }
   }, [addToast]);
   useEffect(() => { load(); }, [load]);
+
   const addCategory = async (e) => {
     e.preventDefault(); if (!name.trim()) { addToast('Name required', 'error'); return; }
     setSaving(true);
-    try { await api('/categories', { method: 'POST', body: { name: name.trim(), description: desc.trim() } }); addToast('Added', 'success'); setName(''); setDesc(''); setShowForm(false); load(); }
+    try { await api('/categories', { method: 'POST', body: { name: name.trim(), description: desc.trim() } }); addToast('Category added', 'success'); setName(''); setDesc(''); setShowForm(false); load(); }
     catch (err) { addToast(err.message, 'error'); }
     finally { setSaving(false); }
   };
+
+  const updateCategory = async (form) => {
+    setSaving(true);
+    try {
+      await api('/categories/' + editModal.id, { method: 'PUT', body: form });
+      addToast('Category updated', 'success');
+      setEditModal(null);
+      load();
+    } catch (err) { addToast(err.message, 'error'); }
+    finally { setSaving(false); }
+  };
+
   const deleteCategory = async (id) => {
-    if (!window.confirm('Delete?')) return;
+    if (!window.confirm('Delete category?')) return;
     try { await api('/categories/' + id, { method: 'DELETE' }); addToast('Deleted', 'success'); load(); }
     catch (err) { addToast(err.message, 'error'); }
   };
+
   if (loading) return <Loader />;
   return (
     <div>
@@ -1865,9 +2575,20 @@ function AdminCategories({ addToast }) {
       {categories.length === 0 ? <EmptyState message="No categories" /> : (
         <table className="data-table">
           <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
-          <tbody>{categories.map(c => <tr key={c.id}><td>{c.id}</td><td>{c.name}</td><td>{c.description || '-'}</td><td><button className="btn-cancel" onClick={() => deleteCategory(c.id)}>Delete</button></td></tr>)}</tbody>
+          <tbody>{categories.map(c => (
+            <tr key={c.id}>
+              <td>{c.id}</td>
+              <td><strong>{c.name}</strong></td>
+              <td>{c.description || '-'}</td>
+              <td>
+                <button className="btn-primary" style={{ marginRight: 6 }} onClick={() => setEditModal(c)}>Edit</button>
+                <button className="btn-cancel" onClick={() => deleteCategory(c.id)}>Delete</button>
+              </td>
+            </tr>
+          ))}</tbody>
         </table>
       )}
+      {editModal && <CategoryModal category={editModal} saving={saving} onSave={updateCategory} onClose={() => setEditModal(null)} />}
     </div>
   );
 }
@@ -1879,6 +2600,8 @@ function AdminBrands({ addToast }) {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [saving, setSaving] = useState(false);
+  const [editModal, setEditModal] = useState(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try { const d = await api('/brands'); setBrands(Array.isArray(d) ? d : []); }
@@ -1886,18 +2609,32 @@ function AdminBrands({ addToast }) {
     finally { setLoading(false); }
   }, [addToast]);
   useEffect(() => { load(); }, [load]);
+
   const addBrand = async (e) => {
     e.preventDefault(); if (!name.trim()) { addToast('Name required', 'error'); return; }
     setSaving(true);
-    try { await api('/brands', { method: 'POST', body: { name: name.trim(), description: desc.trim() } }); addToast('Added', 'success'); setName(''); setDesc(''); setShowForm(false); load(); }
+    try { await api('/brands', { method: 'POST', body: { name: name.trim(), description: desc.trim() } }); addToast('Brand added', 'success'); setName(''); setDesc(''); setShowForm(false); load(); }
     catch (err) { addToast(err.message, 'error'); }
     finally { setSaving(false); }
   };
+
+  const updateBrand = async (form) => {
+    setSaving(true);
+    try {
+      await api('/brands/' + editModal.id, { method: 'PUT', body: form });
+      addToast('Brand updated', 'success');
+      setEditModal(null);
+      load();
+    } catch (err) { addToast(err.message, 'error'); }
+    finally { setSaving(false); }
+  };
+
   const deleteBrand = async (id) => {
-    if (!window.confirm('Delete?')) return;
+    if (!window.confirm('Delete brand?')) return;
     try { await api('/brands/' + id, { method: 'DELETE' }); addToast('Deleted', 'success'); load(); }
     catch (err) { addToast(err.message, 'error'); }
   };
+
   if (loading) return <Loader />;
   return (
     <div>
@@ -1912,9 +2649,20 @@ function AdminBrands({ addToast }) {
       {brands.length === 0 ? <EmptyState message="No brands" /> : (
         <table className="data-table">
           <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
-          <tbody>{brands.map(b => <tr key={b.id}><td>{b.id}</td><td>{b.name}</td><td>{b.description || '-'}</td><td><button className="btn-cancel" onClick={() => deleteBrand(b.id)}>Delete</button></td></tr>)}</tbody>
+          <tbody>{brands.map(b => (
+            <tr key={b.id}>
+              <td>{b.id}</td>
+              <td><strong>{b.name}</strong></td>
+              <td>{b.description || '-'}</td>
+              <td>
+                <button className="btn-primary" style={{ marginRight: 6 }} onClick={() => setEditModal(b)}>Edit</button>
+                <button className="btn-cancel" onClick={() => deleteBrand(b.id)}>Delete</button>
+              </td>
+            </tr>
+          ))}</tbody>
         </table>
       )}
+      {editModal && <BrandModal brand={editModal} saving={saving} onSave={updateBrand} onClose={() => setEditModal(null)} />}
     </div>
   );
 }
@@ -1922,30 +2670,81 @@ function AdminBrands({ addToast }) {
 function AdminOrders({ addToast }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try { const d = await api('/orders'); setOrders(Array.isArray(d) ? d : []); }
     catch (err) { addToast(err.message, 'error'); }
     finally { setLoading(false); }
   }, [addToast]);
+
   useEffect(() => { load(); }, [load]);
+
   const updateStatus = async (orderId, status) => {
-    try { await api('/orders/' + orderId + '/status', { method: 'PUT', body: { status } }); addToast('Updated', 'success'); load(); }
-    catch (err) { addToast(err.message, 'error'); }
+    try {
+      await api('/orders/' + orderId + '/status', { method: 'PUT', body: { status } });
+      addToast('Order status updated to ' + status, 'success');
+      load();
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(prev => ({ ...prev, orderStatus: status }));
+      }
+    } catch (err) { addToast(err.message, 'error'); }
   };
+
   if (loading) return <Loader />;
+
   return (
     <div>
-      <div className="section-header"><h1>Orders</h1></div>
-      {orders.length === 0 ? <EmptyState message="No orders" /> : (
+      <div className="section-header"><h1>Orders Management ({orders.length})</h1></div>
+      {orders.length === 0 ? <EmptyState message="No orders in marketplace" /> : (
         <table className="data-table">
-          <thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Payment</th><th>Status</th><th>Update</th></tr></thead>
-          <tbody>{orders.map(o => (
-            <tr key={o.id}><td>#{o.id}</td><td>{o.customerName}</td><td>{fmt(o.finalAmount)}</td><td><span className={statusClass(o.paymentStatus)}>{o.paymentStatus}</span></td><td><span className={statusClass(o.orderStatus)}>{o.orderStatus}</span></td>
-              <td><select value={o.orderStatus} onChange={e => updateStatus(o.id, e.target.value)} style={{ padding: '4px 8px' }}>{['PLACED','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map(s => <option key={s} value={s}>{s}</option>)}</select></td>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ))}</tbody>
+          </thead>
+          <tbody>
+            {orders.map(o => (
+              <tr key={o.id}>
+                <td><strong>#{o.id}</strong></td>
+                <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '-'}</td>
+                <td>{o.customerName}</td>
+                <td><strong>{fmt(o.finalAmount)}</strong></td>
+                <td><span className={statusClass(o.paymentStatus)}>{o.paymentStatus || 'COMPLETED'}</span></td>
+                <td><span className={statusClass(o.orderStatus)}>{o.orderStatus}</span></td>
+                <td>
+                  <button className="btn-secondary" style={{ marginRight: 8, padding: '4px 10px', fontSize: '0.85rem' }} onClick={() => setSelectedOrder(o)}>
+                    View Details
+                  </button>
+                  <select
+                    value={o.orderStatus}
+                    onChange={e => updateStatus(o.id, e.target.value)}
+                    style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #cbd5e1' }}
+                  >
+                    {['PLACED','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
+      )}
+
+      {selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onStatusUpdate={updateStatus}
+        />
       )}
     </div>
   );
@@ -1981,6 +2780,7 @@ function App() {
           <Route path="/cart"              element={<CartPage           addToast={addToast} />} />
           <Route path="/checkout"          element={<CheckoutPage       addToast={addToast} />} />
           <Route path="/orders"            element={<OrdersPage         addToast={addToast} />} />
+          <Route path="/wishlist"          element={<WishlistPage       addToast={addToast} />} />
         </Route>
 
         <Route element={<RequireRole user={user} role="VENDOR"><VendorLayout user={user} onLogout={handleLogout} /></RequireRole>}>
@@ -2007,3 +2807,4 @@ function App() {
 }
 
 export default App;
+

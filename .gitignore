@@ -15,6 +15,8 @@ target/
 # Node dependencies
 node_modules/
 frontend/dist/
+shop-capstone-react/dist/
+shop-capstone-react/node_modules/
 
 # Database drivers (download locally)
 backend/lib/
@@ -24,6 +26,9 @@ backend/resources/database.properties
 
 # Log files
 *.log
+
+# Temporary cache
+amazon-capstone/photo_cache/
 
 # Operating system files
 .DS_Store

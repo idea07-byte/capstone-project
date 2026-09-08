@@ -109,8 +109,12 @@ public class ProductService {
     }
 
     public List<Product> searchProducts(String query, Integer categoryId, Integer brandId, Double minPrice, Double maxPrice, String sortBy) {
-        if ((query == null || query.trim().isEmpty()) && categoryId == null && brandId == null && minPrice == null && maxPrice == null && (sortBy == null || sortBy.isEmpty() || "newest".equals(sortBy))) {
-            return getAllProducts();
+        return searchProducts(query, categoryId, brandId, null, minPrice, maxPrice, sortBy);
+    }
+
+    public List<Product> searchProducts(String query, Integer categoryId, Integer brandId, Integer vendorId, Double minPrice, Double maxPrice, String sortBy) {
+        if ((query == null || query.trim().isEmpty()) && categoryId == null && brandId == null && vendorId == null && minPrice == null && maxPrice == null && (sortBy == null || sortBy.isEmpty() || "newest".equals(sortBy))) {
+            return vendorId != null ? getProductsByVendor(vendorId) : getAllProducts();
         }
 
         StringBuilder sql = new StringBuilder("SELECT p.*, v.business_name as vendor_name, c.name as category_name, b.name as brand_name, COALESCE(AVG(r.rating), 0) as avg_rating, COUNT(r.id) as review_count FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'ACTIVE' WHERE p.status = 'ACTIVE'");
@@ -123,6 +127,7 @@ public class ProductService {
         }
         if (categoryId != null) { sql.append(" AND p.category_id = ?"); params.add(categoryId); }
         if (brandId != null) { sql.append(" AND p.brand_id = ?"); params.add(brandId); }
+        if (vendorId != null) { sql.append(" AND p.vendor_id = ?"); params.add(vendorId); }
         if (minPrice != null) { sql.append(" AND p.price >= ?"); params.add(minPrice); }
         if (maxPrice != null) { sql.append(" AND p.price <= ?"); params.add(maxPrice); }
 
@@ -228,6 +233,14 @@ public class ProductService {
         }
     }
 
+    public void reduceProductQuantity(int productId, int amount) {
+        try (Connection conn = Database.getConnection()) {
+            reduceStock(conn, productId, amount);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to reduce stock: " + e.getMessage(), e);
+        }
+    }
+
     public int countAll() {
         String sql = "SELECT COUNT(*) FROM products";
         try (Connection conn = Database.getConnection();
@@ -267,7 +280,7 @@ public class ProductService {
         return products;
     }
 
-    private Product mapProduct(ResultSet rs) throws SQLException {
+    public Product mapProduct(ResultSet rs) throws SQLException {
         Product p = new Product();
         p.setId(rs.getInt("id"));
         p.setVendorId(rs.getInt("vendor_id"));

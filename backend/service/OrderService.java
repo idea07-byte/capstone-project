@@ -1,6 +1,7 @@
 package service;
 
 import db.Database;
+import model.Customer;
 import model.Order;
 import model.OrderItem;
 
@@ -9,6 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderService {
+
+    public Order createOrder(Customer customer, List<OrderItem> items) {
+        if (customer == null) throw new IllegalArgumentException("Customer cannot be null.");
+        return createOrder(customer.getId(), items, null, "COD", 0.0);
+    }
+
+    public Order createOrder(int customerId, List<OrderItem> items) {
+        return createOrder(customerId, items, null, "COD", 0.0);
+    }
 
     public Order createOrder(int customerId, List<OrderItem> items, Integer addressId, String paymentMethod, double discountAmount) {
         if (items == null || items.isEmpty()) throw new IllegalArgumentException("Order must contain at least one item.");
@@ -73,6 +83,22 @@ public class OrderService {
                 }
 
                 conn.commit();
+                ProductService.clearCache();
+                try {
+                    NotificationService ns = new NotificationService();
+                    ns.create(customerId, "Order Placed Successfully", "Your order #" + orderId + " has been placed for ₹" + String.format("%.2f", finalAmount) + " and is being prepared.", "ORDER");
+                    VendorService vs = new VendorService();
+                    java.util.Set<Integer> notifiedVendors = new java.util.HashSet<>();
+                    for (OrderItem item : items) {
+                        if (item.getVendorId() > 0 && notifiedVendors.add(item.getVendorId())) {
+                            model.Vendor v = vs.getVendorById(item.getVendorId());
+                            if (v != null) {
+                                ns.create(v.getUserId(), "New Order #" + orderId, "You received an order for " + item.getProductName() + " (Qty: " + item.getQuantity() + ").", "ORDER");
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {}
+
                 Order order = new Order(orderId, customerId, totalAmount, "PLACED");
                 order.setShippingAmount(shippingAmount);
                 order.setDiscountAmount(discountAmount);
@@ -162,7 +188,16 @@ public class OrderService {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, status);
             stmt.setInt(2, orderId);
-            return stmt.executeUpdate() > 0;
+            boolean ok = stmt.executeUpdate() > 0;
+            if (ok) {
+                try {
+                    Order o = getOrderById(orderId);
+                    if (o != null) {
+                        new NotificationService().create(o.getCustomerId(), "Order #" + orderId + " Update", "Your order #" + orderId + " status is now " + status + ".", "ORDER");
+                    }
+                } catch (Exception ignored) {}
+            }
+            return ok;
         } catch (SQLException e) { throw new RuntimeException("Failed to update order status: " + e.getMessage(), e); }
     }
 
@@ -183,6 +218,13 @@ public class OrderService {
                     stmt.executeUpdate();
                 }
                 conn.commit();
+                ProductService.clearCache();
+                try {
+                    Order o = getOrderById(orderId);
+                    if (o != null) {
+                        new NotificationService().create(o.getCustomerId(), "Order #" + orderId + " Cancelled", "Your order #" + orderId + " has been cancelled and stock returned.", "ORDER");
+                    }
+                } catch (Exception ignored) {}
                 return true;
             } catch (SQLException e) {
                 conn.rollback();

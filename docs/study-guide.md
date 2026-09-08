@@ -2,149 +2,136 @@
 
 ## 1. Project Overview
 
-BuyIt is a **shop management system** (capstone project) that lets users browse products, place orders, and manage inventory. It has two parts:
+BuyIt is a **Multi-Vendor E-Commerce Marketplace** (capstone project) that lets customers browse products, manage carts & wishlists, and place orders, while vendors manage inventory and fulfill sales, and administrators oversee platform operations. It consists of:
 
-- **Backend:** Java (JDK 17+), plain JDBC, and a lightweight HTTP server built on `com.sun.net.httpserver.HttpServer` (no Spring).
-- **Frontend:** React (Vite) + React Router, styled with plain CSS.
-- **Database:** PostgreSQL hosted on **Supabase** (cloud).
+- **Backend:** Java (JDK 17+), plain JDBC, and a lightweight multi-threaded HTTP server built on `com.sun.net.httpserver.HttpServer` (zero external frameworks).
+- **Frontend:** React 18 + Vite 5 + React Router 6, styled with modern CSS and glassmorphism.
+- **Database:** Cloud PostgreSQL hosted on **Supabase**.
+- **CLI Management:** Interactive command-line menu built directly into `Main.java` supporting 10 management features alongside the web server.
+- **Automated Testing:** Standalone test suite (`TestRunner.java`) verifying schema integrity, polymorphism, stock atomicity, and REST helpers.
 
-Users come in two roles: **ADMIN** (manage everything) and **CUSTOMER** (shop / place orders). Currently there is no role restriction in the backend — both roles can access the same dashboard.
+Users operate under three distinct roles:
+1. **CUSTOMER:** Browse products, filter by category/brand/price, add to cart/wishlist, checkout with promo coupons, view orders and live notifications.
+2. **VENDOR:** Merchant portal with sales dashboard, product creation with multi-image URLs, stock updates, and order fulfillment.
+3. **ADMIN:** Platform-wide oversight: manage customers, approve/suspend vendors, manage categories & brands, and inspect total gross revenue.
 
 ## 2. Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Language | Java 17+ (tested on 25) |
-| HTTP server | `com.sun.net.httpserver.HttpServer` (built into the JDK) |
-| Database | PostgreSQL (Supabase) |
-| JDBC driver | `postgresql-42.7.4.jar` |
+| Language | Java 17+ (tested on JDK 21 and 26) |
+| HTTP Server | `com.sun.net.httpserver.HttpServer` (built into the JDK) |
+| Database | PostgreSQL (Supabase cloud) |
+| JDBC Driver | `postgresql-42.7.4.jar` |
 | Frontend | React 18 + Vite 5 + React Router 6 |
-| Build (backend) | `build.bat` / manual `javac` |
-| Build (frontend) | `npm run build` → outputs `frontend/dist` |
+| Build Scripts | Root `build.bat` & `run.bat`; `backend/build.bat` & `run.bat` |
+| Automated Tests | `TestRunner.java` |
 
 ## 3. Folder Structure
 
 ```
 capstone/
+├── build.bat                    # Top-level build script (Frontend + Backend)
+├── run.bat                      # Top-level run script
 ├── backend/
-│   ├── Main.java            # CLI entry point + starts web server + browser
-│   ├── WebServer.java       # REST API handlers + static file server
-│   ├── model/               # Product, User, Customer, Admin, Role, Order, OrderItem
-│   ├── service/             # ProductService, UserService, OrderService
-│   ├── db/Database.java     # DB connection, table auto-create, seed data
-│   ├── resources/database.properties  # Supabase URL/user/password
-│   └── database/schema.sql  # Full SQL schema + seed
+│   ├── Main.java                # Web server + Interactive CLI launcher
+│   ├── WebServer.java           # Built-in HttpServer REST API & SPA host
+│   ├── TestRunner.java          # Standalone automated test suite
+│   ├── build.bat / run.bat      # Backend standalone build & run scripts
+│   ├── model/                   # Product, User, Customer, Admin, Vendor, Order, etc.
+│   ├── service/                 # ProductService, UserService, OrderService, Cart, etc.
+│   ├── db/                      # Database connection pool, SeedPostgresRunner
+│   ├── lib/                     # JDBC drivers (PostgreSQL, MySQL)
+│   └── resources/               # database.properties configuration
 ├── frontend/
-│   ├── src/App.jsx          # All React pages (login, register, dashboard, home)
-│   ├── src/main.jsx         # React entry point
-│   ├── css/                 # style.css, dashboard.css
-│   └── dist/                # Built app served by the Java backend
-└── docs/                    # Diagrams, ERD, this guide
+│   ├── src/App.jsx              # React single-page application (Storefront, Portals)
+│   ├── css/style.css            # Stylesheets (glassmorphism, theme, components)
+│   ├── dist/                    # Production bundle served by Java WebServer
+│   ├── package.json             # React 18, Vite 5, React Router 6
+│   └── vite.config.js           # Vite dev proxy configuration
+├── amazon-capstone/             # 1000-product image dataset pipeline & mapping
+└── docs/                        # Architecture diagrams, ERD, study guides, slides
 ```
 
 ## 4. Database Design (ERD)
 
-4 tables in a PostgreSQL/Supabase database.
+The marketplace uses a normalized schema with 15 relational tables in PostgreSQL:
 
-**users**
-| Column | Type | Notes |
+1. **`users`** — Base user credentials (`id`, `name`, `email`, `phone`, `password`, `role`, `status`).
+2. **`vendors`** — Vendor merchant profiles (`user_id`, `business_name`, `owner_name`, `approval_status`).
+3. **`categories`** — 15 consumer categories (`name`, `description`, `image`).
+4. **`brands`** — Brand catalog entries (`name`, `description`, `logo`).
+5. **`products`** — 1,000 product catalog entries (`vendor_id`, `category_id`, `brand_id`, `price`, `discount`, `stock_quantity`, `sku`, `image`).
+6. **`product_images`** — 3,000 multi-image records linked to products.
+7. **`addresses`** — Customer delivery addresses (`customer_id`, `address_line`, `city`, `state`, `pincode`).
+8. **`coupons`** — Promo discount codes (`code`, `discount_percent`, `min_amount`).
+9. **`orders`** — Placed orders (`customer_id`, `address_id`, `total_amount`, `discount_amount`, `final_amount`, `order_status`).
+10. **`order_items`** — Snapshot line items (`order_id`, `product_id`, `vendor_id`, `product_name`, `price`, `quantity`, `subtotal`).
+11. **`payments`** — Transaction records (`order_id`, `payment_method`, `transaction_id`, `amount`, `payment_status`).
+12. **`cart` & `cart_items`** — Persistent customer shopping cart state.
+13. **`wishlist` & `wishlist_items`** — Customer saved product wishlists.
+14. **`reviews`** — Product ratings and feedback (`rating`, `comment`, `customer_id`, `product_id`).
+15. **`notifications`** — User notification feed (`user_id`, `title`, `message`, `is_read`).
+
+> Why keep `product_name` and `price` in `order_items`?
+> Because a product can subsequently change name or price, or be archived. The order line item preserves an immutable historical **snapshot** of what was charged at the moment of purchase.
+
+## 5. Backend Layers (3-tier Architecture)
+
+### 5.1 Model Layer (`backend/model/`)
+- `User` (abstract base) + `Customer`, `VendorUser`, `Admin` (concrete subclasses demonstrating OOP inheritance and polymorphism).
+- `Product` — encapsulates price, discount calculation (`getFinalPrice()`), and stock validation (`reduceQuantity(amount)`).
+- `Order` & `OrderItem` — encapsulate multi-item totals, shipping calculations, and immutable line snapshots.
+- `CartItem`, `Brand`, `Category`, `Address`, `Review`, `Notification`.
+
+### 5.2 Service Layer (`backend/service/`)
+- `ProductService`: CRUD, multi-parameter search, stock checks (`hasSufficientStock`), and atomic stock reduction (`reduceStock`).
+- `UserService`: User management, email lookup, role counts, and polymorphic mapping.
+- `OrderService`: Transactional order placement with atomic stock decrements and rollback safety (`createOrder`), status updates, and cancellation.
+- `CartService` & `WishlistService`: Customer cart and wishlist persistence.
+- `VendorService`, `CategoryService`, `BrandService`, `CouponService`, `NotificationService`.
+
+### 5.3 Database Layer (`backend/db/Database.java`)
+- Connection pool (`BlockingQueue<Connection>`) managing JDBC connections with dynamic proxy wrapping for safe connection recycling.
+- Startup catalog guard preserving existing data if tables already exist.
+
+## 6. REST API Reference (WebServer.java)
+
+Built using the JDK's built-in `HttpServer` with JSON responses and CORS support:
+
+| Method & Path | Purpose | Role / Auth |
 |---|---|---|
-| id | INT PK | manual IDs |
-| name | VARCHAR(100) | |
-| email | VARCHAR(100) | UNIQUE |
-| password | VARCHAR(255) | plain text (not hashed in this project) |
-| role | VARCHAR(50) | CHECK IN ('CUSTOMER','ADMIN') |
-| created_at / updated_at | TIMESTAMP | auto |
-
-**products**
-| Column | Type | Notes |
-|---|---|---|
-| id | INT PK | |
-| name | VARCHAR(255) | |
-| price | DECIMAL(10,2) | CHECK >= 0 |
-| quantity | INT | CHECK >= 0 |
-
-**orders**
-| Column | Type | Notes |
-|---|---|---|
-| id | INT PK | |
-| customer_id | INT FK → users.id | ON DELETE CASCADE |
-| total_amount | DECIMAL(10,2) | |
-| status | VARCHAR(50) | default 'Pending' |
-
-**order_items** (junction/line items)
-| Column | Type | Notes |
-|---|---|---|
-| id | INT PK | |
-| order_id | INT FK → orders.id | ON DELETE CASCADE |
-| product_id | INT FK → products.id | ON DELETE RESTRICT |
-| product_name | VARCHAR(255) | snapshot of name at order time |
-| unit_price | DECIMAL(10,2) | snapshot of price at order time |
-| quantity | INT | CHECK > 0 |
-
-**Relationships:** `users 1—* orders` · `orders 1—* order_items` · `products 1—* order_items`
-
-> Why keep `product_name` and `unit_price` in order_items? Because a product can later change name/price or be deleted. The order must keep the price that was charged — this is called a **snapshot** / denormalized copy.
-
-## 5. Backend Layers (3-tier)
-
-### 5.1 Model layer (`backend/model/`)
-Plain POJOs that mirror the database:
-
-- `Product` — immutable id/name/price; `quantity` mutable; `reduceQuantity(amount)` validates stock.
-- `User` — **abstract** base class with `role` as a final `Role` enum field.
-- `Customer extends User` — role fixed to `CUSTOMER`.
-- `Admin extends User` — role fixed to `ADMIN`.
-- `Role` — enum `{ CUSTOMER, ADMIN }`.
-- `Order` — validates it has ≥1 item; `getTotalAmount()` = sum of line totals.
-- `OrderItem` — product id, name snapshot, unit price, quantity; `getTotalPrice() = unitPrice * quantity`.
-
-Inheritance lets services work with any `User` and lets the DB layer map a row back to `Admin` or `Customer` based on the role column.
-
-### 5.2 Service layer (`backend/service/`)
-Business logic + SQL access.
-
-**ProductService**
-- `addProduct` — rejects duplicate IDs.
-- `getAllProducts` / `getProductById` / `nextProductId` (MAX(id)+1).
-- `updateProduct` — used by the edit feature (PUT).
-- `removeProductById`.
-- `hasSufficientStock(productId, qty)` — SELECT quantity and compare.
-- `reduceProductQuantity(id, amount)` — `UPDATE ... SET quantity = quantity - ? WHERE id = ? AND quantity >= ?` — the `WHERE quantity >= ?` makes the stock check **atomic** (no race condition).
-
-**UserService**
-- `addUser` / `removeUserById` / `getAllUsers` / `getUserById` / `nextUserId`.
-- `getUsersByRole(Role)`.
-- `mapUser(ResultSet)` — reads the role column and constructs `Admin` or `Customer` (polymorphism).
-
-**OrderService**
-- `createOrder(customer, items)` — **the most important method** (see 7.2).
-- `getAllOrders`, `getOrderById`, `getOrdersByCustomerId`.
-- Uses `fetchCustomer` and `fetchOrderItems` to rebuild full objects with JOIN-like queries.
-
-### 5.3 DB layer (`backend/db/Database.java`)
-- Loads `database.properties` from the classpath.
-- `getConnection()` returns a JDBC `Connection`.
-- `initialize()` runs `CREATE TABLE IF NOT EXISTS ...` so tables are auto-created on startup, then calls `seedData()` (admin, customer Asha, and 3 starter products).
-- Passwords, URL, user are read from `resources/database.properties`.
-
-## 6. REST API (WebServer.java)
-
-Built with `HttpServer` — each context maps to one handler class.
-
-| Method & Path | Purpose |
-|---|---|
-| POST `/api/auth/login` | Checks email + password against users, returns user JSON |
-| POST `/api/auth/register` | Creates a new CUSTOMER (auto-assigned id) |
-| GET `/api/products` | List all products |
-| POST `/api/products` | Add product (id = max+1) |
-| PUT `/api/products/{id}` | Update name/price/quantity |
-| DELETE `/api/products/{id}` | Delete product |
-| GET `/api/orders` | List orders with customer + item count |
-| POST `/api/orders` | Create order (customer_id + items array) |
-| GET `/api/users` | List users |
-| POST `/api/users` | Add user (role selectable) |
-| DELETE `/api/users/{id}` | Delete user |
+| `POST /api/auth/login` | Authenticate user, issue session token | Public |
+| `POST /api/auth/register` | Register customer or vendor | Public |
+| `POST /api/auth/logout` | Invalidate current session token | Authenticated |
+| `GET /api/auth/me` | Fetch authenticated user profile | Authenticated |
+| `GET /api/products` | Search catalog with filters & sorting | Public |
+| `GET /api/products/{id}` | Product details with image gallery | Public |
+| `POST /api/products` | Add new product | Vendor / Admin |
+| `PUT /api/products/{id}` | Update product or stock | Vendor / Admin |
+| `DELETE /api/products/{id}` | Remove product | Admin |
+| `GET /api/categories` | List catalog categories | Public |
+| `POST /api/categories` | Create category | Admin |
+| `GET /api/brands` | List brands | Public |
+| `POST /api/brands` | Create brand | Admin |
+| `GET /api/users` | List users (supports `?role=...`) | Admin |
+| `GET /api/users/{id}` | User profile by ID | Authenticated |
+| `POST /api/users` | Add user (Customer, Vendor, Admin) | Admin |
+| `DELETE /api/users/{id}` | Delete user | Admin |
+| `GET /api/cart` | Get cart items & total | Customer |
+| `POST /api/cart` | Add product to cart | Customer |
+| `DELETE /api/cart` | Clear or remove from cart | Customer |
+| `GET /api/wishlist` | Get saved wishlist items | Customer |
+| `POST /api/wishlist` | Add product to wishlist | Customer |
+| `DELETE /api/wishlist` | Remove from wishlist | Customer |
+| `GET /api/orders` | List orders (role-scoped) | Authenticated |
+| `GET /api/orders/{id}` | Single order details with items | Authenticated |
+| `POST /api/orders` | Transactional order placement | Customer |
+| `PUT /api/orders/{id}/status`| Update order status | Vendor / Admin |
+| `POST /api/orders/{id}/cancel`| Cancel order and restore stock | Customer |
+| `GET /api/admin/stats` | Admin platform metrics & KPIs | Admin |
+| `GET /api/notifications` | User notifications & unread count | Authenticated |
+| `POST /api/notifications/read`| Mark notifications as read | Authenticated |
 
 Notes:
 - JSON is built **manually** with string formatting (no JSON library). `extractJsonValue` and `splitJsonObjects` are simple parser helpers.
