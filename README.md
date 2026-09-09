@@ -2,6 +2,8 @@
 
 > Capstone Project: Multi-vendor E-Commerce Marketplace with Seller Dashboard, Admin Monitoring, Customer Storefront, and Secure Transactional Order Management (Amazon-style).
 
+🎓 **[Academic Practical Report (PDF)](BuyIt_Database_Report.pdf)** | 📕 **[Complete Technical Documentation (PDF)](BuyIt_Project_Documentation.pdf)** | 📖 **[Markdown Report](PROJECT_DOCUMENTATION.md)** | 🌐 **[Interactive Web Report](docs/project_report.html)**
+
 ---
 
 ## 🌟 Key Features
@@ -172,8 +174,13 @@ capstone/
 
 ## 📚 Documentation
 
+- 🎓 **[Academic Database Practical & Project Documentation (PDF)](BuyIt_Database_Report.pdf)** — 8-page report formatted specifically for college/academic submissions (ER Diagram on Page 1, Database Structure, Table Creation, Row Counts, and JOIN Operations with CLI terminal outputs).
+- 📕 **[Complete Technical Documentation & System Architecture Report (PDF)](BuyIt_Project_Documentation.pdf)** — Comprehensive 15-chapter publication-ready PDF report (1.25 MB).
+- 📘 **[Comprehensive Project Documentation (Markdown)](PROJECT_DOCUMENTATION.md)** — Master technical and academic documentation in GitHub Markdown.
+- 🌐 **[Interactive Printable HTML Report](docs/project_report.html)** — Executive standalone web report with print-to-PDF formatting.
 - [Usage Guide](docs/usage.md)
 - [System Architecture & UML Diagrams](docs/diagrams.md)
 - [Entity-Relationship Diagram (ERD)](docs/erd.md)
+- [Traditional Crow's Foot ER Diagram](docs/ER_DIAGRAM_TRADITIONAL.md)
 - [Comprehensive Study Guide](docs/study-guide.md)
 - [Presentation Slides Outline](docs/slides.md)
