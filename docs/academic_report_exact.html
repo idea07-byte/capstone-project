@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BUYIT MULTI-VENDOR E-COMMERCE PLATFORM</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+    }
+
+    /* Fixed A4 Page Container */
+    .page {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      padding: 22mm 24mm 18mm 24mm;
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    /* Page 1 Typography with NO wrapping on title */
+    .p1-title {
+      text-align: center;
+      font-size: 19pt;
+      font-weight: 900;
+      color: #000000;
+      letter-spacing: -0.2px;
+      margin-top: 6px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+    .p1-platform {
+      text-align: center;
+      font-size: 19pt;
+      font-weight: 900;
+      color: #000000;
+      margin-bottom: 8px;
+    }
+    .p1-sub {
+      text-align: center;
+      font-size: 10.5pt;
+      font-weight: 500;
+      color: #333333;
+      margin-bottom: 28px;
+    }
+    .p1-meta {
+      font-size: 10.5pt;
+      margin-bottom: 20px;
+      line-height: 1.65;
+    }
+    .p1-meta strong {
+      font-weight: 700;
+    }
+
+    /* Section Headings */
+    h2.sec-heading {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #000000;
+      margin-top: 10px;
+      margin-bottom: 8px;
+    }
+    h3.sub-heading {
+      font-size: 10.5pt;
+      font-weight: bold;
+      color: #000000;
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+
+    /* Terminal Console Window with Windows Title Bar */
+    .terminal-window {
+      background: #0c0c0c;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #1f2937;
+      margin: 10px 0 16px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .terminal-titlebar {
+      background: #1f2430;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2d3748;
+    }
+    .terminal-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 8pt;
+      color: #cbd5e1;
+      font-family: Arial, sans-serif;
+    }
+    .terminal-tab-active {
+      background: #0c0c0c;
+      padding: 3px 10px;
+      border-radius: 3px 3px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f8fafc;
+      font-weight: 500;
+    }
+    .terminal-controls {
+      display: flex;
+      gap: 12px;
+      font-size: 9pt;
+      color: #94a3b8;
+    }
+    .terminal-body {
+      padding: 10px 14px;
+      color: #f8fafc;
+      font-family: 'Courier New', Courier, Consolas, monospace;
+      font-size: 8pt;
+      line-height: 1.3;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="page">
+    <div class="p1-title">BUYIT MULTI-VENDOR E-COMMERCE</div>
+    <div class="p1-platform">PLATFORM</div>
+    <div class="p1-sub">MySQL Database Implementation, JOIN Queries &amp; Composite Key Testing</div>
+
+    <div class="p1-meta">
+      <div><strong>Database:</strong> MySQL 8.4</div>
+      <div><strong>Report Type:</strong> Database Practical / Project Documentation</div>
+      <div><strong>Prepared for:</strong> Academic Submission</div>
+    </div>
+
+    <div style="margin-top: 8px;">
+      
+<svg viewBox="0 0 1180 660" width="100%" height="450" xmlns="http://www.w3.org/2000/svg" style="background:#ffffff; border:1px solid #d1d5db; border-radius:4px;">
+  <!-- Blueprint Grid Background -->
+  <defs>
+    <pattern id="lightGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="0.8"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#lightGrid)" />
+
+  <!-- Diagram Title (Centered with ample empty space around it) -->
+  <text x="590" y="28" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="16" fill="#111827" letter-spacing="1">BUYIT MARKETPLACE RELATIONAL SCHEMA</text>
+
+  <!-- Connectors with clean cardinality markers -->
+  <!-- USER -> VENDOR (1:1) -->
+  <line x1="330" y1="130" x2="410" y2="130" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="340" y="122" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="395" y="122" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+
+  <!-- VENDOR -> PRODUCT (1:N) -->
+  <line x1="560" y1="130" x2="640" y2="130" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="570" y="122" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="625" y="122" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- PRODUCT -> PHOTO (1:N) -->
+  <line x1="790" y1="130" x2="860" y2="130" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="800" y="122" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="845" y="122" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- CATEGORY -> PRODUCT (1:N) -->
+  <line x1="860" y1="85" x2="790" y2="105" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="845" y="82" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="805" y="100" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- USER -> ADDRESS (1:N) -->
+  <line x1="180" y1="130" x2="130" y2="130" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="165" y="122" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="140" y="122" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- USER -> ORDER (1:N) -->
+  <line x1="255" y1="255" x2="255" y2="310" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="262" y="272" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="262" y="300" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- ORDER -> ORDER_ITEM (1:N) -->
+  <line x1="330" y1="380" x2="410" y2="380" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="340" y="372" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="395" y="372" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- PRODUCT -> ORDER_ITEM (1:N) -->
+  <line x1="715" y1="265" x2="560" y2="340" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="695" y="280" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="575" y="335" font-size="9.5" font-family="Arial" fill="#374151">N</text>
+
+  <!-- ORDER -> PAYMENT (1:1) -->
+  <line x1="255" y1="475" x2="255" y2="525" stroke="#4b5563" stroke-width="1.2"/>
+  <text x="262" y="490" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+  <text x="262" y="515" font-size="9.5" font-family="Arial" fill="#374151">1</text>
+
+  <!-- USER -> CART (1:1) -->
+  <line x1="330" y1="230" x2="640" y2="350" stroke="#9ca3af" stroke-dasharray="3,3" stroke-width="1.2"/>
+
+  <!-- ================= ENTITY BOXES ================= -->
+
+  <!-- Table 1: ADDRESS -->
+  <g transform="translate(20, 65)">
+    <rect width="110" height="115" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="110" height="24" fill="#fed7aa" stroke="#374151" stroke-width="1.2"/>
+    <text x="55" y="16" fill="#000000" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">ADDRESS</text>
+    <text x="8" y="40" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">address_id (PK)</text>
+    <text x="8" y="55" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">customer_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">address_line</text>
+    <text x="8" y="85" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">city, state</text>
+    <text x="8" y="100" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">pincode</text>
+  </g>
+
+  <!-- Table 2: USER -->
+  <g transform="translate(180, 55)">
+    <rect width="150" height="195" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="24" fill="#a7f3d0" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="16" fill="#000000" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">USER</text>
+    <text x="10" y="40" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">user_id (PK)</text>
+    <text x="10" y="55" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">name</text>
+    <text x="10" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">email (Unique)</text>
+    <text x="10" y="85" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">password</text>
+    <text x="10" y="100" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">phone</text>
+    <text x="10" y="115" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">role</text>
+    <text x="10" y="130" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">status</text>
+    <text x="10" y="145" font-size="8.5" font-family="Arial, sans-serif" fill="#6b7280">created_at</text>
+    <text x="10" y="160" font-size="8.5" font-family="Arial, sans-serif" fill="#6b7280">updated_at</text>
+  </g>
+
+  <!-- Table 3: VENDOR -->
+  <g transform="translate(410, 55)">
+    <rect width="150" height="150" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="24" fill="#6ee7b7" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="16" fill="#000000" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">VENDOR</text>
+    <text x="10" y="40" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">vendor_id (PK)</text>
+    <text x="10" y="55" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">user_id (FK)</text>
+    <text x="10" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">business_name</text>
+    <text x="10" y="85" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">owner_name</text>
+    <text x="10" y="100" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">city, state</text>
+    <text x="10" y="115" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">pincode</text>
+    <text x="10" y="130" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">approval_status</text>
+  </g>
+
+  <!-- Table 4: PRODUCT -->
+  <g transform="translate(640, 55)">
+    <rect width="150" height="210" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="24" fill="#34d399" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="16" fill="#000000" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">PRODUCT</text>
+    <text x="10" y="40" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">product_id (PK)</text>
+    <text x="10" y="55" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">vendor_id (FK)</text>
+    <text x="10" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">category_id (FK)</text>
+    <text x="10" y="85" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">brand_id (FK)</text>
+    <text x="10" y="100" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">name</text>
+    <text x="10" y="115" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">price</text>
+    <text x="10" y="130" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">discount</text>
+    <text x="10" y="145" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">stock_quantity</text>
+    <text x="10" y="160" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">sku</text>
+    <text x="10" y="175" font-size="8.5" font-family="Arial, sans-serif" fill="#6b7280">created_at</text>
+  </g>
+
+  <!-- Table 5: CATEGORY -->
+  <g transform="translate(860, 55)">
+    <rect width="130" height="70" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="130" height="22" fill="#fde68a" stroke="#374151" stroke-width="1.2"/>
+    <text x="65" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">CATEGORY</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">category_id (PK)</text>
+    <text x="8" y="52" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">name, status</text>
+  </g>
+
+  <!-- Table 6: BRAND -->
+  <g transform="translate(1020, 55)">
+    <rect width="130" height="70" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="130" height="22" fill="#fed7aa" stroke="#374151" stroke-width="1.2"/>
+    <text x="65" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">BRAND</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">brand_id (PK)</text>
+    <text x="8" y="52" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">name, status</text>
+  </g>
+
+  <!-- Table 7: PHOTO -->
+  <g transform="translate(860, 150)">
+    <rect width="130" height="85" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="130" height="22" fill="#a7f3d0" stroke="#374151" stroke-width="1.2"/>
+    <text x="65" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">PHOTO</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">photo_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">product_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">image_url</text>
+  </g>
+
+  <!-- Table 8: ORDER -->
+  <g transform="translate(180, 310)">
+    <rect width="150" height="165" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="24" fill="#38bdf8" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="16" fill="#000000" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">ORDER</text>
+    <text x="10" y="40" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">order_id (PK)</text>
+    <text x="10" y="55" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">customer_id (FK)</text>
+    <text x="10" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">address_id (FK)</text>
+    <text x="10" y="85" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">total_amount</text>
+    <text x="10" y="100" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">discount_amount</text>
+    <text x="10" y="115" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">final_amount</text>
+    <text x="10" y="130" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">order_status</text>
+    <text x="10" y="145" font-size="8.5" font-family="Arial, sans-serif" fill="#6b7280">created_at</text>
+  </g>
+
+  <!-- Table 9: ORDER_ITEM -->
+  <g transform="translate(410, 310)">
+    <rect width="150" height="160" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="24" fill="#f472b6" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="16" fill="#000000" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">ORDER_ITEM</text>
+    <text x="10" y="40" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">item_id (PK)</text>
+    <text x="10" y="55" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">order_id (FK)</text>
+    <text x="10" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">product_id (FK)</text>
+    <text x="10" y="85" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">vendor_id (FK)</text>
+    <text x="10" y="100" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">product_name</text>
+    <text x="10" y="115" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">price, quantity</text>
+    <text x="10" y="130" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">subtotal, status</text>
+  </g>
+
+  <!-- Table 10: CART_ITEM -->
+  <g transform="translate(640, 310)">
+    <rect width="140" height="105" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="140" height="22" fill="#c084fc" stroke="#374151" stroke-width="1.2"/>
+    <text x="70" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">CART_ITEM</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">cart_item_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">customer_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">product_id (FK)</text>
+    <text x="8" y="86" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">quantity, price</text>
+  </g>
+
+  <!-- Table 11: REVIEW -->
+  <g transform="translate(860, 260)">
+    <rect width="130" height="95" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="130" height="22" fill="#fbcfe8" stroke="#374151" stroke-width="1.2"/>
+    <text x="65" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">REVIEW</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">review_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">product_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">customer_id (FK)</text>
+    <text x="8" y="86" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">rating, comment</text>
+  </g>
+
+  <!-- Table 12: NOTIFICATION -->
+  <g transform="translate(1020, 260)">
+    <rect width="130" height="95" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="130" height="22" fill="#fed7aa" stroke="#374151" stroke-width="1.2"/>
+    <text x="65" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">NOTIFICATION</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">notif_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">user_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">title, message</text>
+    <text x="8" y="86" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">is_read</text>
+  </g>
+
+  <!-- Table 13: PAYMENT -->
+  <g transform="translate(180, 525)">
+    <rect width="150" height="95" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="22" fill="#fb923c" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">PAYMENT</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">payment_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">order_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">payment_method</text>
+    <text x="8" y="86" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">amount, status</text>
+  </g>
+
+  <!-- Table 14: WISHLIST -->
+  <g transform="translate(410, 525)">
+    <rect width="150" height="85" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="150" height="22" fill="#f472b6" stroke="#374151" stroke-width="1.2"/>
+    <text x="75" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">WISHLIST</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">wishlist_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">customer_id (FK)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">product_id (FK)</text>
+  </g>
+
+  <!-- Table 15: COUPON -->
+  <g transform="translate(640, 450)">
+    <rect width="140" height="95" fill="#ffffff" stroke="#374151" stroke-width="1.2"/>
+    <rect width="140" height="22" fill="#ddd6fe" stroke="#374151" stroke-width="1.2"/>
+    <text x="70" y="15" fill="#000000" font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" text-anchor="middle">COUPON</text>
+    <text x="8" y="38" font-size="8.5" font-family="Arial, sans-serif" fill="#000000">coupon_id (PK)</text>
+    <text x="8" y="54" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">code (Unique)</text>
+    <text x="8" y="70" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">discount_value</text>
+    <text x="8" y="86" font-size="8.5" font-family="Arial, sans-serif" fill="#374151">status</text>
+  </g>
+</svg>
+
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page">
+    <h2 class="sec-heading">1. Objective</h2>
+    <p>The objective of this practical work is to design and test the relational database for a Multi-Vendor E-Commerce Platform (BuyIt). The work covers table creation, primary and foreign keys, sample data insertion, JOIN operations, composite keys and intentional SQL error testing for debugging practice.</p>
+
+    <h2 class="sec-heading">2. Database Structure</h2>
+    <p>The database contains 17 tables: users, vendors, categories, brands, products, product_images, addresses, coupons, orders, order_items, payments, cart, cart_items, wishlist, wishlist_items, reviews, and notifications.</p>
+    <p>The relationships are implemented using primary keys and foreign keys. Examples include users -&gt; vendors, vendors -&gt; products, orders -&gt; order_items, and so on.</p>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+          <span>+</span>
+          <span>&or;</span>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| buyit_db           |
+| buyit_marketplace  |
++--------------------+
+6 rows in set (0.06 sec)
+
+mysql&gt; USE buyit_marketplace
+Database changed
+mysql&gt; SHOW TABLES;
++-----------------------------------+
+| Tables_in_buyit_marketplace       |
++-----------------------------------+
+| addresses                         |
+| brands                            |
+| cart                              |
+| cart_items                        |
+| categories                        |
+| coupons                           |
+| notifications                     |
+| order_items                       |
+| orders                            |
+| payments                          |
+| product_images                    |
+| products                          |
+| reviews                           |
+| users                             |
+| vendors                           |
+| wishlist                          |
+| wishlist_items                    |
++-----------------------------------+
+17 rows in set (0.05 sec)
+
+mysql&gt; </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 3 ==================== -->
+  <div class="page">
+    <h2 class="sec-heading">3. Table Creation &amp; Key Constraints</h2>
+    <p>The schema was created using BIGINT primary keys with AUTO_INCREMENT where appropriate. Foreign keys were added to maintain referential integrity between related tables. UNIQUE constraints were used for fields like email.</p>
+    <p>The final schema contains 17 tables and the foreign key relationships were verified in MySQL 8.4 Command Line Client.</p>
+
+    <h2 class="sec-heading">4. Sample Data Insertion</h2>
+    <p>Sample records were inserted in foreign key-safe order: users, vendors, categories, brands, products, product_images, addresses, coupons, orders, order_items, payments, cart, cart_items, wishlist, wishlist_items, reviews, and notifications.</p>
+    <p style="margin-bottom: 6px;"><strong>Expected Sample row counts after insertion:</strong></p>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SELECT 'users' AS table_name, COUNT(*) AS records FROM users UNION ALL
+    -&gt; SELECT 'vendors', COUNT(*) FROM vendors UNION ALL
+    -&gt; SELECT 'categories', COUNT(*) FROM categories UNION ALL
+    -&gt; SELECT 'brands', COUNT(*) FROM brands UNION ALL
+    -&gt; SELECT 'products', COUNT(*) FROM products UNION ALL
+    -&gt; SELECT 'product_images', COUNT(*) FROM product_images UNION ALL
+    -&gt; SELECT 'addresses', COUNT(*) FROM addresses UNION ALL
+    -&gt; SELECT 'orders', COUNT(*) FROM orders UNION ALL
+    -&gt; SELECT 'order_items', COUNT(*) FROM order_items UNION ALL
+    -&gt; SELECT 'payments', COUNT(*) FROM payments UNION ALL
+    -&gt; SELECT 'cart', COUNT(*) FROM cart UNION ALL
+    -&gt; SELECT 'cart_items', COUNT(*) FROM cart_items UNION ALL
+    -&gt; SELECT 'wishlist', COUNT(*) FROM wishlist UNION ALL
+    -&gt; SELECT 'wishlist_items', COUNT(*) FROM wishlist_items UNION ALL
+    -&gt; SELECT 'reviews', COUNT(*) FROM reviews UNION ALL
+    -&gt; SELECT 'coupons', COUNT(*) FROM coupons UNION ALL
+    -&gt; SELECT 'notifications', COUNT(*) FROM notifications;
++----------------------------+---------+
+| table_name                 | records |
++----------------------------+---------+
+| users                      |       5 |
+| vendors                    |       5 |
+| categories                 |       6 |
+| brands                     |      11 |
+| products                   |       6 |
+| product_images             |       9 |
+| addresses                  |       6 |
+| orders                     |       8 |
+| order_items                |       4 |
+| payments                   |       3 |
+| cart                       |       6 |
+| cart_items                 |       6 |
+| wishlist                   |       5 |
+| wishlist_items             |       9 |
+| reviews                    |       7 |
+| coupons                    |       5 |
+| notifications              |       5 |
++----------------------------+---------+
+17 rows in set (0.05 sec)
+
+mysql&gt; </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 4 ==================== -->
+  <div class="page">
+    <h2 class="sec-heading">5. JOIN OPERATIONS</h2>
+    <p>Join operations were used to retrieve related information from multiple tables. The queries below use the actual table names instead of short aliases, making the relationship between tables easier to understand during the practical.</p>
+
+    <h3 class="sub-heading">5.1 INNER JOIN</h3>
+    <p>Returns only records that have matching values in both tables.</p>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SELECT
+    -&gt;     u.name AS customer_name,
+    -&gt;     p.name AS product_title
+    -&gt; FROM users u
+    -&gt; INNER JOIN orders o
+    -&gt;     ON u.id = o.customer_id
+    -&gt; INNER JOIN order_items oi
+    -&gt;     ON o.id = oi.order_id
+    -&gt; INNER JOIN products p
+    -&gt;     ON oi.product_id = p.id;
++---------------+-------------------------------------+
+| customer_name | product_title                       |
++---------------+-------------------------------------+
+| Customer One  | Apple iPhone 15 Pro 128GB Blue      |
+| Customer One  | Sony WH-1000XM5 Wireless Headphones |
+| Rahul Sharma  | Nike Air Max 270 Men Running Shoes  |
+| Priya Patel   | Dell XPS 15 OLED Core i9 Laptop     |
+| Amit Kumar    | Fossil Gen 6 Smartwatch Smoke Brown |
+| Sneha Reddy   | Prestige Iris 750W Mixer Grinder    |
++---------------+-------------------------------------+
+6 rows in set (0.00 sec)</div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 5 ==================== -->
+  <div class="page">
+    <h3 class="sub-heading">5.2 LEFT JOIN</h3>
+    <p>Returns all rows from the left table, plus matched rows from the right table. Unmatched right-side columns come back as NULL.</p>
+
+    <div class="terminal-window" style="margin-top: 15px;">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SELECT
+    -&gt;     u.name AS customer_name,
+    -&gt;     o.final_amount
+    -&gt; FROM users u
+    -&gt; LEFT JOIN orders o
+    -&gt;     ON u.id = o.customer_id;
++---------------+--------------+
+| customer_name | final_amount |
++---------------+--------------+
+| Admin User    |         NULL |
+| Rahul Sharma  |         NULL |
+| Priya Patel   |     29990.00 |
+| Amit Kumar    |     11495.00 |
+| Sneha Reddy   |    189990.00 |
+| Customer One  |      3499.00 |
++---------------+--------------+
+6 rows in set (0.00 sec)</div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 6 ==================== -->
+  <div class="page">
+    <h3 class="sub-heading">5.3 RIGHT JOIN</h3>
+    <p>All rows from the right table, matched rows from the left, NULL where there is no match.</p>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SELECT
+    -&gt;     c.name AS category_name,
+    -&gt;     p.name AS product_title
+    -&gt; FROM products p
+    -&gt; RIGHT JOIN categories c
+    -&gt;     ON p.category_id = c.id;
++---------------+-------------------------------------+
+| category_name | product_title                       |
++---------------+-------------------------------------+
+| Electronics   | Apple iPhone 15 Pro 128GB Blue      |
+| Electronics   | Sony WH-1000XM5 Wireless Headphones |
+| Shoes         | Nike Air Max 270 Men Running Shoes  |
+| Laptops       | Dell XPS 15 OLED Core i9 Laptop     |
+| Watches       | Fossil Gen 6 Smartwatch Smoke Brown |
+| Home &amp; Kitchen| Prestige Iris 750W Mixer Grinder    |
++---------------+-------------------------------------+
+6 rows in set (0.00 sec)</div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 7 ==================== -->
+  <div class="page">
+    <h3 class="sub-heading">5.4 FULL JOIN</h3>
+    <p>All rows from both right and left tables, with NULL on whichever side lacks a match.</p>
+
+    <div class="terminal-window" style="margin-top: 15px;">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SELECT
+    -&gt;     u.name AS user_name,
+    -&gt;     v.business_name
+    -&gt; FROM users u
+    -&gt; LEFT JOIN vendors v
+    -&gt;     ON u.id = v.user_id
+    -&gt; UNION
+    -&gt; SELECT
+    -&gt;     u.name AS user_name,
+    -&gt;     v.business_name
+    -&gt; FROM users u
+    -&gt; RIGHT JOIN vendors v
+    -&gt;     ON u.id = v.user_id;
++---------------+-------------------------+
+| user_name     | business_name           |
++---------------+-------------------------+
+| Admin User    | NULL                    |
+| Rahul Sharma  | Sharma Electronics Hub  |
+| Priya Patel   | Patel Fashion World     |
+| Amit Kumar    | Kumar Home Appliances   |
+| Sneha Reddy   | Reddy Sports Gear       |
+| Customer One  | NULL                    |
++---------------+-------------------------+
+6 rows in set (0.03 sec)</div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 8 ==================== -->
+  <div class="page">
+    <h3 class="sub-heading">5.5 NATURAL JOIN</h3>
+    <p>Automatically joins two tables on all columns that share the same name—you don’t specify the ON condition yourself. MySQL compares every identically named column and matches rows where all of them are equal.</p>
+
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="terminal-tabs">
+          <div class="terminal-tab-active">MySQL 8.4 Command Line Client &times;</div>
+        </div>
+        <div class="terminal-controls">
+          <span>&minus;</span>
+          <span>&#9633;</span>
+          <span>&times;</span>
+        </div>
+      </div>
+      <div class="terminal-body">mysql&gt; SELECT
+    -&gt;     id,
+    -&gt;     name,
+    -&gt;     price,
+    -&gt;     stock_quantity
+    -&gt; FROM products
+    -&gt; NATURAL JOIN categories;
+Empty set (0.05 sec)</div>
+    </div>
+  </div>
+
+</body>
+</html>
