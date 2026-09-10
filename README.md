@@ -2,7 +2,7 @@
 
 > Capstone Project: Multi-vendor E-Commerce Marketplace with Seller Dashboard, Admin Monitoring, Customer Storefront, and Secure Transactional Order Management (Amazon-style).
 
-🎓 **[Academic Practical Report (PDF)](BuyIt_Database_Report.pdf)** | 📕 **[Complete Technical Documentation (PDF)](BuyIt_Project_Documentation.pdf)** | 📖 **[Markdown Report](PROJECT_DOCUMENTATION.md)** | 🌐 **[Interactive Web Report](docs/project_report.html)**
+🎓 **[Academic Practical Report (PDF)](BuyIt_Database_Report.pdf)** | 📑 **[Activity Document (PDF)](BuyIt_Activity_Document.pdf)** | 📕 **[Complete Technical Documentation (PDF)](BuyIt_Project_Documentation.pdf)** | 📖 **[Markdown Report](PROJECT_DOCUMENTATION.md)** | 🌐 **[Interactive Web Report](docs/project_report.html)**
 
 ---
 
