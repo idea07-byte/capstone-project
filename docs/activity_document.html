@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ONLINE SHOPPING AND MULTI-VENDOR E-COMMERCE SYSTEM</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      color: #000000;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.5;
+    }
+
+    /* Fixed A4 Page Container */
+    .page {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      margin: 0 auto 10mm auto;
+      background: #ffffff;
+      padding: 18mm 20mm 16mm 20mm;
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+      margin-bottom: 0;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        height: 297mm;
+        max-height: 297mm;
+        overflow: hidden;
+      }
+    }
+
+    /* Page 1 Title Styling */
+    .p1-header {
+      text-align: center;
+      margin-top: 15mm;
+      margin-bottom: 25mm;
+    }
+    .p1-title {
+      font-size: 14pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      color: #000000;
+    }
+    .p1-subtitle {
+      font-size: 11pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      color: #000000;
+    }
+    .p1-doc {
+      font-size: 11pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      color: #000000;
+    }
+    .p1-by {
+      font-size: 10pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      color: #000000;
+    }
+    .p1-name {
+      font-size: 11pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      color: #000000;
+    }
+    .p1-year {
+      font-size: 10.5pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      color: #000000;
+    }
+    .p1-dept {
+      font-size: 10.5pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      color: #000000;
+    }
+    .p1-college {
+      font-size: 10.5pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 0;
+      color: #000000;
+    }
+
+    /* Index Page Table */
+    .index-title {
+      text-align: center;
+      font-size: 11pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      margin-top: 15mm;
+    }
+    .index-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 10pt;
+    }
+    .index-table th, .index-table td {
+      border: 1px solid #000000;
+      padding: 6px 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .index-table th {
+      font-weight: bold;
+    }
+    .index-table th.col-sno, .index-table td.col-sno {
+      width: 14%;
+      text-align: center;
+    }
+    .index-table th.col-content, .index-table td.col-content {
+      width: 66%;
+    }
+    .index-table th.col-page, .index-table td.col-page {
+      width: 20%;
+      text-align: center;
+    }
+
+    /* Page Headings */
+    .page-title {
+      text-align: center;
+      font-size: 12pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-top: 0;
+      margin-bottom: 14px;
+      color: #000000;
+    }
+
+    /* Paragraphs */
+    p {
+      margin-top: 0;
+      margin-bottom: 14px;
+      text-align: justify;
+      line-height: 1.45;
+      font-size: 10.2pt;
+    }
+
+    /* Schema Mapping Rules list */
+    .rule-title {
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 2px;
+      font-size: 10.2pt;
+    }
+    .rule-body {
+      margin-bottom: 10px;
+      text-align: justify;
+      line-height: 1.4;
+      font-size: 10pt;
+    }
+
+    /* Data Dictionary Tables */
+    .table-caption {
+      font-size: 10.5pt;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      color: #000000;
+      text-align: left;
+    }
+    .dict-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 9pt;
+      line-height: 1.35;
+      margin-bottom: 10px;
+    }
+    .dict-table th, .dict-table td {
+      border: 1px solid #000000;
+      padding: 3.5px 7px;
+      text-align: left;
+      vertical-align: middle;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    .dict-table th {
+      font-weight: bold;
+      background: #ffffff;
+    }
+    .dict-table th:nth-child(1), .dict-table td:nth-child(1) {
+      width: 33%;
+    }
+    .dict-table th:nth-child(2), .dict-table td:nth-child(2) {
+      width: 27%;
+    }
+    .dict-table th:nth-child(3), .dict-table td:nth-child(3) {
+      width: 40%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="page">
+    <div class="p1-header">
+      <div class="p1-title">ONLINE SHOPPING AND MULTI-VENDOR E-COMMERCE SYSTEM</div>
+      <div class="p1-subtitle">CAPSTONE PROJECT</div>
+      <div class="p1-doc">ACTIVITY DOCUMENT</div>
+      <div class="p1-by">SUBMITTED BY</div>
+      <div class="p1-name">SHYAM M</div>
+      <div class="p1-year">YEAR: III</div>
+      <div class="p1-dept">DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</div>
+      <div class="p1-college">J.J COLLEGE OF ENGINEERING AND TECHNOLOGY</div>
+    </div>
+
+    <div class="index-title">INDEX PAGE</div>
+    <table class="index-table">
+      <thead>
+        <tr>
+          <th class="col-sno">S.No</th>
+          <th class="col-content">CONTENTS</th>
+          <th class="col-page">PAGE NO.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Traditional ER Diagram</td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Traditional ER Diagram Explanation</td>
+          <td>3</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Schema Mapping Rules</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Data Dictionary</td>
+          <td>6 onwards</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page" style="padding: 10mm 15mm 8mm 15mm;">
+    
+<svg viewBox="0 0 1000 1150" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#ffffff; font-family: Arial, Helvetica, sans-serif;">
+  <defs>
+    <style>
+      .title { font-size: 16px; font-weight: bold; fill: #000000; text-anchor: middle; letter-spacing: 0.5px; }
+      
+      /* Peter Chen Standard Shapes */
+      .entity-rect { fill: #ffffff; stroke: #000000; stroke-width: 1.4px; }
+      .rel-diamond { fill: #ffffff; stroke: #000000; stroke-width: 1.3px; }
+      .attr-oval { fill: #ffffff; stroke: #000000; stroke-width: 1.0px; }
+      .attr-pk-oval { fill: #ffffff; stroke: #000000; stroke-width: 1.4px; }
+      
+      /* Connector lines */
+      .conn-line { stroke: #000000; stroke-width: 1.1px; }
+      .attr-line { stroke: #444444; stroke-width: 0.85px; }
+      
+      /* Typography */
+      .entity-txt { font-size: 10px; font-weight: bold; fill: #000000; text-anchor: middle; dominant-baseline: central; }
+      .rel-txt { font-size: 7.5px; font-weight: bold; fill: #000000; text-anchor: middle; dominant-baseline: central; }
+      .attr-txt { font-size: 7.5px; fill: #111111; text-anchor: middle; dominant-baseline: central; }
+      .attr-pk-txt { font-size: 7.5px; font-weight: bold; text-decoration: underline; fill: #000000; text-anchor: middle; dominant-baseline: central; }
+      .card-txt { font-size: 9px; font-weight: bold; fill: #000000; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="500" y="24" class="title">TRADITIONAL ER DIAGRAM</text>
+
+  <!-- ================= CONNECTING LINES ================= -->
+  
+  <!-- USERS <-> NOTIFICATIONS (1:N) -->
+  <line x1="335" y1="185" x2="225" y2="120" class="conn-line" />
+  <line x1="225" y1="120" x2="160" y2="120" class="conn-line" />
+  <text x="315" y="165" class="card-txt">1</text>
+  <text x="175" y="112" class="card-txt">N</text>
+
+  <!-- USERS <-> ADDRESSES (1:N) -->
+  <line x1="335" y1="210" x2="225" y2="275" class="conn-line" />
+  <line x1="225" y1="275" x2="150" y2="275" class="conn-line" />
+  <text x="300" y="225" class="card-txt">1</text>
+  <text x="165" y="268" class="card-txt">N</text>
+
+  <!-- USERS <-> VENDORS (1:1) -->
+  <line x1="435" y1="205" x2="520" y2="205" class="conn-line" />
+  <line x1="520" y1="205" x2="620" y2="205" class="conn-line" />
+  <text x="445" y="198" class="card-txt">1</text>
+  <text x="605" y="198" class="card-txt">1</text>
+
+  <!-- VENDORS <-> PRODUCTS (1:N) -->
+  <line x1="670" y1="230" x2="670" y2="330" class="conn-line" />
+  <line x1="670" y1="330" x2="635" y2="445" class="conn-line" />
+  <text x="680" y="250" class="card-txt">1</text>
+  <text x="645" y="430" class="card-txt">N</text>
+
+  <!-- CATEGORIES <-> PRODUCTS (1:N) -->
+  <line x1="770" y1="355" x2="725" y2="385" class="conn-line" />
+  <line x1="725" y1="385" x2="675" y2="445" class="conn-line" />
+  <text x="755" y="365" class="card-txt">1</text>
+  <text x="685" y="432" class="card-txt">N</text>
+
+  <!-- BRANDS <-> PRODUCTS (1:N) -->
+  <line x1="770" y1="465" x2="725" y2="465" class="conn-line" />
+  <line x1="725" y1="465" x2="685" y2="465" class="conn-line" />
+  <text x="750" y="455" class="card-txt">1</text>
+  <text x="695" y="455" class="card-txt">N</text>
+
+  <!-- PRODUCTS <-> PRODUCT_IMAGES (1:N) -->
+  <line x1="675" y1="495" x2="725" y2="545" class="conn-line" />
+  <line x1="725" y1="545" x2="765" y2="560" class="conn-line" />
+  <text x="685" y="515" class="card-txt">1</text>
+  <text x="748" y="550" class="card-txt">N</text>
+
+  <!-- USERS <-> CART (1:1) -->
+  <line x1="340" y1="230" x2="200" y2="400" class="conn-line" />
+  <line x1="200" y1="400" x2="135" y2="425" class="conn-line" />
+  <text x="315" y="250" class="card-txt">1</text>
+  <text x="145" y="418" class="card-txt">1</text>
+
+  <!-- CART <-> CART_ITEMS (1:N) -->
+  <line x1="135" y1="445" x2="190" y2="465" class="conn-line" />
+  <line x1="190" y1="465" x2="270" y2="475" class="conn-line" />
+  <text x="145" y="440" class="card-txt">1</text>
+  <text x="250" y="468" class="card-txt">N</text>
+
+  <!-- PRODUCTS <-> CART_ITEMS (1:N) -->
+  <line x1="575" y1="470" x2="470" y2="470" class="conn-line" />
+  <line x1="470" y1="470" x2="370" y2="475" class="conn-line" />
+  <text x="560" y="462" class="card-txt">1</text>
+  <text x="385" y="468" class="card-txt">N</text>
+
+  <!-- USERS <-> WISHLIST (1:1) -->
+  <line x1="345" y1="230" x2="185" y2="550" class="conn-line" />
+  <line x1="185" y1="550" x2="135" y2="580" class="conn-line" />
+  <text x="315" y="275" class="card-txt">1</text>
+  <text x="145" y="572" class="card-txt">1</text>
+
+  <!-- WISHLIST <-> WISHLIST_ITEMS (1:N) -->
+  <line x1="135" y1="600" x2="190" y2="615" class="conn-line" />
+  <line x1="190" y1="615" x2="265" y2="625" class="conn-line" />
+  <text x="145" y="595" class="card-txt">1</text>
+  <text x="245" y="618" class="card-txt">N</text>
+
+  <!-- PRODUCTS <-> WISHLIST_ITEMS (1:N) -->
+  <line x1="585" y1="495" x2="470" y2="580" class="conn-line" />
+  <line x1="470" y1="580" x2="375" y2="625" class="conn-line" />
+  <text x="570" y="515" class="card-txt">1</text>
+  <text x="390" y="618" class="card-txt">N</text>
+
+  <!-- USERS <-> REVIEWS (1:N) & PRODUCTS <-> REVIEWS (1:N) -->
+  <line x1="385" y1="230" x2="385" y2="280" class="conn-line" />
+  <line x1="385" y1="280" x2="430" y2="330" class="conn-line" />
+  <text x="395" y="250" class="card-txt">1</text>
+  <text x="415" y="320" class="card-txt">N</text>
+
+  <line x1="580" y1="445" x2="525" y2="375" class="conn-line" />
+  <line x1="525" y1="375" x2="500" y2="355" class="conn-line" />
+  <text x="560" y="425" class="card-txt">1</text>
+  <text x="515" y="365" class="card-txt">N</text>
+
+  <!-- USERS <-> ORDERS (1:N) -->
+  <line x1="410" y1="230" x2="410" y2="665" class="conn-line" />
+  <line x1="410" y1="665" x2="470" y2="760" class="conn-line" />
+  <text x="418" y="270" class="card-txt">1</text>
+  <text x="455" y="745" class="card-txt">N</text>
+
+  <!-- ORDERS <-> ADDRESSES (N:1) -->
+  <line x1="455" y1="785" x2="250" y2="785" class="conn-line" />
+  <line x1="250" y1="785" x2="95" y2="300" class="conn-line" />
+  <text x="435" y="777" class="card-txt">N</text>
+  <text x="105" y="320" class="card-txt">1</text>
+
+  <!-- ORDERS <-> ORDER_ITEMS (1:N) -->
+  <line x1="555" y1="785" x2="640" y2="785" class="conn-line" />
+  <line x1="640" y1="785" x2="725" y2="785" class="conn-line" />
+  <text x="568" y="777" class="card-txt">1</text>
+  <text x="708" y="777" class="card-txt">N</text>
+
+  <!-- PRODUCTS <-> ORDER_ITEMS (1:N) -->
+  <line x1="645" y1="495" x2="705" y2="655" class="conn-line" />
+  <line x1="705" y1="655" x2="755" y2="760" class="conn-line" />
+  <text x="655" y="525" class="card-txt">1</text>
+  <text x="742" y="745" class="card-txt">N</text>
+
+  <!-- ORDERS <-> PAYMENTS (1:1) -->
+  <line x1="475" y1="810" x2="400" y2="890" class="conn-line" />
+  <line x1="400" y1="890" x2="335" y2="960" class="conn-line" />
+  <text x="460" y="835" class="card-txt">1</text>
+  <text x="350" y="950" class="card-txt">1</text>
+
+  <!-- ORDERS <-> COUPONS (N:1) -->
+  <line x1="535" y1="810" x2="590" y2="890" class="conn-line" />
+  <line x1="590" y1="890" x2="650" y2="960" class="conn-line" />
+  <text x="545" y="835" class="card-txt">N</text>
+  <text x="635" y="950" class="card-txt">1</text>
+
+
+  <!-- ================= RELATIONSHIP DIAMONDS ================= -->
+
+  <!-- R1: RECEIVES (USERS -> NOTIFICATIONS) -->
+  <g transform="translate(225, 120)">
+    <polygon points="0,-14 26,0 0,14 -26,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">RECEIVES</text>
+  </g>
+
+  <!-- R2: SAVES (USERS -> ADDRESSES) -->
+  <g transform="translate(225, 275)">
+    <polygon points="0,-14 24,0 0,14 -24,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">SAVES</text>
+  </g>
+
+  <!-- R3: OPERATES (USERS -> VENDORS) -->
+  <g transform="translate(520, 205)">
+    <polygon points="0,-14 28,0 0,14 -28,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">OPERATES</text>
+  </g>
+
+  <!-- R4: SUPPLIES (VENDORS -> PRODUCTS) -->
+  <g transform="translate(670, 330)">
+    <polygon points="0,-14 28,0 0,14 -28,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">SUPPLIES</text>
+  </g>
+
+  <!-- R5: CLASSIFIES (CATEGORIES -> PRODUCTS) -->
+  <g transform="translate(725, 385)">
+    <polygon points="0,-14 30,0 0,14 -30,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">CLASSIFIES</text>
+  </g>
+
+  <!-- R6: MANUFACTURES (BRANDS -> PRODUCTS) -->
+  <g transform="translate(725, 465)">
+    <polygon points="0,-14 32,0 0,14 -32,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">MANUFACTURES</text>
+  </g>
+
+  <!-- R7: HAS_IMG (PRODUCTS -> PRODUCT_IMAGES) -->
+  <g transform="translate(725, 545)">
+    <polygon points="0,-14 26,0 0,14 -26,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">HAS_IMG</text>
+  </g>
+
+  <!-- R8: OWNS (USERS -> CART) -->
+  <g transform="translate(200, 400)">
+    <polygon points="0,-13 22,0 0,13 -22,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">OWNS</text>
+  </g>
+
+  <!-- R9: HOLDS (CART -> CART_ITEMS) -->
+  <g transform="translate(190, 465)">
+    <polygon points="0,-13 22,0 0,13 -22,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">HOLDS</text>
+  </g>
+
+  <!-- R10: IN_CART (PRODUCTS -> CART_ITEMS) -->
+  <g transform="translate(470, 470)">
+    <polygon points="0,-13 25,0 0,13 -25,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">IN_CART</text>
+  </g>
+
+  <!-- R11: OWNS (USERS -> WISHLIST) -->
+  <g transform="translate(185, 550)">
+    <polygon points="0,-13 22,0 0,13 -22,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">OWNS</text>
+  </g>
+
+  <!-- R12: STORES (WISHLIST -> WISHLIST_ITEMS) -->
+  <g transform="translate(190, 615)">
+    <polygon points="0,-13 24,0 0,13 -24,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">STORES</text>
+  </g>
+
+  <!-- R13: IN_WISH (PRODUCTS -> WISHLIST_ITEMS) -->
+  <g transform="translate(470, 580)">
+    <polygon points="0,-13 26,0 0,13 -26,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">IN_WISH</text>
+  </g>
+
+  <!-- R14: WRITES (USERS -> REVIEWS) -->
+  <g transform="translate(385, 280)">
+    <polygon points="0,-13 24,0 0,13 -24,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">WRITES</text>
+  </g>
+
+  <!-- R15: REVIEWED (PRODUCTS -> REVIEWS) -->
+  <g transform="translate(515, 365)">
+    <polygon points="0,-13 28,0 0,13 -28,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">REVIEWED</text>
+  </g>
+
+  <!-- R16: PLACES (USERS -> ORDERS) -->
+  <g transform="translate(410, 665)">
+    <polygon points="0,-14 26,0 0,14 -26,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">PLACES</text>
+  </g>
+
+  <!-- R17: SHIP_TO (ORDERS -> ADDRESSES) -->
+  <g transform="translate(250, 785)">
+    <polygon points="0,-14 26,0 0,14 -26,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">SHIP_TO</text>
+  </g>
+
+  <!-- R18: CONSISTS_OF (ORDERS -> ORDER_ITEMS) -->
+  <g transform="translate(640, 785)">
+    <polygon points="0,-14 34,0 0,14 -34,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">CONSISTS_OF</text>
+  </g>
+
+  <!-- R19: ORDERED (PRODUCTS -> ORDER_ITEMS) -->
+  <g transform="translate(705, 655)">
+    <polygon points="0,-14 27,0 0,14 -27,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">ORDERED</text>
+  </g>
+
+  <!-- R20: PAID_VIA (ORDERS -> PAYMENTS) -->
+  <g transform="translate(400, 890)">
+    <polygon points="0,-14 27,0 0,14 -27,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">PAID_VIA</text>
+  </g>
+
+  <!-- R21: APPLIES (ORDERS -> COUPONS) -->
+  <g transform="translate(590, 890)">
+    <polygon points="0,-14 26,0 0,14 -26,0" class="rel-diamond" />
+    <text x="0" y="0" class="rel-txt">APPLIES</text>
+  </g>
+
+
+  <!-- ================= ENTITY BOXES ================= -->
+
+  <!-- E1: USERS -->
+  <g transform="translate(335, 185)">
+    <rect x="0" y="0" width="100" height="45" class="entity-rect" />
+    <text x="50" y="22.5" class="entity-txt">USERS</text>
+  </g>
+  <!-- USERS Attributes -->
+  <line x1="345" y1="185" x2="295" y2="155" class="attr-line" />
+  <ellipse cx="270" cy="148" rx="28" ry="9" class="attr-pk-oval" />
+  <text x="270" y="148" class="attr-pk-txt">user_id</text>
+
+  <line x1="365" y1="185" x2="335" y2="135" class="attr-line" />
+  <ellipse cx="325" cy="126" rx="22" ry="9" class="attr-oval" />
+  <text x="325" y="126" class="attr-txt">name</text>
+
+  <line x1="385" y1="185" x2="385" y2="130" class="attr-line" />
+  <ellipse cx="385" cy="120" rx="24" ry="9" class="attr-oval" />
+  <text x="385" y="120" class="attr-txt">email</text>
+
+  <line x1="405" y1="185" x2="435" y2="135" class="attr-line" />
+  <ellipse cx="445" cy="126" rx="22" ry="9" class="attr-oval" />
+  <text x="445" y="126" class="attr-txt">phone</text>
+
+  <line x1="425" y1="185" x2="475" y2="155" class="attr-line" />
+  <ellipse cx="500" cy="148" rx="26" ry="9" class="attr-oval" />
+  <text x="500" y="148" class="attr-txt">password</text>
+
+  <line x1="435" y1="215" x2="480" y2="235" class="attr-line" />
+  <ellipse cx="500" cy="242" rx="20" ry="9" class="attr-oval" />
+  <text x="500" y="242" class="attr-txt">role</text>
+
+  <line x1="345" y1="230" x2="310" y2="255" class="attr-line" />
+  <ellipse cx="295" cy="265" rx="22" ry="9" class="attr-oval" />
+  <text x="295" y="265" class="attr-txt">status</text>
+
+
+  <!-- E2: NOTIFICATIONS -->
+  <g transform="translate(45, 95)">
+    <rect x="0" y="0" width="115" height="45" class="entity-rect" />
+    <text x="57.5" y="22.5" class="entity-txt">NOTIFICATIONS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="102" y1="95" x2="102" y2="60" class="attr-line" />
+  <ellipse cx="102" cy="50" rx="38" ry="9" class="attr-pk-oval" />
+  <text x="102" y="50" class="attr-pk-txt">notification_id</text>
+
+  <line x1="45" y1="110" x2="25" y2="95" class="attr-line" />
+  <ellipse cx="18" cy="85" rx="16" ry="9" class="attr-oval" />
+  <text x="18" y="85" class="attr-txt">title</text>
+
+  <line x1="45" y1="125" x2="25" y2="140" class="attr-line" />
+  <ellipse cx="20" cy="150" rx="20" ry="9" class="attr-oval" />
+  <text x="20" y="150" class="attr-txt">message</text>
+
+  <line x1="102" y1="140" x2="102" y2="165" class="attr-line" />
+  <ellipse cx="102" cy="175" rx="24" ry="9" class="attr-oval" />
+  <text x="102" y="175" class="attr-txt">is_read</text>
+
+
+  <!-- E3: ADDRESSES -->
+  <g transform="translate(45, 255)">
+    <rect x="0" y="0" width="105" height="45" class="entity-rect" />
+    <text x="52.5" y="22.5" class="entity-txt">ADDRESSES</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="45" y1="265" x2="25" y2="250" class="attr-line" />
+  <ellipse cx="20" cy="240" rx="26" ry="9" class="attr-pk-oval" />
+  <text x="20" y="240" class="attr-pk-txt">address_id</text>
+
+  <line x1="45" y1="285" x2="25" y2="300" class="attr-line" />
+  <ellipse cx="20" cy="310" rx="24" ry="9" class="attr-oval" />
+  <text x="20" y="310" class="attr-txt">full_name</text>
+
+  <line x1="97" y1="300" x2="97" y2="330" class="attr-line" />
+  <ellipse cx="97" cy="340" rx="28" ry="9" class="attr-oval" />
+  <text x="97" y="340" class="attr-txt">address_line</text>
+
+  <line x1="135" y1="300" x2="155" y2="330" class="attr-line" />
+  <ellipse cx="160" cy="340" rx="20" ry="9" class="attr-oval" />
+  <text x="160" y="340" class="attr-txt">city</text>
+
+
+  <!-- E4: VENDORS -->
+  <g transform="translate(620, 185)">
+    <rect x="0" y="0" width="100" height="45" class="entity-rect" />
+    <text x="50" y="22.5" class="entity-txt">VENDORS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="670" y1="185" x2="670" y2="145" class="attr-line" />
+  <ellipse cx="670" cy="135" rx="30" ry="9" class="attr-pk-oval" />
+  <text x="670" y="135" class="attr-pk-txt">vendor_id</text>
+
+  <line x1="710" y1="185" x2="745" y2="150" class="attr-line" />
+  <ellipse cx="770" cy="140" rx="34" ry="9" class="attr-oval" />
+  <text x="770" y="140" class="attr-txt">business_name</text>
+
+  <line x1="720" y1="205" x2="775" y2="190" class="attr-line" />
+  <ellipse cx="805" cy="185" rx="30" ry="9" class="attr-oval" />
+  <text x="805" y="185" class="attr-txt">owner_name</text>
+
+  <line x1="720" y1="220" x2="775" y2="230" class="attr-line" />
+  <ellipse cx="800" cy="235" rx="20" ry="9" class="attr-oval" />
+  <text x="800" y="235" class="attr-txt">city</text>
+
+  <line x1="695" y1="230" x2="735" y2="265" class="attr-line" />
+  <ellipse cx="760" cy="275" rx="34" ry="9" class="attr-oval" />
+  <text x="760" y="275" class="attr-txt">approval_status</text>
+
+
+  <!-- E5: CATEGORIES -->
+  <g transform="translate(770, 335)">
+    <rect x="0" y="0" width="100" height="42" class="entity-rect" />
+    <text x="50" y="21" class="entity-txt">CATEGORIES</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="870" y1="345" x2="910" y2="335" class="attr-line" />
+  <ellipse cx="940" cy="330" rx="32" ry="9" class="attr-pk-oval" />
+  <text x="940" y="330" class="attr-pk-txt">category_id</text>
+
+  <line x1="870" y1="365" x2="915" y2="375" class="attr-line" />
+  <ellipse cx="935" cy="380" rx="18" ry="9" class="attr-oval" />
+  <text x="935" y="380" class="attr-txt">name</text>
+
+
+  <!-- E6: BRANDS -->
+  <g transform="translate(770, 440)">
+    <rect x="0" y="0" width="90" height="42" class="entity-rect" />
+    <text x="45" y="21" class="entity-txt">BRANDS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="860" y1="450" x2="905" y2="440" class="attr-line" />
+  <ellipse cx="935" cy="435" rx="28" ry="9" class="attr-pk-oval" />
+  <text x="935" y="435" class="attr-pk-txt">brand_id</text>
+
+  <line x1="860" y1="470" x2="910" y2="480" class="attr-line" />
+  <ellipse cx="930" cy="485" rx="18" ry="9" class="attr-oval" />
+  <text x="930" y="485" class="attr-txt">name</text>
+
+
+  <!-- E7: PRODUCT_IMAGES -->
+  <g transform="translate(765, 540)">
+    <rect x="0" y="0" width="115" height="42" class="entity-rect" />
+    <text x="57.5" y="21" class="entity-txt">PRODUCT_IMAGES</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="880" y1="550" x2="915" y2="540" class="attr-line" />
+  <ellipse cx="940" cy="535" rx="26" ry="9" class="attr-pk-oval" />
+  <text x="940" y="535" class="attr-pk-txt">image_id</text>
+
+  <line x1="880" y1="570" x2="915" y2="580" class="attr-line" />
+  <ellipse cx="942" cy="585" rx="26" ry="9" class="attr-oval" />
+  <text x="942" y="585" class="attr-txt">image_url</text>
+
+
+  <!-- E8: PRODUCTS -->
+  <g transform="translate(575, 445)">
+    <rect x="0" y="0" width="110" height="50" class="entity-rect" />
+    <text x="55" y="25" class="entity-txt">PRODUCTS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="585" y1="445" x2="550" y2="415" class="attr-line" />
+  <ellipse cx="525" cy="405" rx="28" ry="9" class="attr-pk-oval" />
+  <text x="525" y="405" class="attr-pk-txt">product_id</text>
+
+  <line x1="620" y1="445" x2="620" y2="415" class="attr-line" />
+  <ellipse cx="620" cy="405" rx="20" ry="9" class="attr-oval" />
+  <text x="620" y="405" class="attr-txt">name</text>
+
+  <line x1="660" y1="445" x2="685" y2="415" class="attr-line" />
+  <ellipse cx="700" cy="405" rx="20" ry="9" class="attr-oval" />
+  <text x="700" y="405" class="attr-txt">price</text>
+
+  <line x1="590" y1="495" x2="560" y2="525" class="attr-line" />
+  <ellipse cx="540" cy="535" rx="24" ry="9" class="attr-oval" />
+  <text x="540" y="535" class="attr-txt">discount</text>
+
+  <line x1="630" y1="495" x2="630" y2="530" class="attr-line" />
+  <ellipse cx="630" cy="540" rx="32" ry="9" class="attr-oval" />
+  <text x="630" y="540" class="attr-txt">stock_quantity</text>
+
+  <line x1="670" y1="495" x2="695" y2="525" class="attr-line" />
+  <ellipse cx="710" cy="535" rx="18" ry="9" class="attr-oval" />
+  <text x="710" y="535" class="attr-txt">sku</text>
+
+
+  <!-- E9: REVIEWS -->
+  <g transform="translate(425, 330)">
+    <rect x="0" y="0" width="85" height="42" class="entity-rect" />
+    <text x="42.5" y="21" class="entity-txt">REVIEWS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="425" y1="345" x2="385" y2="340" class="attr-line" />
+  <ellipse cx="355" cy="338" rx="28" ry="9" class="attr-pk-oval" />
+  <text x="355" y="338" class="attr-pk-txt">review_id</text>
+
+  <line x1="450" y1="372" x2="435" y2="400" class="attr-line" />
+  <ellipse cx="425" cy="410" rx="20" ry="9" class="attr-oval" />
+  <text x="425" y="410" class="attr-txt">rating</text>
+
+  <line x1="480" y1="372" x2="495" y2="400" class="attr-line" />
+  <ellipse cx="505" cy="410" rx="24" ry="9" class="attr-oval" />
+  <text x="505" y="410" class="attr-txt">comment</text>
+
+
+  <!-- E10: CART -->
+  <g transform="translate(50, 420)">
+    <rect x="0" y="0" width="85" height="40" class="entity-rect" />
+    <text x="42.5" y="20" class="entity-txt">CART</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="50" y1="435" x2="25" y2="430" class="attr-line" />
+  <ellipse cx="20" cy="425" rx="22" ry="9" class="attr-pk-oval" />
+  <text x="20" y="425" class="attr-pk-txt">cart_id</text>
+
+
+  <!-- E11: CART_ITEMS -->
+  <g transform="translate(270, 455)">
+    <rect x="0" y="0" width="100" height="45" class="entity-rect" />
+    <text x="50" y="22.5" class="entity-txt">CART_ITEMS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="320" y1="455" x2="320" y2="425" class="attr-line" />
+  <ellipse cx="320" cy="415" rx="32" ry="9" class="attr-pk-oval" />
+  <text x="320" y="415" class="attr-pk-txt">cart_item_id</text>
+
+  <line x1="300" y1="500" x2="285" y2="525" class="attr-line" />
+  <ellipse cx="275" cy="535" rx="22" ry="9" class="attr-oval" />
+  <text x="275" y="535" class="attr-txt">quantity</text>
+
+  <line x1="340" y1="500" x2="355" y2="525" class="attr-line" />
+  <ellipse cx="365" cy="535" rx="20" ry="9" class="attr-oval" />
+  <text x="365" y="535" class="attr-txt">price</text>
+
+
+  <!-- E12: WISHLIST -->
+  <g transform="translate(50, 575)">
+    <rect x="0" y="0" width="85" height="40" class="entity-rect" />
+    <text x="42.5" y="20" class="entity-txt">WISHLIST</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="50" y1="590" x2="25" y2="585" class="attr-line" />
+  <ellipse cx="20" cy="580" rx="24" ry="9" class="attr-pk-oval" />
+  <text x="20" y="580" class="attr-pk-txt">wishlist_id</text>
+
+
+  <!-- E13: WISHLIST_ITEMS -->
+  <g transform="translate(265, 605)">
+    <rect x="0" y="0" width="110" height="45" class="entity-rect" />
+    <text x="55" y="22.5" class="entity-txt">WISHLIST_ITEMS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="320" y1="650" x2="320" y2="685" class="attr-line" />
+  <ellipse cx="320" cy="695" rx="36" ry="9" class="attr-pk-oval" />
+  <text x="320" y="695" class="attr-pk-txt">wishlist_item_id</text>
+
+
+  <!-- E14: ORDERS -->
+  <g transform="translate(455, 760)">
+    <rect x="0" y="0" width="100" height="50" class="entity-rect" />
+    <text x="50" y="25" class="entity-txt">ORDERS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="475" y1="760" x2="455" y2="730" class="attr-line" />
+  <ellipse cx="440" cy="720" rx="26" ry="9" class="attr-pk-oval" />
+  <text x="440" y="720" class="attr-pk-txt">order_id</text>
+
+  <line x1="505" y1="760" x2="505" y2="728" class="attr-line" />
+  <ellipse cx="505" cy="718" rx="28" ry="9" class="attr-oval" />
+  <text x="505" y="718" class="attr-txt">total_amount</text>
+
+  <line x1="535" y1="760" x2="560" y2="730" class="attr-line" />
+  <ellipse cx="575" cy="720" rx="28" ry="9" class="attr-oval" />
+  <text x="575" y="720" class="attr-txt">final_amount</text>
+
+  <line x1="475" y1="810" x2="450" y2="835" class="attr-line" />
+  <ellipse cx="435" cy="845" rx="30" ry="9" class="attr-oval" />
+  <text x="435" y="845" class="attr-txt">order_status</text>
+
+  <line x1="535" y1="810" x2="560" y2="835" class="attr-line" />
+  <ellipse cx="580" cy="845" rx="32" ry="9" class="attr-oval" />
+  <text x="580" y="845" class="attr-txt">payment_status</text>
+
+
+  <!-- E15: ORDER_ITEMS -->
+  <g transform="translate(725, 760)">
+    <rect x="0" y="0" width="105" height="50" class="entity-rect" />
+    <text x="52.5" y="25" class="entity-txt">ORDER_ITEMS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="777" y1="760" x2="777" y2="725" class="attr-line" />
+  <ellipse cx="777" cy="715" rx="34" ry="9" class="attr-pk-oval" />
+  <text x="777" y="715" class="attr-pk-txt">order_item_id</text>
+
+  <line x1="830" y1="770" x2="865" y2="755" class="attr-line" />
+  <ellipse cx="885" cy="750" rx="22" ry="9" class="attr-oval" />
+  <text x="885" y="750" class="attr-txt">quantity</text>
+
+  <line x1="830" y1="785" x2="865" y2="790" class="attr-line" />
+  <ellipse cx="885" cy="792" rx="20" ry="9" class="attr-oval" />
+  <text x="885" y="792" class="attr-txt">price</text>
+
+  <line x1="830" y1="800" x2="865" y2="825" class="attr-line" />
+  <ellipse cx="888" cy="835" rx="24" ry="9" class="attr-oval" />
+  <text x="888" y="835" class="attr-txt">subtotal</text>
+
+
+  <!-- E16: PAYMENTS -->
+  <g transform="translate(265, 960)">
+    <rect x="0" y="0" width="95" height="50" class="entity-rect" />
+    <text x="47.5" y="25" class="entity-txt">PAYMENTS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="265" y1="975" x2="225" y2="960" class="attr-line" />
+  <ellipse cx="200" cy="950" rx="30" ry="9" class="attr-pk-oval" />
+  <text x="200" y="950" class="attr-pk-txt">payment_id</text>
+
+  <line x1="265" y1="995" x2="225" y2="1005" class="attr-line" />
+  <ellipse cx="200" cy="1010" rx="22" ry="9" class="attr-oval" />
+  <text x="200" y="1010" class="attr-txt">amount</text>
+
+  <line x1="312" y1="1010" x2="312" y2="1040" class="attr-line" />
+  <ellipse cx="312" cy="1050" rx="34" ry="9" class="attr-oval" />
+  <text x="312" y="1050" class="attr-txt">payment_method</text>
+
+  <line x1="345" y1="1010" x2="370" y2="1040" class="attr-line" />
+  <ellipse cx="385" cy="1050" rx="32" ry="9" class="attr-oval" />
+  <text x="385" y="1050" class="attr-txt">payment_status</text>
+
+
+  <!-- E17: COUPONS -->
+  <g transform="translate(640, 960)">
+    <rect x="0" y="0" width="95" height="50" class="entity-rect" />
+    <text x="47.5" y="25" class="entity-txt">COUPONS</text>
+  </g>
+  <!-- Attributes -->
+  <line x1="640" y1="975" x2="600" y2="965" class="attr-line" />
+  <ellipse cx="575" cy="960" rx="28" ry="9" class="attr-pk-oval" />
+  <text x="575" y="960" class="attr-pk-txt">coupon_id</text>
+
+  <line x1="660" y1="1010" x2="645" y2="1040" class="attr-line" />
+  <ellipse cx="635" cy="1050" rx="30" ry="9" class="attr-oval" />
+  <text x="635" y="1050" class="attr-txt">coupon_code</text>
+
+  <line x1="710" y1="1010" x2="720" y2="1040" class="attr-line" />
+  <ellipse cx="730" cy="1050" rx="30" ry="9" class="attr-oval" />
+  <text x="730" y="1050" class="attr-txt">discount_value</text>
+
+  <line x1="735" y1="980" x2="770" y2="980" class="attr-line" />
+  <ellipse cx="795" cy="980" rx="22" ry="9" class="attr-oval" />
+  <text x="795" y="980" class="attr-txt">status</text>
+
+</svg>
+
+  </div>
+
+  <!-- ==================== PAGE 3 ==================== -->
+  <div class="page">
+    <div class="page-title">TRADITIONAL ER DIAGRAM EXPLANATION</div>
+
+    <p>The Traditional Entity Relationship (ER) Diagram represents the overall database structure of the Online Shopping and Multi-Vendor E-Commerce System (BuyIt Marketplace). It illustrates the major entities, their attributes, relationships, and cardinalities used in the system. The ER Diagram helps in understanding how different entities are connected before converting the design into relational database tables.</p>
+
+    <p>The USERS entity is one of the main entities in the system. It stores information such as user ID, name, email, phone number, password, role, status, and account creation details. Users can act as customers, vendors, or system administrators depending on their assigned role. A customer can place multiple orders, maintain a personal cart and wishlist, save delivery addresses, receive notifications, and write product reviews.</p>
+
+    <p>The VENDORS entity stores business and merchant information for registered sellers on the marketplace. Each vendor record is associated with a user through the user_id in a one-to-one relationship. The entity contains business name, owner name, business description, address, city, state, pincode, and administrative approval status. A vendor can list and supply multiple products in the catalog.</p>
+
+    <p>The CATEGORIES entity organizes marketplace products into logical departments such as Electronics, Mobiles, Fashion, Home, and Books. It includes category name, description, image URL, and status. Each category can contain multiple products, establishing a one-to-many relationship with the products entity.</p>
+
+    <p>The BRANDS entity stores information about manufacturers and brands associated with marketplace items. It includes brand name, description, brand logo URL, and active status. Multiple products can belong to a specific brand.</p>
+
+    <p>The PRODUCTS entity stores important product catalog details such as product name, description, price, discount percentage, stock quantity, SKU code, display image, and availability status. Products form the central part of the e-commerce system. Each product belongs to a specific vendor, category, and brand, and can have multiple gallery images, reviews, and order items.</p>
+
+    <p>The PRODUCT_IMAGES entity stores multiple images related to products. A product can have multiple images, allowing the system to display different views and detailed gallery photos of the item to prospective buyers.</p>
+
+    <p>The ADDRESSES entity stores delivery address information created by customers. Each address record contains details such as recipient full name, phone number, address line, city, state, postal pincode, and default address flag. A user can store multiple addresses for shipping.</p>
+
+    <p>The CART entity manages active shopping sessions for customers. Each customer has one cart record connected via customer_id. The CART_ITEMS entity represents individual products placed in the cart, capturing the desired quantity and item price. Every cart item belongs to a specific cart and references a product.</p>
+  </div>
+
+  <!-- ==================== PAGE 4 ==================== -->
+  <div class="page">
+    <p>The WISHLIST entity enables customers to save products of interest for future purchase. Each customer is associated with one wishlist through customer_id. The WISHLIST_ITEMS entity maintains the junction between the wishlist and individual products, allowing users to bookmark multiple items.</p>
+
+    <p>The ORDERS entity is responsible for managing customer checkout transactions and order fulfillment. It connects the USERS entity (customer) with the ADDRESSES entity (shipping destination). Order records maintain total amount, shipping charges, discount deductions, final payable amount, payment status, and order status. A user can place multiple orders over time.</p>
+
+    <p>The ORDER_ITEMS entity records the individual product line items contained within each order. It captures an immutable historical snapshot of the purchased item, including product ID, vendor ID, product name at the time of purchase, unit price, quantity, and line-item subtotal. Each order item connects to a specific order and product.</p>
+
+    <p>The PAYMENTS entity stores payment transaction records associated with customer orders. It includes details such as payment amount, payment method (Cash on Delivery, UPI, Card, or Net Banking), payment date, payment status, and transaction reference ID. Payments are associated with orders in a one-to-one relationship to maintain rigorous financial accounting records.</p>
+
+    <p>The COUPONS entity stores promotional discount information such as unique coupon code, discount type (percentage or fixed amount), discount value, minimum order requirement, maximum discount limit, usage limits, and validity dates. Coupons can be applied during checkout to provide promotional savings.</p>
+
+    <p>The REVIEWS entity stores feedback and ratings provided by customers for products they have purchased. It includes rating score (1 to 5 stars), review comments, moderation status, and creation date. A user can write reviews for multiple products, helping prospective buyers evaluate item quality.</p>
+
+    <p>The NOTIFICATIONS entity stores system alerts and operational messages sent to users. A user can receive multiple notifications related to order confirmations, shipping updates, payment receipts, or promotional offers. Notification details include message title, body text, type, read status, and timestamp.</p>
+
+    <p>Overall, the Traditional ER Diagram provides a clear representation of the entities and relationships used in the Online Shopping and Multi-Vendor E-Commerce System. Primary Keys are used to uniquely identify records, while Foreign Keys establish relationships between related entities. The ER Diagram was later converted into relational tables using schema mapping rules, ensuring data integrity, consistency, and proper database organization.</p>
+  </div>
+
+  <!-- ==================== PAGE 5 ==================== -->
+  <div class="page">
+    <div class="page-title">SCHEMA MAPPING RULE</div>
+
+    <div class="rule-title">1. Entity to Table Mapping</div>
+    <div class="rule-body">Each entity in the ER Diagram was converted into a separate relational table. For example, USERS, VENDORS, CATEGORIES, BRANDS, PRODUCTS, ORDERS, and PAYMENTS were converted into database tables.</div>
+
+    <div class="rule-title">2. Attribute to Column Mapping</div>
+    <div class="rule-body">Each attribute of an entity was converted into a column in the corresponding table, retaining standard descriptive identifiers such as user_id, price, stock_quantity, and order_status.</div>
+
+    <div class="rule-title">3. Primary Key Mapping</div>
+    <div class="rule-body">Each table was assigned a Primary Key to uniquely identify every record, implemented using auto-incrementing SERIAL integer sequences.</div>
+
+    <div class="rule-title">4. Relationship Mapping</div>
+    <div class="rule-body">Relationships between entities were implemented using Foreign Keys. For example, the customer_id in the ORDERS table references the USERS table, and vendor_id in the PRODUCTS table references the VENDORS table.</div>
+
+    <div class="rule-title">5. One-to-Many Relationship Mapping</div>
+    <div class="rule-body">For a one-to-many relationship, the Primary Key of the parent table was added as a Foreign Key in the child table. For example, category_id is added to PRODUCTS to reference the parent CATEGORIES table.</div>
+
+    <div class="rule-title">6. One-to-One Relationship Mapping</div>
+    <div class="rule-body">For a one-to-one relationship, a Foreign Key with a UNIQUE constraint was used. For example, user_id in the VENDORS table and customer_id in the CART table uniquely reference the USERS table.</div>
+
+    <div class="rule-title">7. Many-to-Many Relationship Mapping</div>
+    <div class="rule-body">Many-to-many relationships were represented using an intermediate or junction table when required. For example, the relationship between CART and PRODUCTS is represented via CART_ITEMS, and between ORDERS and PRODUCTS via ORDER_ITEMS, avoiding data redundancy.</div>
+
+    <div class="rule-title">8. Foreign Key Mapping</div>
+    <div class="rule-body">Foreign Keys were used to establish relationships between related tables. For example, customer_id connects USERS with ORDERS, ADDRESSES, CART, WISHLIST, REVIEWS, and NOTIFICATIONS.</div>
+
+    <div class="rule-title">9. Referential Integrity</div>
+    <div class="rule-body">Referential integrity was maintained by using Foreign Key constraints with appropriate cascading actions (ON DELETE CASCADE, SET NULL, or RESTRICT). This ensures that a record in a child table cannot reference a non-existing record in a parent table.</div>
+
+    <div class="rule-title">10. Constraint Mapping</div>
+    <div class="rule-body">Constraints such as NOT NULL, UNIQUE, PRIMARY KEY, FOREIGN KEY, CHECK (e.g. price >= 0, stock_quantity >= 0, rating between 1 and 5), and DEFAULT were applied to maintain data accuracy, consistency, and integrity.</div>
+
+    <div class="rule-title">11. Data Type Mapping</div>
+    <div class="rule-body">Appropriate data types were selected based on the type of information stored: VARCHAR for text values, INT for numerical values, DATE and TIMESTAMP for date-related information, and DECIMAL(10,2) for exact monetary and currency values.</div>
+  </div>
+
+  <!-- ==================== PAGE 6 ==================== -->
+  <div class="page">
+    <div class="page-title">DATA DICTIONARY</div>
+
+    <p style="margin-bottom: 10px;">The following data dictionary describes the tables, columns, data types, keys, and constraints used in the Online Shopping and Multi-Vendor E-Commerce System database.</p>
+
+    <div class="table-caption"><strong>USERS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>user_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>email</td><td>VARCHAR(100)</td><td>UNIQUE, NOT NULL</td></tr>
+        <tr><td>phone</td><td>VARCHAR(20)</td><td>-</td></tr>
+        <tr><td>password</td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+        <tr><td>role</td><td>VARCHAR(20)</td><td>DEFAULT 'CUSTOMER'</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td>DEFAULT 'ACTIVE'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+        <tr><td>updated_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>VENDORS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>vendor_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>user_id</td><td>INT</td><td>NOT NULL, UNIQUE, FOREIGN KEY</td></tr>
+        <tr><td>business_name</td><td>VARCHAR(200)</td><td>NOT NULL</td></tr>
+        <tr><td>owner_name</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>description</td><td>TEXT</td><td>-</td></tr>
+        <tr><td>address</td><td>TEXT</td><td>-</td></tr>
+        <tr><td>city</td><td>VARCHAR(100)</td><td>-</td></tr>
+        <tr><td>state</td><td>VARCHAR(100)</td><td>-</td></tr>
+        <tr><td>pincode</td><td>VARCHAR(10)</td><td>-</td></tr>
+        <tr><td>approval_status</td><td>VARCHAR(20)</td><td>DEFAULT 'PENDING'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>CATEGORIES Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>category_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>description</td><td>TEXT</td><td>-</td></tr>
+        <tr><td>image</td><td>VARCHAR(500)</td><td>-</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td>DEFAULT 'ACTIVE'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== PAGE 7 ==================== -->
+  <div class="page">
+    <div class="table-caption"><strong>BRANDS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>brand_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>description</td><td>TEXT</td><td>-</td></tr>
+        <tr><td>logo</td><td>VARCHAR(500)</td><td>-</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td>DEFAULT 'ACTIVE'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>PRODUCTS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>product_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>vendor_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>category_id</td><td>INT</td><td>FOREIGN KEY</td></tr>
+        <tr><td>brand_id</td><td>INT</td><td>FOREIGN KEY</td></tr>
+        <tr><td>name</td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+        <tr><td>description</td><td>TEXT</td><td>-</td></tr>
+        <tr><td>price</td><td>DECIMAL(10,2)</td><td>NOT NULL</td></tr>
+        <tr><td>discount</td><td>DECIMAL(5,2)</td><td>DEFAULT 0</td></tr>
+        <tr><td>stock_quantity</td><td>INT</td><td>NOT NULL, DEFAULT 0</td></tr>
+        <tr><td>sku</td><td>VARCHAR(50)</td><td>-</td></tr>
+        <tr><td>image</td><td>VARCHAR(500)</td><td>-</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td>DEFAULT 'ACTIVE'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+        <tr><td>updated_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>PRODUCT_IMAGES Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>image_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>product_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>image_url</td><td>VARCHAR(500)</td><td>NOT NULL</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== PAGE 8 ==================== -->
+  <div class="page">
+    <div class="table-caption"><strong>ADDRESSES Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>address_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>customer_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>full_name</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>phone</td><td>VARCHAR(20)</td><td>-</td></tr>
+        <tr><td>address_line</td><td>TEXT</td><td>NOT NULL</td></tr>
+        <tr><td>city</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>state</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+        <tr><td>pincode</td><td>VARCHAR(10)</td><td>NOT NULL</td></tr>
+        <tr><td>is_default</td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>CART Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>cart_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>customer_id</td><td>INT</td><td>NOT NULL, UNIQUE, FOREIGN KEY</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+        <tr><td>updated_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>CART_ITEMS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>cart_item_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>cart_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>product_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>quantity</td><td>INT</td><td>NOT NULL, DEFAULT 1</td></tr>
+        <tr><td>price</td><td>DECIMAL(10,2)</td><td>NOT NULL</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>WISHLIST Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>wishlist_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>customer_id</td><td>INT</td><td>NOT NULL, UNIQUE, FOREIGN KEY</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>WISHLIST_ITEMS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>wishlist_item_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>wishlist_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>product_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== PAGE 9 ==================== -->
+  <div class="page">
+    <div class="table-caption"><strong>ORDERS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>order_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>customer_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>address_id</td><td>INT</td><td>FOREIGN KEY</td></tr>
+        <tr><td>total_amount</td><td>DECIMAL(10,2)</td><td>NOT NULL, DEFAULT 0.00</td></tr>
+        <tr><td>shipping_amount</td><td>DECIMAL(10,2)</td><td>DEFAULT 0.00</td></tr>
+        <tr><td>discount_amount</td><td>DECIMAL(10,2)</td><td>DEFAULT 0.00</td></tr>
+        <tr><td>final_amount</td><td>DECIMAL(10,2)</td><td>NOT NULL, DEFAULT 0.00</td></tr>
+        <tr><td>payment_status</td><td>VARCHAR(20)</td><td>DEFAULT 'PENDING'</td></tr>
+        <tr><td>order_status</td><td>VARCHAR(30)</td><td>DEFAULT 'PLACED'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+        <tr><td>updated_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>ORDER_ITEMS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>order_item_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>order_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>product_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>vendor_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>product_name</td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+        <tr><td>price</td><td>DECIMAL(10,2)</td><td>NOT NULL</td></tr>
+        <tr><td>quantity</td><td>INT</td><td>NOT NULL</td></tr>
+        <tr><td>subtotal</td><td>DECIMAL(10,2)</td><td>NOT NULL</td></tr>
+        <tr><td>item_status</td><td>VARCHAR(30)</td><td>DEFAULT 'PLACED'</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>PAYMENTS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>payment_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>order_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>payment_method</td><td>VARCHAR(20)</td><td>NOT NULL</td></tr>
+        <tr><td>transaction_id</td><td>VARCHAR(100)</td><td>-</td></tr>
+        <tr><td>amount</td><td>DECIMAL(10,2)</td><td>NOT NULL</td></tr>
+        <tr><td>payment_status</td><td>VARCHAR(20)</td><td>DEFAULT 'PENDING'</td></tr>
+        <tr><td>payment_date</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ==================== PAGE 10 ==================== -->
+  <div class="page">
+    <div class="table-caption"><strong>COUPONS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>coupon_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>coupon_code</td><td>VARCHAR(50)</td><td>UNIQUE, NOT NULL</td></tr>
+        <tr><td>discount_type</td><td>VARCHAR(20)</td><td>NOT NULL</td></tr>
+        <tr><td>discount_value</td><td>DECIMAL(10,2)</td><td>NOT NULL</td></tr>
+        <tr><td>minimum_amount</td><td>DECIMAL(10,2)</td><td>DEFAULT 0</td></tr>
+        <tr><td>maximum_discount</td><td>DECIMAL(10,2)</td><td>-</td></tr>
+        <tr><td>start_date</td><td>TIMESTAMP</td><td>-</td></tr>
+        <tr><td>expiry_date</td><td>TIMESTAMP</td><td>-</td></tr>
+        <tr><td>usage_limit</td><td>INT</td><td>DEFAULT 0</td></tr>
+        <tr><td>used_count</td><td>INT</td><td>DEFAULT 0</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td>DEFAULT 'ACTIVE'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>REVIEWS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>review_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>product_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>customer_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>rating</td><td>INT</td><td>NOT NULL</td></tr>
+        <tr><td>comment</td><td>TEXT</td><td>-</td></tr>
+        <tr><td>status</td><td>VARCHAR(20)</td><td>DEFAULT 'ACTIVE'</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-caption"><strong>NOTIFICATIONS Table</strong></div>
+    <table class="dict-table">
+      <thead>
+        <tr>
+          <th>Column Name</th>
+          <th>Data Type</th>
+          <th>Key / Constraint</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>notification_id</td><td>SERIAL</td><td>PRIMARY KEY</td></tr>
+        <tr><td>user_id</td><td>INT</td><td>NOT NULL, FOREIGN KEY</td></tr>
+        <tr><td>title</td><td>VARCHAR(200)</td><td>NOT NULL</td></tr>
+        <tr><td>message</td><td>TEXT</td><td>NOT NULL</td></tr>
+        <tr><td>type</td><td>VARCHAR(50)</td><td>-</td></tr>
+        <tr><td>is_read</td><td>BOOLEAN</td><td>DEFAULT FALSE</td></tr>
+        <tr><td>created_at</td><td>TIMESTAMP</td><td>DEFAULT CURRENT_TIMESTAMP</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
