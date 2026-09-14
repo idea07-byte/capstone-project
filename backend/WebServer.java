@@ -15,12 +15,28 @@ import service.*;
 import model.*;
 
 public class WebServer {
-    private static final int PORT = 8080;
+    private static final int DEFAULT_PORT = 8080;
+
+    public static int getPort() {
+        String envPort = System.getenv("PORT");
+        if (envPort != null && !envPort.trim().isEmpty()) {
+            try {
+                return Integer.parseInt(envPort.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        return DEFAULT_PORT;
+    }
+
     private static final Map<String, Integer> sessionTokens = new ConcurrentHashMap<>();
     private static final Map<Integer, String> userTokens = new ConcurrentHashMap<>();
 
     private static Path webRoot() {
         try {
+            String envWebRoot = System.getenv("WEB_ROOT");
+            if (envWebRoot != null && !envWebRoot.trim().isEmpty()) {
+                Path p = Paths.get(envWebRoot.trim()).toAbsolutePath().normalize();
+                if (Files.isDirectory(p)) return p;
+            }
             Path codeSource = Paths.get(WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             Path root = codeSource.getParent();
             if (root != null) {
@@ -43,6 +59,11 @@ public class WebServer {
 
     private static Path imageRoot() {
         try {
+            String envImageRoot = System.getenv("IMAGE_ROOT");
+            if (envImageRoot != null && !envImageRoot.trim().isEmpty()) {
+                Path p = Paths.get(envImageRoot.trim()).toAbsolutePath().normalize();
+                if (Files.isDirectory(p)) return p;
+            }
             Path codeSource = Paths.get(WebServer.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             Path root = codeSource.getParent();
             Path p1 = root.resolve("amazon-capstone/product-images").toAbsolutePath().normalize();
@@ -77,8 +98,11 @@ public class WebServer {
     }
 
     public static void startServer() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        int port = getPort();
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", new SafeHandler(new StaticFileHandler()));
+        server.createContext("/health", new SafeHandler(new HealthHandler()));
+        server.createContext("/api/health", new SafeHandler(new HealthHandler()));
         server.createContext("/product-images", new SafeHandler(new ProductImageHandler()));
         server.createContext("/api/auth/login", new SafeHandler(new LoginHandler()));
         server.createContext("/api/auth/register", new SafeHandler(new RegisterHandler()));
@@ -103,7 +127,7 @@ public class WebServer {
         System.out.println("====================================");
         System.out.println("  BuyIt Marketplace Server Started");
         System.out.println("====================================");
-        System.out.println("Server: http://localhost:" + PORT);
+        System.out.println("Server: http://localhost:" + port);
         System.out.println("\nDemo Credentials:");
         System.out.println("  Admin:    admin@buyit.com / Admin@123");
         System.out.println("  Vendor:   vendor1@buyit.com / Vendor@123");
@@ -132,12 +156,37 @@ public class WebServer {
             try {
                 delegate.handle(exchange);
             } catch (Exception e) {
+                String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+                if (msg.contains("connection reset") || msg.contains("broken pipe") || msg.contains("stream closed") || msg.contains("insufficient bytes")) {
+                    return;
+                }
                 System.err.println("Handler error: " + e.getMessage());
                 e.printStackTrace();
                 try {
                     respondJson(exchange, "{\"success\":false,\"message\":\"Internal server error\"}", 500);
                 } catch (Exception ignored) {}
             }
+        }
+    }
+
+    static class HealthHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleCors(exchange)) return;
+            boolean dbHealthy = false;
+            try (java.sql.Connection conn = db.Database.getConnection()) {
+                dbHealthy = (conn != null && !conn.isClosed() && conn.isValid(3));
+            } catch (Exception ignored) {}
+
+            String jsonPayload = "{"
+                + "\"status\":\"" + (dbHealthy ? "UP" : "DEGRADED") + "\","
+                + "\"timestamp\":" + System.currentTimeMillis() + ","
+                + "\"port\":" + getPort() + ","
+                + "\"database\":\"" + (dbHealthy ? "connected" : "disconnected") + "\","
+                + "\"service\":\"BuyIt Marketplace\""
+                + "}";
+            exchange.getResponseHeaders().set("Cache-Control", "no-cache, no-store, must-revalidate");
+            respondJson(exchange, jsonPayload, 200);
         }
     }
 
@@ -175,6 +224,10 @@ public class WebServer {
                 } else {
                     exchange.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
                 }
+                if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+                    exchange.sendResponseHeaders(200, -1);
+                    return;
+                }
                 exchange.sendResponseHeaders(200, data.length);
                 try (OutputStream os = exchange.getResponseBody()) { os.write(data); }
             } else if (!path.startsWith("/api/")) {
@@ -207,6 +260,10 @@ public class WebServer {
             exchange.getResponseHeaders().set("Content-Type", "text/html");
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().set("Cache-Control", "no-cache");
+            if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(200, -1);
+                return;
+            }
             exchange.sendResponseHeaders(200, resp.length);
             try (OutputStream os = exchange.getResponseBody()) { os.write(resp); }
         }
@@ -1292,6 +1349,10 @@ public class WebServer {
         byte[] resp = json.getBytes();
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        if ("HEAD".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(code, -1);
+            return;
+        }
         exchange.sendResponseHeaders(code, resp.length);
         try (OutputStream os = exchange.getResponseBody()) { os.write(resp); }
     }

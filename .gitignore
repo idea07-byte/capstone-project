@@ -23,6 +23,7 @@ backend/lib/
 
 # Local database credentials (never commit)
 backend/resources/database.properties
+!backend/resources/database.properties.example
 
 # Log files
 *.log

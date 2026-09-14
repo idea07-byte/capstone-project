@@ -297,7 +297,7 @@ const PHOTO_BANK = {
 
 function downloadImage(photoId, destFile) {
   return new Promise((resolve, reject) => {
-    const url = `https://images.unsplash.com/${photoId}?w=600&auto=format&fit=crop&q=85`;
+    const url = photoId.startsWith('http') ? photoId : `https://images.unsplash.com/${photoId}?w=600&auto=format&fit=crop&q=85`;
     const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return downloadImage(res.headers.location, destFile).then(resolve).catch(reject);
@@ -311,7 +311,7 @@ function downloadImage(photoId, destFile) {
       out.on('error', reject);
     });
     req.on('error', reject);
-    req.setTimeout(8000, () => {
+    req.setTimeout(15000, () => {
       req.destroy(new Error('Timeout'));
     });
   });

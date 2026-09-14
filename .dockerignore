@@ -1,0 +1,25 @@
+.git
+.gitignore
+.idea
+.vscode
+.settings
+.project
+.classpath
+
+# Build directories
+out/
+build/
+target/
+
+# Node dependencies
+**/node_modules/
+frontend/dist/
+
+# Documentation and heavy PDFs
+*.pdf
+docs/
+
+# Temporary and log files
+*.log
+backend/server.err.log
+amazon-capstone/photo_cache/

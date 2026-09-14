@@ -1,0 +1,36 @@
+services:
+  buyit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: buyit-marketplace
+    restart: always
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=8080
+      # Optional: Override database connection (defaults to pre-configured Supabase PostgreSQL)
+      # - DATABASE_URL=postgresql://user:password@host:5432/postgres?sslmode=require
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Optional local PostgreSQL database service (uncomment if deploying without external Supabase DB)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: buyit-postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_DB: buyit_marketplace
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgrespassword
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:

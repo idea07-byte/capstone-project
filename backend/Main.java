@@ -5,7 +5,6 @@ import service.*;
 import java.io.IOException;
 import java.awt.Desktop;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -24,7 +23,8 @@ public class Main {
         System.out.println("Initializing database connection...");
         Database.initialize();
 
-        System.out.println("Starting web server on port 8080...");
+        int port = WebServer.getPort();
+        System.out.println("Starting web server on port " + port + "...");
         try {
             WebServer.startServer();
         } catch (IOException e) {
@@ -34,7 +34,7 @@ public class Main {
         }
 
         try { Thread.sleep(1000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-        openBrowser("http://localhost:8080");
+        openBrowser("http://localhost:" + port);
 
         boolean forceCli = false;
         for (String arg : args) {
@@ -391,13 +391,13 @@ public class Main {
 
     private static void openBrowser(String url) {
         try {
-            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            if (!java.awt.GraphicsEnvironment.isHeadless() && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(new URI(url));
                 System.out.println("Opening browser at: " + url);
             } else {
                 System.out.println("Visit the web application at: " + url);
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (Throwable t) {
             System.out.println("Visit the web application at: " + url);
         }
     }

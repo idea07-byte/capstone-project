@@ -36,23 +36,82 @@ public class Database {
     private static void loadProperties() {
         Properties props = new Properties();
         try (InputStream input = Database.class.getClassLoader().getResourceAsStream("database.properties")) {
-            if (input == null) {
-                System.err.println("Unable to find database.properties. Using defaults.");
-                URL = "jdbc:postgresql://localhost:5432/buyit_marketplace?sslmode=require";
-                USER = "postgres";
-                PASSWORD = "";
-                return;
+            if (input != null) {
+                props.load(input);
+                URL = props.getProperty("db.url");
+                USER = props.getProperty("db.user");
+                PASSWORD = props.getProperty("db.password", "");
             }
-            props.load(input);
-            URL = props.getProperty("db.url");
-            USER = props.getProperty("db.user");
-            PASSWORD = props.getProperty("db.password", "");
         } catch (IOException e) {
-            System.err.println("Failed to load database.properties: " + e.getMessage());
-            URL = "jdbc:postgresql://localhost:5432/buyit_marketplace?sslmode=require";
-            USER = "postgres";
-            PASSWORD = "";
+            System.err.println("Note: database.properties not loaded from classpath: " + e.getMessage());
         }
+
+        // 12-Factor Cloud Environment Variable Support
+        String envDbUrl = System.getenv("JDBC_DATABASE_URL");
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) {
+            envDbUrl = System.getenv("DB_URL");
+        }
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) {
+            envDbUrl = System.getenv("DATABASE_URL");
+        }
+
+        if (envDbUrl != null && !envDbUrl.trim().isEmpty()) {
+            envDbUrl = envDbUrl.trim();
+            if (envDbUrl.startsWith("postgres://") || envDbUrl.startsWith("postgresql://")) {
+                try {
+                    java.net.URI uri = new java.net.URI(envDbUrl);
+                    String host = uri.getHost();
+                    int port = uri.getPort() > 0 ? uri.getPort() : 5432;
+                    String path = uri.getPath();
+                    String dbName = (path != null && path.length() > 1) ? path.substring(1) : "postgres";
+                    String userInfo = uri.getUserInfo();
+                    if (userInfo != null && !userInfo.isEmpty()) {
+                        String[] parts = userInfo.split(":", 2);
+                        USER = parts[0];
+                        if (parts.length > 1) {
+                            PASSWORD = parts[1];
+                        }
+                    }
+                    String query = uri.getQuery();
+                    URL = "jdbc:postgresql://" + host + ":" + port + "/" + dbName;
+                    if (query != null && !query.isEmpty()) {
+                        URL += "?" + query;
+                    } else {
+                        URL += "?sslmode=require";
+                    }
+                } catch (Exception ex) {
+                    if (!envDbUrl.startsWith("jdbc:")) {
+                        URL = "jdbc:" + envDbUrl;
+                    } else {
+                        URL = envDbUrl;
+                    }
+                }
+            } else if (envDbUrl.startsWith("jdbc:")) {
+                URL = envDbUrl;
+            } else {
+                URL = "jdbc:postgresql://" + envDbUrl;
+            }
+        }
+
+        if (System.getenv("DB_USER") != null && !System.getenv("DB_USER").trim().isEmpty()) {
+            USER = System.getenv("DB_USER").trim();
+        }
+        if (System.getenv("DB_PASSWORD") != null) {
+            PASSWORD = System.getenv("DB_PASSWORD").trim();
+        }
+
+        if (URL == null || URL.trim().isEmpty()) {
+            URL = "jdbc:postgresql://db.wcoivrmtfvlcpwerhjwn.supabase.co:5432/postgres?sslmode=require&connectTimeout=10&socketTimeout=30";
+            if (USER == null || USER.trim().isEmpty()) USER = "postgres";
+            if (PASSWORD == null) PASSWORD = "Shyam@2007ronaldo";
+        }
+
+        System.out.println("Database configured: " + maskUrl(URL) + " (user: " + USER + ")");
+    }
+
+    private static String maskUrl(String rawUrl) {
+        if (rawUrl == null) return "null";
+        return rawUrl.replaceAll(":[^/@:]+@", ":***@");
     }
 
     private static Connection createRealConnection() throws SQLException {

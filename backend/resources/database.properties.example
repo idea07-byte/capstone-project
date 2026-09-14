@@ -1,0 +1,6 @@
+# BuyIt Marketplace Database Configuration
+# (Can also be set via cloud environment variable DATABASE_URL or DB_URL)
+
+db.url=jdbc:postgresql://db.wcoivrmtfvlcpwerhjwn.supabase.co:5432/postgres?sslmode=require&connectTimeout=10&socketTimeout=30
+db.user=postgres
+db.password=Shyam@2007ronaldo
