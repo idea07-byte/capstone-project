@@ -3170,6 +3170,7 @@ img {
     cursor: pointer;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -3255,5 +3256,240 @@ img {
     padding: 12px 0;
     font-size: 0.88rem;
     color: #64748b;
+}
+
+/* ============================================
+   PRODUCT IMAGES MANAGER (MULTI-IMAGE GALLERY)
+   ============================================ */
+.product-images-manager {
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+    transition: border-color 0.2s;
+}
+
+.product-images-manager:focus-within {
+    border-color: #f97316;
+    background: #fffaf5;
+}
+
+.pim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.pim-title {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.pim-subtitle {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.pim-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-autofill-angles {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(249, 115, 22, 0.25);
+}
+
+.btn-autofill-angles:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.35);
+}
+
+.btn-add-slot {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add-slot:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.pim-loading {
+    font-size: 0.8rem;
+    color: #f97316;
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+.pim-thumbnails-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.pim-thumb-card {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pim-thumb-card.is-primary {
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.25);
+}
+
+.pim-thumb-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pim-thumb-badge {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 2px 0;
+    line-height: 1.2;
+}
+
+.pim-thumb-card.is-primary .pim-thumb-badge {
+    background: #f97316;
+}
+
+.pim-inputs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pim-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pim-slot-label {
+    min-width: 75px;
+    flex-shrink: 0;
+}
+
+.pim-slot-num {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #e2e8f0;
+    color: #475569;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pim-slot-num.primary {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+.pim-input-wrapper {
+    flex: 1;
+}
+
+.pim-input-wrapper input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box;
+    background: #ffffff;
+}
+
+.pim-input-wrapper input:focus {
+    border-color: #f97316;
+    outline: none;
+}
+
+.pim-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-set-primary {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.btn-set-primary:hover {
+    background: #fde68a;
+    color: #92400e;
+}
+
+.btn-remove-slot {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-remove-slot:hover {
+    background: #fca5a5;
+    color: #991b1b;
 }
 
