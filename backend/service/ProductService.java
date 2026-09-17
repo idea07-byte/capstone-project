@@ -15,6 +15,9 @@ public class ProductService {
     }
 
     public int addProduct(Product product) {
+        if ((product.getImage() == null || product.getImage().isEmpty()) && product.getImages() != null && !product.getImages().isEmpty()) {
+            product.setImage(product.getImages().get(0));
+        }
         String sql = "INSERT INTO products (vendor_id, category_id, brand_id, name, description, price, discount, stock_quantity, sku, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -166,6 +169,9 @@ public class ProductService {
     }
 
     public boolean updateProduct(int id, Product product) {
+        if ((product.getImage() == null || product.getImage().isEmpty()) && product.getImages() != null && !product.getImages().isEmpty()) {
+            product.setImage(product.getImages().get(0));
+        }
         String sql = "UPDATE products SET vendor_id = COALESCE(?, vendor_id), category_id = COALESCE(?, category_id), brand_id = COALESCE(?, brand_id), name = COALESCE(?, name), description = COALESCE(?, description), price = COALESCE(?, price), discount = COALESCE(?, discount), stock_quantity = COALESCE(?, stock_quantity), sku = COALESCE(?, sku), image = COALESCE(?, image), status = COALESCE(?, status), updated_at = CURRENT_TIMESTAMP WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
