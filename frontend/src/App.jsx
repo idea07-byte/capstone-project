@@ -1942,10 +1942,175 @@ function VendorProducts({ addToast, user }) {
   );
 }
 
+const CATEGORY_ANGLE_SUGGESTIONS = {
+  'electronics': [
+    'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'
+  ],
+  'mobiles': [
+    'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&auto=format&fit=crop&q=80'
+  ],
+  'laptops': [
+    'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80'
+  ],
+  'headphones': [
+    'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&auto=format&fit=crop&q=80'
+  ],
+  'clothing': [
+    'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=800&auto=format&fit=crop&q=80'
+  ],
+  'shoes': [
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=800&auto=format&fit=crop&q=80'
+  ],
+  'watches': [
+    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=800&auto=format&fit=crop&q=80'
+  ],
+  'bags': [
+    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800&auto=format&fit=crop&q=80'
+  ],
+  'home-kitchen': [
+    'https://images.unsplash.com/photo-1584990347449-a2a51f33f679?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&auto=format&fit=crop&q=80'
+  ],
+  'beauty': [
+    'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80'
+  ],
+  'books': [
+    'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&auto=format&fit=crop&q=80'
+  ],
+  'toys': [
+    'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&auto=format&fit=crop&q=80'
+  ],
+  'sports': [
+    'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&auto=format&fit=crop&q=80'
+  ],
+  'grocery': [
+    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80'
+  ],
+  'appliances': [
+    'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&auto=format&fit=crop&q=80'
+  ]
+};
+
 function ProductModal({ product, categories, brands, saving, onSave, onClose }) {
-  const [form, setForm] = useState({ name: product?.name || '', description: product?.description || '', categoryId: product?.categoryId || '', brandId: product?.brandId || '', price: product?.price || '', discount: product?.discount || 0, stockQuantity: product?.stockQuantity || '', sku: product?.sku || '', image: product?.image || '' });
+  const [form, setForm] = useState({
+    name: product?.name || '',
+    description: product?.description || '',
+    categoryId: product?.categoryId || '',
+    brandId: product?.brandId || '',
+    price: product?.price || '',
+    discount: product?.discount || 0,
+    stockQuantity: product?.stockQuantity || '',
+    sku: product?.sku || '',
+    image: product?.image || ''
+  });
+
+  const [imagesList, setImagesList] = useState(() => {
+    if (Array.isArray(product?.images) && product.images.length > 0) {
+      return product.images;
+    }
+    return product?.image ? [product.image] : [''];
+  });
+
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // If editing an existing product, fetch full details to ensure all 3 gallery images are loaded
+  useEffect(() => {
+    if (product?.id) {
+      setLoadingDetails(true);
+      api('/products/' + product.id)
+        .then(res => {
+          const p = res?.product || res;
+          if (p && Array.isArray(p.images) && p.images.length > 0) {
+            setImagesList(p.images);
+            if (p.image) setForm(f => ({ ...f, image: p.image }));
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingDetails(false));
+    }
+  }, [product?.id]);
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const handleSubmit = (e) => { e.preventDefault(); onSave({ ...form, price: Number(form.price), discount: Number(form.discount), stockQuantity: Number(form.stockQuantity), categoryId: Number(form.categoryId), brandId: Number(form.brandId) }); };
+
+  const updateImageUrl = (index, url) => {
+    setImagesList(prev => {
+      const next = [...prev];
+      next[index] = url;
+      return next;
+    });
+  };
+
+  const addImageSlot = () => {
+    setImagesList(prev => [...prev, '']);
+  };
+
+  const removeImageSlot = (index) => {
+    setImagesList(prev => {
+      if (prev.length <= 1) return [''];
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const setAsPrimary = (index) => {
+    if (index === 0) return;
+    setImagesList(prev => {
+      const item = prev[index];
+      const remaining = prev.filter((_, i) => i !== index);
+      return [item, ...remaining];
+    });
+  };
+
+  const autoFillAngles = () => {
+    const selCat = categories.find(c => String(c.id) === String(form.categoryId));
+    const catKey = selCat ? selCat.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-') : '';
+    const suggested = CATEGORY_ANGLE_SUGGESTIONS[catKey] || [
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'
+    ];
+
+    setImagesList(prev => {
+      const valid = prev.filter(u => u && u.trim().length > 0);
+      const current = valid.length > 0 ? valid[0] : (form.image || '');
+      const base = current ? [current] : [];
+      for (const s of suggested) {
+        if (!base.includes(s) && base.length < 3) {
+          base.push(s);
+        }
+      }
+      return base.length > 0 ? base : [''];
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const validImages = imagesList.map(u => u.trim()).filter(u => u.length > 0);
+    const primary = validImages.length > 0 ? validImages[0] : (form.image || '');
+    onSave({
+      ...form,
+      image: primary,
+      images: validImages,
+      price: Number(form.price),
+      discount: Number(form.discount),
+      stockQuantity: Number(form.stockQuantity),
+      categoryId: Number(form.categoryId),
+      brandId: Number(form.brandId)
+    });
+  };
+
   return (
     <Modal title={product ? 'Edit Product' : 'Add Product'} onClose={onClose}>
       <form onSubmit={handleSubmit}>
@@ -1963,8 +2128,108 @@ function ProductModal({ product, categories, brands, saving, onSave, onClose }) 
           <div className="form-group" style={{ flex: 1 }}><label>Stock</label><input type="number" min="0" value={form.stockQuantity} onChange={e => set('stockQuantity', e.target.value)} required /></div>
           <div className="form-group" style={{ flex: 1 }}><label>SKU</label><input value={form.sku} onChange={e => set('sku', e.target.value)} /></div>
         </div>
-        <div className="form-group"><label>Image URL</label><input value={form.image} onChange={e => set('image', e.target.value)} placeholder="https://..." /></div>
-        <div className="modal-actions"><button type="button" className="btn-cancel" onClick={onClose}>Cancel</button><button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button></div>
+
+        {/* Multi-Image Product Gallery Manager */}
+        <div className="product-images-manager">
+          <div className="pim-header">
+            <div>
+              <label className="pim-title">Product Image Gallery ({imagesList.filter(u => u && u.trim()).length} Images)</label>
+              <span className="pim-subtitle">First photo serves as the storefront cover. Add alternate angles & lifestyle views.</span>
+            </div>
+            <div className="pim-actions">
+              {form.categoryId && (
+                <button
+                  type="button"
+                  className="btn-autofill-angles"
+                  onClick={autoFillAngles}
+                  title="Autofill alternate angles based on selected category"
+                >
+                  ✨ Complete 3 Gallery Angles
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-add-slot"
+                onClick={addImageSlot}
+                title="Add another photo URL slot"
+              >
+                + Add Angle
+              </button>
+            </div>
+          </div>
+
+          {loadingDetails && <div className="pim-loading">Loading full gallery images...</div>}
+
+          {/* Visual Thumbnail Preview Strip */}
+          {imagesList.some(u => u && u.trim()) && (
+            <div className="pim-thumbnails-row">
+              {imagesList.map((url, idx) => {
+                if (!url || !url.trim()) return null;
+                return (
+                  <div key={idx} className={`pim-thumb-card ${idx === 0 ? 'is-primary' : ''}`}>
+                    <img
+                      src={url}
+                      alt={`View ${idx + 1}`}
+                      onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=Invalid+Image'; }}
+                    />
+                    <span className="pim-thumb-badge">
+                      {idx === 0 ? '★ Primary' : `Angle ${idx + 1}`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Image URL Inputs */}
+          <div className="pim-inputs-list">
+            {imagesList.map((url, idx) => (
+              <div key={idx} className="pim-input-row">
+                <div className="pim-slot-label">
+                  <span className={`pim-slot-num ${idx === 0 ? 'primary' : ''}`}>
+                    {idx === 0 ? '★ Primary' : `Angle ${idx + 1}`}
+                  </span>
+                </div>
+                <div className="pim-input-wrapper">
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={(e) => updateImageUrl(idx, e.target.value)}
+                    placeholder={idx === 0 ? "Primary image URL (e.g. /product-images/... or https://...)" : `Angle ${idx + 1} URL (detail, side view, lifestyle)`}
+                    required={idx === 0}
+                  />
+                </div>
+                <div className="pim-row-actions">
+                  {idx !== 0 && url && url.trim() && (
+                    <button
+                      type="button"
+                      className="btn-set-primary"
+                      onClick={() => setAsPrimary(idx)}
+                      title="Make this the Primary Storefront Image"
+                    >
+                      ★ Make Primary
+                    </button>
+                  )}
+                  {imagesList.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-remove-slot"
+                      onClick={() => removeImageSlot(idx)}
+                      title="Remove this image slot"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="modal-actions">
+          <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Product'}</button>
+        </div>
       </form>
     </Modal>
   );
