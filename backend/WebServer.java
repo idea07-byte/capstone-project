@@ -556,7 +556,11 @@ public class WebServer {
                 String img = jsonStr(body, "image");
                 if (!img.isEmpty()) p.setImage(img);
                 if (body.contains("\"images\"")) {
-                    p.setImages(jsonStrList(body, "images"));
+                    List<String> imgs = jsonStrList(body, "images");
+                    p.setImages(imgs);
+                    if (!imgs.isEmpty() && (p.getImage() == null || p.getImage().isEmpty())) {
+                        p.setImage(imgs.get(0));
+                    }
                 }
                 String status = jsonStr(body, "status");
                 if (!status.isEmpty()) p.setStatus(status);
