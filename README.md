@@ -11,14 +11,14 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
-  <strong>Production-Grade Multi-Vendor E-Commerce Platform</strong><br>
-  Featuring Seller Portals, Platform Admin Telemetry, Customer VIP Storefront, Real-Time Cart Synchronization, Multi-Image Galleries, and ACID Transactional Inventory Management.
+  <strong>Enterprise Multi-Vendor E-Commerce Marketplace Platform</strong><br>
+  Built with lightweight Java Backend (JDK HttpServer), React 18 SPA (Vite), PostgreSQL (Supabase Cloud), and full ACID transactional stock management.
 </p>
 
 [🎓 Academic Report (PDF)](BuyIt_Database_Report.pdf) •
 [📑 Activity Document (PDF)](BuyIt_Activity_Document.pdf) •
 [📕 Technical Documentation (PDF)](BuyIt_Project_Documentation.pdf) •
-[📖 Full Markdown Spec](PROJECT_DOCUMENTATION.md) •
+[📖 Master Technical Spec](PROJECT_DOCUMENTATION.md) •
 [🌐 Cloud Deployment Guide](DEPLOYMENT.md)
 
 </div>
@@ -26,42 +26,42 @@
 ---
 
 ## 📑 Table of Contents
-1. [Executive Overview](#-executive-overview)
-2. [Key Architecture & Technical Highlights](#-key-architecture--technical-highlights)
-3. [Portal & Core Features](#-portal--core-features)
+1. [🌟 Executive Overview](#-executive-overview)
+2. [⚡ System Architecture](#-system-architecture)
+3. [🎯 Role-Based Portals & Core Features](#-role-based-portals--core-features)
    - [Customer VIP Storefront](#1-customer-vip-storefront)
    - [Vendor Merchant Portal](#2-vendor-merchant-portal)
    - [Super Admin Platform Console](#3-super-admin-platform-console)
-4. [Live Demo Credentials](#-live-demo-credentials)
-5. [System Architecture Diagram](#-system-architecture-diagram)
-6. [Database Schema (15 Tables)](#-database-schema-15-tables)
-7. [Getting Started (Local Setup)](#-getting-started-local-setup)
-8. [Cloud Deployment](#-cloud-deployment)
-9. [Automated Test Suite](#-automated-test-suite)
-10. [REST API Documentation](#-rest-api-documentation)
-11. [Project Directory Map](#-project-directory-map)
+4. [🔑 Live Demo Credentials](#-live-demo-credentials)
+5. [🗄️ Database Schema & Relational Design](#-database-schema--relational-design)
+6. [🚀 Quick Start & Installation](#-quick-start--installation)
+7. [☁️ Cloud Deployment (Netlify & Render)](#-cloud-deployment-netlify--render)
+8. [🧪 Automated Test Suite](#-automated-test-suite)
+9. [📡 REST API Specification](#-rest-api-specification)
+10. [📁 Project Directory Map](#-project-directory-map)
+11. [📄 Academic & Submission Deliverables](#-academic--submission-deliverables)
 
 ---
 
 ## 🌟 Executive Overview
 
-**BuyIt** is an Amazon-style, full-stack multi-vendor e-commerce marketplace engineered for high performance, transactional safety, and seamless customer experiences:
+**BuyIt** is an Amazon-grade, full-stack multi-vendor marketplace engineered for performance, security, and scalability:
 
-* **Unified Lightweight Java Backend:** Powered by JDK's embedded high-throughput `HttpServer` with non-blocking connection routing, custom connection pooling, and zero framework bloat.
-* **Modern React 18 SPA:** Responsive luxury UI powered by Vite, featuring fluid glassmorphism aesthetics, dynamic dark/light surfaces, animated carousels, and instant real-time client routing.
-* **1,000 Products & 3,000 Studio Photos:** Seeded enterprise catalog across 15 consumer categories (Electronics, Laptops, Mobiles, Sneakers, Luxury Apparel, Watches, Appliances, and more).
-* **ACID Transactional Safety:** Atomic order placement with row-level stock locking, automated inventory deduction, rollback guarantees on failure, and multi-coupon calculation engines.
-* **Hybrid Guest & Cloud Cart Engine:** Offline-first guest cart in `localStorage` that seamlessly auto-merges into the user's PostgreSQL database cart upon login.
+* **⚡ Ultra-Fast Java Backend:** Built on JDK's native `HttpServer` with custom connection pooling, TCP keep-alive, auto-reconnecting SQL resilience, and zero framework overhead.
+* **✨ Modern React 18 Single-Page App:** Styled with responsive glassmorphism, dynamic animations, multi-image galleries, and sub-second page transitions.
+* **📦 1,000 Products & 3,000 Studio Photos:** Pre-seeded across 15 retail categories with intelligent high-resolution studio photo fallbacks (900px+).
+* **🔒 ACID Transactional Safety:** Atomic order placement with row-level stock locking, automated inventory deduction, rollback guarantees on failure, and promo discount calculations.
+* **🛒 Hybrid Guest & Cloud Cart Engine:** Add products seamlessly as a guest in `localStorage`; cart automatically merges into PostgreSQL on user sign-in.
 
 ---
 
-## ⚡ Key Architecture & Technical Highlights
+## ⚡ System Architecture
 
 ```mermaid
 flowchart TD
-    Client["🌐 React 18 Single-Page Application (Vite CDN / Local :3000)"]
+    Client["🌐 React 18 Single-Page Application (Vite / CDN)"]
     
-    subgraph Backend ["⚡ High-Throughput Java WebServer (:8080)"]
+    subgraph Backend ["⚡ High-Performance Java WebServer (:8080)"]
         Router["HttpServer Router & CORS Interceptor"]
         AuthHandler["Auth Handler (Bearer Token / UUID)"]
         ProductHandler["Product & Gallery Service"]
@@ -70,7 +70,7 @@ flowchart TD
         AdminHandler["Admin Telemetry & User Control"]
     end
     
-    subgraph Database ["🐘 Cloud PostgreSQL Database (Supabase / Neon / Railway)"]
+    subgraph Database ["🐘 Cloud PostgreSQL Database (Supabase Cloud)"]
         UsersTbl[("users & vendors")]
         CatalogTbl[("categories, brands, products, product_images")]
         OrdersTbl[("orders, order_items & addresses")]
@@ -78,33 +78,33 @@ flowchart TD
         ReviewsTbl[("reviews, coupons & notifications")]
     end
 
-    Client -->|REST JSON APIs| Router
+    Client -->|JSON REST API Requests| Router
     Router --> AuthHandler & ProductHandler & CartHandler & OrderHandler & AdminHandler
-    AuthHandler & ProductHandler & CartHandler & OrderHandler & AdminHandler -->|Connection Pool (12 Max)| Database
+    AuthHandler & ProductHandler & CartHandler & OrderHandler & AdminHandler -->|Connection Pool (12 Max, Auto-Reconnect)| Database
 ```
 
 ---
 
-## 🎯 Portal & Core Features
+## 🎯 Role-Based Portals & Core Features
 
 ### 1. Customer VIP Storefront
-- **Enterprise Catalog:** Browse 1,000 products with instant multi-facet filtering (categories, brands, price range sliders, rating filters, and sorting).
-- **Interactive Multi-Image Galleries:** High-resolution studio photography with category-intelligent fallback pipelines and interactive variant/size pickers.
-- **Hybrid Guest & Cloud Cart:** Add items to cart as a guest without friction; cart automatically synchronizes to the cloud on login with zero data loss.
-- **Express Transactional Checkout:** Multi-item orders with saved addresses, coupon discounts (e.g. `WELCOME10`), COD/Card payment simulations, and instant stock reservations.
-- **Customer Account & Tracking:** Order history, tracking status badges (`PENDING`, `SHIPPED`, `DELIVERED`), wishlist toggling, and verified product reviews.
+* **Enterprise Catalog:** Browse 1,000 products with instant multi-facet filtering (categories, brands, price range sliders, rating filters, and sorting).
+* **Crystal-Clear Multi-Image Galleries:** High-definition product photography (900px+ studio assets) with interactive variant/size pickers and gallery carousels.
+* **Hybrid Guest & Cloud Cart:** Add items to cart as a guest without friction; cart automatically synchronizes to the cloud on login with zero data loss.
+* **Express Transactional Checkout:** Multi-item orders with saved addresses, coupon discounts (e.g., `WELCOME10`), COD/Card payment options, and instant stock reservations.
+* **Customer Account & Tracking:** Order history, tracking status badges (`PENDING`, `SHIPPED`, `DELIVERED`), wishlist toggling, and verified product reviews.
 
 ### 2. Vendor Merchant Portal
-- **Real-Time Analytics:** Live KPI metrics for gross merchant volume (GMV), active product counts, inventory warnings, and order counts.
-- **Product Catalog Management:** Add and edit items with multi-image URLs, MSRP pricing, discount percentages, SKUs, and stock quantities.
-- **Fulfillment Management:** Filter incoming customer orders by vendor line items and transition processing states.
-- **Store Branding:** Custom store banner, business details, owner identity, and contact information.
+* **Real-Time Analytics:** Live KPI metrics for gross merchant volume (GMV), active product counts, inventory warnings, and order counts.
+* **Product Catalog Management:** Add and edit items with multi-image URLs, MSRP pricing, discount percentages, SKUs, and stock quantities.
+* **Fulfillment Management:** Filter incoming customer orders by vendor line items and transition processing states.
+* **Store Branding:** Custom store banner, business details, owner identity, and contact information.
 
 ### 3. Super Admin Platform Console
-- **Executive KPI Dashboard:** Real-time platform revenue, total user registrations, vendor metrics, order volumes, and catalog size.
-- **User & Merchant Governance:** Search users by role, toggle account status (`ACTIVE` / `INACTIVE`), approve or ban vendors.
-- **Category & Brand Engine:** Declarative management of top-level product taxonomies and brand directories.
-- **Platform Order Auditing:** Audit and manage every transactional order across all sellers.
+* **Executive KPI Dashboard:** Real-time platform revenue, total user registrations, vendor metrics, order volumes, and catalog size.
+* **User & Merchant Governance:** Search users by role, toggle account status (`ACTIVE` / `INACTIVE`), approve or ban vendors.
+* **Category & Brand Engine:** Declarative management of top-level product taxonomies and brand directories.
+* **Platform Order Auditing:** Audit and manage every transactional order across all sellers.
 
 ---
 
@@ -120,9 +120,9 @@ Use the **Quick Demo Access** buttons on the login page or sign in with these cr
 
 ---
 
-## 🗄️ Database Schema (15 Tables)
+## 🗄️ Database Schema & Relational Design
 
-The system runs on a normalized 3NF relational schema engineered for PostgreSQL & MySQL:
+The platform uses a normalized **3NF relational database schema** (PostgreSQL & MySQL compatible):
 
 | # | Table Name | Purpose | Key Constraints |
 | :--- | :--- | :--- | :--- |
@@ -144,40 +144,40 @@ The system runs on a normalized 3NF relational schema engineered for PostgreSQL 
 
 ---
 
-## 🚀 Getting Started (Local Setup)
+## 🚀 Quick Start & Installation
 
 ### Prerequisites
-* **Java:** JDK 17+ (tested on JDK 21 and 26)
-* **Node.js:** v18+ (for building React frontend)
+* **Java:** JDK 17 or higher (tested on JDK 21 and JDK 26)
+* **Node.js:** v18+ (for building the React frontend)
 * **Git:** Version control
 
-### Option A: One-Click Launch (Windows)
+### Option A: One-Click Run (Windows)
 
 ```bat
-:: 1. Clone repository
+# 1. Clone repository
 git clone https://github.com/idea07-byte/capstone-project.git
 cd capstone-project
 
-:: 2. Build full-stack application (compiles React SPA and Java backend)
+# 2. Build full-stack project (compiles React SPA and Java backend)
 build.bat
 
-:: 3. Start BuyIt server
+# 3. Start BuyIt server
 run.bat
 ```
-* Access the web platform at: **[http://localhost:8080](http://localhost:8080)**
+* Open your browser at: **[http://localhost:8080](http://localhost:8080)**
 
 ---
 
-### Option B: Linux / macOS / Unix Setup
+### Option B: Linux / macOS Run
 
 ```bash
 # 1. Grant execution permissions
 chmod +x build.sh run.sh
 
-# 2. Build both frontend and backend
+# 2. Build frontend and backend
 ./build.sh
 
-# 3. Launch the platform
+# 3. Launch platform
 ./run.sh
 ```
 
@@ -190,30 +190,30 @@ cd frontend
 npm install
 npm run dev
 ```
-* Vite will run at **[http://localhost:3000](http://localhost:3000)** with proxy routing configured to the backend on `:8080`.
+* Vite will run at **[http://localhost:3000](http://localhost:3000)** with API requests automatically proxied to the backend on port `:8080`.
 
 ---
 
-## ☁️ Cloud Deployment
+## ☁️ Cloud Deployment (Netlify & Render)
 
-BuyIt is 12-factor cloud compliant and containerized for zero-friction cloud deployment.
+BuyIt is containerized and cloud-ready for instant deployment:
 
-* 🌐 **Frontend (Netlify):** Push to GitHub, connect to Netlify, set Base Directory to `frontend`, Build Command to `npm run build`, Publish Directory to `frontend/dist`, and set `VITE_API_URL` to your backend URL. (See [NETLIFY_DEPLOYMENT.md](NETLIFY_DEPLOYMENT.md))
-* 🚀 **Backend (Render / Railway / Cloud Run):** One-click container deployment via Dockerfile. (See [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md) and [DEPLOYMENT.md](DEPLOYMENT.md))
+* 🌐 **Frontend on Netlify:** Push to GitHub, import repository into Netlify, set Base Directory to `frontend`, Build Command to `npm run build`, Publish Directory to `frontend/dist`, and set `VITE_API_URL` to your backend URL. (See [NETLIFY_DEPLOYMENT.md](NETLIFY_DEPLOYMENT.md))
+* 🚀 **Backend on Render / Railway / Cloud Run:** One-click deployment via the included multi-stage [`Dockerfile`](Dockerfile). (See [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md) and [DEPLOYMENT.md](DEPLOYMENT.md))
 * 🐳 **Docker Compose:**
   ```bash
   docker compose up -d --build
   ```
-* 🏥 **Health Endpoint:** `GET /health` and `GET /api/health` return live service and database connectivity telemetry.
+* 🏥 **Health Check Endpoints:** `GET /health` and `GET /api/health` return live server status and database connectivity.
 
 ---
 
 ## 🧪 Automated Test Suite
 
-A standalone test suite validates database health, polymorphic user models, catalog search, atomic inventory locks, and REST endpoints:
+A standalone test suite verifies database health, polymorphic models, catalog search, atomic inventory locks, and REST endpoints:
 
 ```bat
-# Run test suite
+# Run automated tests
 java -cp "out;backend/lib/postgresql-42.7.4.jar;backend/resources" TestRunner
 ```
 
@@ -227,7 +227,7 @@ java -cp "out;backend/lib/postgresql-42.7.4.jar;backend/resources" TestRunner
 
 ---
 
-## 📡 REST API Documentation
+## 📡 REST API Specification
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
@@ -292,7 +292,7 @@ capstone-project/
 
 ---
 
-## 📄 Academic & Submission Documents
+## 📄 Academic & Submission Deliverables
 
 - 🎓 **[BuyIt Database Report (PDF)](BuyIt_Database_Report.pdf)** — Academic report with Page 1 ER diagram, table schemas, row counts, and JOIN execution outputs.
 - 📕 **[BuyIt Complete Technical Documentation (PDF)](BuyIt_Project_Documentation.pdf)** — Full 15-chapter publication-ready report.
@@ -302,7 +302,7 @@ capstone-project/
 
 ## ⚖️ License
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Distributed under the **MIT License**. See `LICENSE` for details.
 
 <div align="center">
   <sub>Built with ❤️ for the Capstone Project • 2026</sub>
