@@ -678,11 +678,11 @@ public class WebServer {
         public void handle(HttpExchange exchange) throws IOException {
             if (handleCors(exchange)) return;
             Integer userId = getUserId(exchange);
-            if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
             String method = exchange.getRequestMethod();
             CartService cs = new CartService();
 
             if ("GET".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"items\":[],\"total\":0,\"count\":0,\"success\":true}"); return; }
                 List<CartItem> items = cs.getCartItems(userId);
                 double total = items.stream().mapToDouble(CartItem::getSubtotal).sum();
                 StringBuilder sb = new StringBuilder("{\"items\":[");
@@ -699,6 +699,7 @@ public class WebServer {
                 sb.append("],\"total\":").append(total).append(",\"count\":").append(items.size()).append("}");
                 respondJson(exchange, sb.toString());
             } else if ("POST".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 String body = readBody(exchange);
                 int productId = parseInt(body, "productId");
                 int quantity = parseInt(body, "quantity");
@@ -708,12 +709,14 @@ public class WebServer {
                 cs.addToCart(userId, productId, quantity, p.getFinalPrice());
                 respondJson(exchange, "{\"success\":true,\"message\":\"Added to cart\"}");
             } else if ("PUT".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 String body = readBody(exchange);
                 int productId = parseInt(body, "productId");
                 int quantity = parseInt(body, "quantity");
                 cs.updateCartItem(userId, productId, quantity);
                 respondJson(exchange, "{\"success\":true,\"message\":\"Cart updated\"}");
             } else if ("DELETE".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 String body = readBody(exchange);
                 int productId = parseInt(body, "productId");
                 if (productId > 0) {
@@ -732,12 +735,20 @@ public class WebServer {
         public void handle(HttpExchange exchange) throws IOException {
             if (handleCors(exchange)) return;
             Integer userId = getUserId(exchange);
-            if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
             String method = exchange.getRequestMethod();
             String query = exchange.getRequestURI().getQuery();
             WishlistService ws = new WishlistService();
 
             if ("GET".equals(method)) {
+                if (userId == null) {
+                    Map<String, String> params = parseQuery(query);
+                    if (params.containsKey("productId") && !params.get("productId").isEmpty()) {
+                        respondJson(exchange, "{\"wishlisted\":false}");
+                    } else {
+                        respondJson(exchange, "{\"items\":[],\"count\":0,\"success\":true}");
+                    }
+                    return;
+                }
                 Map<String, String> params = parseQuery(query);
                 if (params.containsKey("productId") && !params.get("productId").isEmpty()) {
                     int pId = Integer.parseInt(params.get("productId"));
@@ -754,12 +765,14 @@ public class WebServer {
                 sb.append("],\"count\":").append(products.size()).append("}");
                 respondJson(exchange, sb.toString());
             } else if ("POST".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 String body = readBody(exchange);
                 int productId = parseInt(body, "productId");
                 if (productId <= 0) { respondJson(exchange, "{\"success\":false,\"message\":\"Invalid product ID\"}", 400); return; }
                 boolean ok = ws.addToWishlist(userId, productId);
                 respondJson(exchange, json("success", ok, "message", ok ? "Added to wishlist" : "Already in wishlist"));
             } else if ("DELETE".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 String body = readBody(exchange);
                 int productId = parseInt(body, "productId");
                 if (productId <= 0) {
@@ -769,7 +782,7 @@ public class WebServer {
                     }
                 }
                 boolean ok = ws.removeFromWishlist(userId, productId);
-                respondJson(exchange, json("success", ok, "message", ok ? "Removed from wishlist" : "Item not in wishlist"));
+                respondJson(exchange, json("success", ok, "message", ok ? "Removed from wishlist" : "Not found"));
             } else { sendMethodNotAllowed(exchange); }
         }
     }
@@ -783,9 +796,10 @@ public class WebServer {
             String path = exchange.getRequestURI().getPath();
 
             if ("GET".equals(method)) {
-                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
+                if (userId == null) { respondJson(exchange, "[]"); return; }
                 OrderService os = new OrderService();
                 User user = new UserService().getUserById(userId);
+                if (user == null) { respondJson(exchange, "[]"); return; }
                 if (path.matches("/api/orders/\\d+")) {
                     int orderId = Integer.parseInt(path.substring(path.lastIndexOf("/") + 1));
                     Order order = os.getOrderById(orderId);
@@ -796,7 +810,7 @@ public class WebServer {
                     if (user.getRole() != Role.ADMIN && order.getCustomerId() != userId) {
                         if (user.getRole() == Role.VENDOR) {
                             Vendor vendor = new VendorService().getVendorByUserId(userId);
-                            boolean hasItem = vendor != null && order.getItems().stream().anyMatch(it -> it.getVendorId() == vendor.getId());
+                            boolean hasItem = vendor != null && order.getItems() != null && order.getItems().stream().anyMatch(it -> it.getVendorId() == vendor.getId());
                             if (!hasItem) {
                                 respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 403);
                                 return;
@@ -1088,12 +1102,12 @@ public class WebServer {
         public void handle(HttpExchange exchange) throws IOException {
             if (handleCors(exchange)) return;
             Integer userId = getUserId(exchange);
-            if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
             NotificationService ns = new NotificationService();
             String method = exchange.getRequestMethod();
             String path = exchange.getRequestURI().getPath();
 
             if ("GET".equals(method)) {
+                if (userId == null) { respondJson(exchange, "{\"notifications\":[],\"unreadCount\":0,\"success\":true}"); return; }
                 List<Map<String, Object>> notifs = ns.getByUser(userId);
                 int unread = ns.getUnreadCount(userId);
                 StringBuilder sb = new StringBuilder("{\"notifications\":[");
@@ -1108,6 +1122,7 @@ public class WebServer {
                 sb.append("],\"unreadCount\":").append(unread).append("}");
                 respondJson(exchange, sb.toString());
             } else if ("POST".equals(method) && path.equals("/api/notifications/read")) {
+                if (userId == null) { respondJson(exchange, "{\"success\":false,\"message\":\"Unauthorized\"}", 401); return; }
                 ns.markAsRead(userId);
                 respondJson(exchange, "{\"success\":true,\"message\":\"Notifications marked as read\"}");
             } else { sendMethodNotAllowed(exchange); }
@@ -1312,16 +1327,18 @@ public class WebServer {
             .append("\",\"createdAt\":\"").append(o.getCreatedAt() != null ? o.getCreatedAt().toString() : "")
             .append("\",\"items\":[");
         List<OrderItem> items = o.getItems();
-        for (int i = 0; i < items.size(); i++) {
-            if (i > 0) sb.append(",");
-            OrderItem it = items.get(i);
-            sb.append("{\"id\":").append(it.getId()).append(",\"productId\":").append(it.getProductId())
-              .append(",\"vendorId\":").append(it.getVendorId())
-              .append(",\"productName\":\"").append(esc(it.getProductName()))
-              .append("\",\"price\":").append(it.getPrice()).append(",\"quantity\":").append(it.getQuantity())
-              .append(",\"subtotal\":").append(it.getSubtotal())
-              .append(",\"itemStatus\":\"").append(it.getItemStatus() != null ? it.getItemStatus() : "PLACED")
-              .append("\",\"vendorName\":\"").append(esc(it.getVendorName() != null ? it.getVendorName() : "")).append("\"}");
+        if (items != null) {
+            for (int i = 0; i < items.size(); i++) {
+                if (i > 0) sb.append(",");
+                OrderItem it = items.get(i);
+                sb.append("{\"id\":").append(it.getId()).append(",\"productId\":").append(it.getProductId())
+                  .append(",\"vendorId\":").append(it.getVendorId())
+                  .append(",\"productName\":\"").append(esc(it.getProductName()))
+                  .append("\",\"price\":").append(it.getPrice()).append(",\"quantity\":").append(it.getQuantity())
+                  .append(",\"subtotal\":").append(it.getSubtotal())
+                  .append(",\"itemStatus\":\"").append(it.getItemStatus() != null ? it.getItemStatus() : "PLACED")
+                  .append("\",\"vendorName\":\"").append(esc(it.getVendorName() != null ? it.getVendorName() : "")).append("\"}");
+            }
         }
         sb.append("]}");
         return sb.toString();
