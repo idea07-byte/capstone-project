@@ -59,28 +59,26 @@
 
 ```mermaid
 flowchart TD
-    Client["🌐 React 18 Single-Page Application (Vite / CDN)"]
+    Client["🌐 React 18 Single-Page Application"]
     
-    subgraph Backend ["⚡ High-Performance Java WebServer (:8080)"]
-        Router["HttpServer Router & CORS Interceptor"]
-        AuthHandler["Auth Handler (Bearer Token / UUID)"]
-        ProductHandler["Product & Gallery Service"]
-        CartHandler["Hybrid Cart & Wishlist Service"]
-        OrderHandler["Transactional Order & Stock Engine"]
-        AdminHandler["Admin Telemetry & User Control"]
+    subgraph Backend["⚡ High-Performance Java WebServer (Port 8080)"]
+        Router["HttpServer Router & CORS Handler"]
+        Services["Auth, Product, Cart & Order Services"]
+        Pool["Hikari-Style JDBC Connection Pool"]
     end
     
-    subgraph Database ["🐘 Cloud PostgreSQL Database (Supabase Cloud)"]
-        UsersTbl[("users & vendors")]
-        CatalogTbl[("categories, brands, products, product_images")]
-        OrdersTbl[("orders, order_items & addresses")]
-        CartTbl[("cart, cart_items & wishlist")]
-        ReviewsTbl[("reviews, coupons & notifications")]
+    subgraph Database["🐘 Cloud PostgreSQL Database (Supabase)"]
+        UsersTbl[("Users & Vendors")]
+        CatalogTbl[("Products, Images & Categories")]
+        OrdersTbl[("Orders, Line Items & Cart")]
     end
 
-    Client -->|JSON REST API Requests| Router
-    Router --> AuthHandler & ProductHandler & CartHandler & OrderHandler & AdminHandler
-    AuthHandler & ProductHandler & CartHandler & OrderHandler & AdminHandler -->|Connection Pool (12 Max, Auto-Reconnect)| Database
+    Client -->|"JSON REST API Requests"| Router
+    Router --> Services
+    Services --> Pool
+    Pool -->|"Auto-Reconnecting SQL Pool"| UsersTbl
+    Pool -->|"Auto-Reconnecting SQL Pool"| CatalogTbl
+    Pool -->|"Auto-Reconnecting SQL Pool"| OrdersTbl
 ```
 
 ---
