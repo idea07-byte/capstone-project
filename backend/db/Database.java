@@ -130,7 +130,7 @@ public class Database {
         }
 
         if (URL == null || URL.trim().isEmpty()) {
-            URL = "jdbc:postgresql://db.wcoivrmtfvlcpwerhjwn.supabase.co:5432/postgres?sslmode=require&connectTimeout=10&socketTimeout=30";
+            URL = "jdbc:postgresql://db.wcoivrmtfvlcpwerhjwn.supabase.co:5432/postgres?sslmode=require&connectTimeout=10&socketTimeout=30&tcpKeepAlive=true&loginTimeout=10";
             if (USER == null || USER.trim().isEmpty()) USER = "postgres";
             if (PASSWORD == null) PASSWORD = "Shyam@2007ronaldo";
         }
@@ -147,11 +147,14 @@ public class Database {
         SQLException lastEx = null;
         for (int attempt = 1; attempt <= 3; attempt++) {
             try {
-                return DriverManager.getConnection(URL, USER, PASSWORD);
+                Connection c = DriverManager.getConnection(URL, USER, PASSWORD);
+                if (c != null && !c.isClosed()) {
+                    return c;
+                }
             } catch (SQLException e) {
                 lastEx = e;
                 if (attempt < 3) {
-                    try { Thread.sleep(250L * attempt); } catch (InterruptedException ignored) {}
+                    try { Thread.sleep(300L * attempt); } catch (InterruptedException ignored) {}
                 }
             }
         }
@@ -170,15 +173,26 @@ public class Database {
                             realConn = createRealConnection();
                             break;
                         } catch (SQLException e) {
-                            activeCount--;
+                            activeCount = Math.max(0, activeCount - 1);
                             throw e;
                         }
                     }
                 }
                 try {
-                    realConn = pool.poll(3, TimeUnit.SECONDS);
+                    realConn = pool.poll(2, TimeUnit.SECONDS);
                     if (realConn == null) {
-                        return createRealConnection();
+                        synchronized (Database.class) {
+                            activeCount++;
+                        }
+                        try {
+                            realConn = createRealConnection();
+                            break;
+                        } catch (SQLException e) {
+                            synchronized (Database.class) {
+                                activeCount = Math.max(0, activeCount - 1);
+                            }
+                            throw e;
+                        }
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -187,14 +201,14 @@ public class Database {
             }
 
             try {
-                if (realConn != null && !realConn.isClosed() && realConn.isValid(5)) {
+                if (realConn != null && !realConn.isClosed() && realConn.isValid(2)) {
                     break;
                 }
             } catch (Exception ignored) {}
 
             if (realConn != null) {
                 try { realConn.close(); } catch (Exception ignored) {}
-                synchronized (Database.class) { activeCount--; }
+                synchronized (Database.class) { activeCount = Math.max(0, activeCount - 1); }
             }
         }
 
@@ -210,13 +224,18 @@ public class Database {
                     if ("close".equals(method.getName())) {
                         if (!closed) {
                             closed = true;
-                            if (!finalRealConn.isClosed()) {
+                            boolean valid = false;
+                            try {
+                                valid = !finalRealConn.isClosed() && finalRealConn.isValid(1);
+                            } catch (Exception ignored) {}
+                            if (valid) {
                                 if (!pool.offer(finalRealConn)) {
                                     try { finalRealConn.close(); } catch (Exception ignored) {}
-                                    synchronized (Database.class) { activeCount--; }
+                                    synchronized (Database.class) { activeCount = Math.max(0, activeCount - 1); }
                                 }
                             } else {
-                                synchronized (Database.class) { activeCount--; }
+                                try { finalRealConn.close(); } catch (Exception ignored) {}
+                                synchronized (Database.class) { activeCount = Math.max(0, activeCount - 1); }
                             }
                         }
                         return null;

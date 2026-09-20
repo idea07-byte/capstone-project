@@ -71,32 +71,46 @@ public class UserService {
 
     public User getUserById(int id) {
         String sql = "SELECT id, name, email, phone, password, role, status, created_at, updated_at FROM users WHERE id = ?";
-        try (Connection conn = Database.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapUser(rs);
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try (Connection conn = Database.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return mapUser(rs);
+                    }
                 }
+                return null;
+            } catch (SQLException e) {
+                if (attempt == 1) {
+                    try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+                    continue;
+                }
+                throw new RuntimeException("Failed to fetch user: " + e.getMessage(), e);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to fetch user: " + e.getMessage(), e);
         }
         return null;
     }
 
     public User getUserByEmail(String email) {
         String sql = "SELECT id, name, email, phone, password, role, status, created_at, updated_at FROM users WHERE LOWER(email) = LOWER(?)";
-        try (Connection conn = Database.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, email);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapUser(rs);
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try (Connection conn = Database.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, email);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return mapUser(rs);
+                    }
                 }
+                return null;
+            } catch (SQLException e) {
+                if (attempt == 1) {
+                    try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+                    continue;
+                }
+                throw new RuntimeException("Failed to fetch user by email: " + e.getMessage(), e);
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to fetch user by email: " + e.getMessage(), e);
         }
         return null;
     }
