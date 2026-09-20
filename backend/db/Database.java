@@ -46,14 +46,13 @@ public class Database {
             System.err.println("Note: database.properties not loaded from classpath: " + e.getMessage());
         }
 
-        // 12-Factor Cloud Environment Variable Support
+        // 12-Factor Cloud & Railway Environment Variable Support
         String envDbUrl = System.getenv("JDBC_DATABASE_URL");
-        if (envDbUrl == null || envDbUrl.trim().isEmpty()) {
-            envDbUrl = System.getenv("DB_URL");
-        }
-        if (envDbUrl == null || envDbUrl.trim().isEmpty()) {
-            envDbUrl = System.getenv("DATABASE_URL");
-        }
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) envDbUrl = System.getenv("DATABASE_URL");
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) envDbUrl = System.getenv("DATABASE_PUBLIC_URL");
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) envDbUrl = System.getenv("DATABASE_PRIVATE_URL");
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) envDbUrl = System.getenv("DATABASE_URL_UNPOOLED");
+        if (envDbUrl == null || envDbUrl.trim().isEmpty()) envDbUrl = System.getenv("DB_URL");
 
         if (envDbUrl != null && !envDbUrl.trim().isEmpty()) {
             envDbUrl = envDbUrl.trim();
@@ -67,9 +66,9 @@ public class Database {
                     String userInfo = uri.getUserInfo();
                     if (userInfo != null && !userInfo.isEmpty()) {
                         String[] parts = userInfo.split(":", 2);
-                        USER = parts[0];
+                        USER = java.net.URLDecoder.decode(parts[0], java.nio.charset.StandardCharsets.UTF_8);
                         if (parts.length > 1) {
-                            PASSWORD = parts[1];
+                            PASSWORD = java.net.URLDecoder.decode(parts[1], java.nio.charset.StandardCharsets.UTF_8);
                         }
                     }
                     String query = uri.getQuery();
@@ -77,7 +76,15 @@ public class Database {
                     if (query != null && !query.isEmpty()) {
                         URL += "?" + query;
                     } else {
-                        URL += "?sslmode=require";
+                        String sslModeEnv = System.getenv("PGSSLMODE");
+                        if (sslModeEnv == null || sslModeEnv.trim().isEmpty()) sslModeEnv = System.getenv("DB_SSLMODE");
+                        if (sslModeEnv != null && !sslModeEnv.trim().isEmpty()) {
+                            URL += "?sslmode=" + sslModeEnv.trim() + "&connectTimeout=10&socketTimeout=30";
+                        } else if (host != null && (host.contains(".railway.internal") || host.equals("localhost") || host.equals("127.0.0.1") || host.equals("postgres"))) {
+                            URL += "?sslmode=prefer&connectTimeout=10&socketTimeout=30";
+                        } else {
+                            URL += "?sslmode=require&connectTimeout=10&socketTimeout=30";
+                        }
                     }
                 } catch (Exception ex) {
                     if (!envDbUrl.startsWith("jdbc:")) {
@@ -93,11 +100,33 @@ public class Database {
             }
         }
 
-        if (System.getenv("DB_USER") != null && !System.getenv("DB_USER").trim().isEmpty()) {
-            USER = System.getenv("DB_USER").trim();
+        // Check individual Railway / Postgres environment variables if URL not set
+        if (URL == null || URL.trim().isEmpty()) {
+            String pghost = System.getenv("PGHOST");
+            if (pghost == null || pghost.trim().isEmpty()) pghost = System.getenv("POSTGRES_HOST");
+            if (pghost != null && !pghost.trim().isEmpty()) {
+                String pgport = System.getenv("PGPORT");
+                if (pgport == null || pgport.trim().isEmpty()) pgport = System.getenv("POSTGRES_PORT");
+                if (pgport == null || pgport.trim().isEmpty()) pgport = "5432";
+                String pgdb = System.getenv("PGDATABASE");
+                if (pgdb == null || pgdb.trim().isEmpty()) pgdb = System.getenv("POSTGRES_DB");
+                if (pgdb == null || pgdb.trim().isEmpty()) pgdb = "railway";
+                URL = "jdbc:postgresql://" + pghost.trim() + ":" + pgport.trim() + "/" + pgdb.trim() + "?sslmode=prefer&connectTimeout=10&socketTimeout=30";
+            }
         }
-        if (System.getenv("DB_PASSWORD") != null) {
-            PASSWORD = System.getenv("DB_PASSWORD").trim();
+
+        String envUser = System.getenv("DB_USER");
+        if (envUser == null || envUser.trim().isEmpty()) envUser = System.getenv("PGUSER");
+        if (envUser == null || envUser.trim().isEmpty()) envUser = System.getenv("POSTGRES_USER");
+        if (envUser != null && !envUser.trim().isEmpty()) {
+            USER = envUser.trim();
+        }
+
+        String envPassword = System.getenv("DB_PASSWORD");
+        if (envPassword == null) envPassword = System.getenv("PGPASSWORD");
+        if (envPassword == null) envPassword = System.getenv("POSTGRES_PASSWORD");
+        if (envPassword != null) {
+            PASSWORD = envPassword.trim();
         }
 
         if (URL == null || URL.trim().isEmpty()) {

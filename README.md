@@ -73,7 +73,8 @@ Accessible at `http://localhost:3000` (API requests automatically proxied to `:8
 ### 4. ☁️ Cloud & Docker Deployment
 
 BuyIt is containerized and production-ready for instant cloud deployment:
-- 📘 **[Complete Cloud Deployment Guide (DEPLOYMENT.md)](DEPLOYMENT.md)** — Step-by-step guides for **Render**, **Railway**, **Google Cloud Run**, **AWS**, and **Fly.io**.
+- 📘 **[Complete Cloud Deployment Guide (DEPLOYMENT.md)](DEPLOYMENT.md)** — Step-by-step guides for **Render**, **Google Cloud Run**, and **Fly.io**.
+- 🚀 **[Render 1-Click Deployment Guide (RENDER_DEPLOYMENT.md)](RENDER_DEPLOYMENT.md)** — Dedicated Render Blueprint guide.
 - 🐳 **Docker Run / Compose:**
   ```bash
   docker compose up -d --build

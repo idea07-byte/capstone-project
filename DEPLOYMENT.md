@@ -19,17 +19,29 @@ BuyIt is engineered with a high-performance **unified cloud architecture**:
 
 | Platform | Free Tier / Cost | Setup Difficulty | Build Type | Best For |
 | :--- | :--- | :--- | :--- | :--- |
-| **[Render](#1-deploying-to-render-recommended)** | Free / Low cost | ⭐ Very Easy | Docker (Automated) | **Capstone Projects & Portfolios** |
-| **[Railway](#2-deploying-to-railway)** | $5 Free Trial Credit | ⭐ Very Easy | Docker (Automated) | Rapid Prototyping |
+| **[Netlify (Frontend)](#1-deploying-frontend-to-netlify-recommended)** | Free Tier | ⭐ Very Easy | React SPA / Static | **High-Speed Global Edge Frontend** |
+| **[Render (Backend / Full-Stack)](#2-deploying-to-render-recommended)** | Free / Low cost | ⭐ Very Easy | Docker (Automated) | **Capstone Projects & Portfolios (Recommended)** |
 | **[Google Cloud Run](#3-deploying-to-google-cloud-run)** | Generous Free Tier | ⭐⭐ Medium | Serverless Container | Enterprise Scalability |
 | **[Fly.io](#4-deploying-to-flyio)** | Free / Low cost | ⭐⭐ Medium | Docker (`flyctl`) | Global Edge Hosting |
 | **[Self-Hosted VPS](#5-deploying-to-a-vps-with-docker-compose)** | $4–$6/month VPS | ⭐⭐ Medium | Docker Compose | Complete Control (Ubuntu/Debian) |
 
 ---
 
-## 1. Deploying to Render (Recommended)
+## 1. Deploying Frontend to Netlify (Recommended)
 
-Render offers the easiest way to deploy Docker containers directly from GitHub with automatic HTTPS certificates and continuous deployment.
+Netlify hosts the React Single-Page Application on global CDN edge nodes with instant HTTPS and client-side routing. See [NETLIFY_DEPLOYMENT.md](NETLIFY_DEPLOYMENT.md).
+
+### Quick Steps:
+1. Go to **[https://app.netlify.com](https://app.netlify.com)** and import your GitHub repository: `idea07-byte/capstone-project`.
+2. Set **Base directory:** `frontend`, **Build command:** `npm run build`, **Publish directory:** `frontend/dist`.
+3. Add Environment Variable: `VITE_API_URL` = `https://<your-backend>.onrender.com`
+4. Click **"Deploy site"**.
+
+---
+
+## 2. Deploying to Render (Recommended)
+
+Render offers the easiest way to deploy Docker containers directly from GitHub with automatic HTTPS certificates and continuous deployment. See also [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
 
 ### Step-by-Step Instructions:
 
@@ -65,18 +77,7 @@ Render offers the easiest way to deploy Docker containers directly from GitHub w
 
 ---
 
-## 2. Deploying to Railway
-
-1. Go to **[https://railway.app](https://railway.app)** and log in with GitHub.
-2. Click **"New Project"** -> **"Deploy from GitHub repo"**.
-3. Select `idea07-byte/capstone-project`.
-4. Railway will detect [`Dockerfile`](Dockerfile) and [`railway.json`](railway.json) automatically.
-5. In the service settings, click **"Generate Domain"** under the **Networking** section.
-6. Your live marketplace is now accessible over HTTPS!
-
----
-
-## 3. Deploying to Google Cloud Run
+## 2. Deploying to Google Cloud Run
 
 Google Cloud Run provides fully managed serverless containers with automatic SSL and zero-cost scaling when idle.
 
@@ -104,7 +105,7 @@ Once the deployment finishes, Cloud Run outputs the live HTTPS service URL (e.g.
 
 ---
 
-## 4. Deploying to Fly.io
+## 3. Deploying to Fly.io
 
 1. Install the `flyctl` CLI:
    - Windows: `pwsh -Command "iwr https://fly.io/install.ps1 -useb | iex"`
@@ -125,7 +126,7 @@ Once the deployment finishes, Cloud Run outputs the live HTTPS service URL (e.g.
 
 ---
 
-## 5. Deploying to a VPS with Docker Compose
+## 4. Deploying to a VPS with Docker Compose
 
 If you have a Linux VPS (DigitalOcean Droplet, AWS EC2, Linode, or Hetzner):
 

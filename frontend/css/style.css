@@ -1,9 +1,9 @@
 /* ============================================
-   BUYIT MARKETPLACE - MODERN PREMIUM STYLESHEET
-   Matching Payoneer-style aesthetic & color palette
+   BUYIT MARKETPLACE - LUXURY SAND & GOLD PALETTE
+   Inspired by @siren.uix Amazon App Concept
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Reset & Base */
 *,
@@ -15,53 +15,68 @@
 }
 
 :root {
-    --bg-primary: #f8fafc;
-    --bg-secondary: #ffffff;
-    --bg-card: #ffffff;
-    --bg-elevated: #f1f5f9;
-    --bg-hover: #f8fafc;
-    --border-subtle: #e2e8f0;
-    --border-default: #cbd5e1;
-    --border-strong: #f97316;
+    /* Luxury Sand & Champagne Gold Theme */
+    --bg-primary: #fbf8f3;
+    --bg-secondary: #f6f1e8;
+    --bg-card: rgba(255, 255, 255, 0.78);
+    --bg-glass: rgba(255, 255, 255, 0.68);
+    --bg-glass-strong: rgba(255, 255, 255, 0.88);
+    --bg-elevated: #f2ebd9;
+    --bg-hover: #f3ebdc;
+    --bg-cream: #f4ecdf;
     
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
+    --border-subtle: rgba(215, 195, 175, 0.4);
+    --border-default: rgba(200, 175, 150, 0.5);
+    --border-glass: rgba(255, 255, 255, 0.85);
+    --border-gold: rgba(212, 162, 85, 0.6);
+    --border-strong: #c98e40;
     
-    --accent: #f97316;
-    --accent-light: #fb923c;
-    --accent-dark: #ea580c;
-    --accent-red: #ef4444;
+    /* Warm Typography Colors */
+    --text-primary: #231911;
+    --text-secondary: #746352;
+    --text-muted: #a39382;
+    --text-light: #fefefe;
     
-    --gradient: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
-    --gradient-hover: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
-    --gradient-dark: linear-gradient(150deg, #1a1008 0%, #2d1a08 50%, #1c1209 100%);
-    --gradient-subtle: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%);
+    /* Accents & Gradients */
+    --accent: #c98e40;
+    --accent-light: #e5b26d;
+    --accent-dark: #b07425;
+    --accent-red: #ea4b4b;
+    --accent-blue: #3b82f6;
+    
+    --gradient: linear-gradient(135deg, #e4ad64 0%, #c48b3e 100%);
+    --gradient-gold: linear-gradient(135deg, #e5b26d 0%, #c98e40 50%, #b07425 100%);
+    --gradient-hover: linear-gradient(135deg, #edb771 0%, #b2792e 100%);
+    --gradient-promo: linear-gradient(135deg, #dfb47c 0%, #ce9f60 45%, #b98542 100%);
+    --gradient-dark: linear-gradient(150deg, #1c140d 0%, #2f2115 50%, #1f150e 100%);
+    --gradient-subtle: linear-gradient(135deg, rgba(228, 173, 100, 0.12) 0%, rgba(196, 139, 62, 0.12) 100%);
+    --gradient-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.85), rgba(248, 242, 233, 0.6));
     
     --success: #10b981;
-    --success-bg: rgba(16, 185, 129, 0.1);
+    --success-bg: rgba(16, 185, 129, 0.12);
     --error: #ef4444;
-    --error-bg: rgba(239, 68, 68, 0.1);
+    --error-bg: rgba(239, 68, 68, 0.12);
     --warning: #f59e0b;
-    --warning-bg: rgba(245, 158, 11, 0.1);
+    --warning-bg: rgba(245, 158, 11, 0.12);
     --info: #3b82f6;
-    --info-bg: rgba(59, 130, 246, 0.1);
+    --info-bg: rgba(59, 130, 246, 0.12);
     
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08);
-    --shadow-xl: 0 20px 45px rgba(0, 0, 0, 0.12);
-    --shadow-orange: 0 4px 20px rgba(249, 115, 22, 0.35);
+    --shadow-sm: 0 2px 6px rgba(168, 133, 94, 0.06);
+    --shadow-md: 0 6px 18px rgba(168, 133, 94, 0.08);
+    --shadow-lg: 0 12px 36px rgba(168, 133, 94, 0.1);
+    --shadow-xl: 0 24px 50px rgba(168, 133, 94, 0.14);
+    --shadow-gold: 0 8px 24px rgba(196, 139, 62, 0.32);
+    --shadow-orange: 0 8px 24px rgba(201, 142, 64, 0.32);
     
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 18px;
-    --radius-xl: 24px;
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
     --radius-full: 9999px;
     
     --sidebar-width: 260px;
     --topbar-height: 72px;
-    --transition: 0.2s ease;
+    --transition: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html {
@@ -69,11 +84,16 @@ html {
 }
 
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
-    background: var(--bg-primary);
+    background-color: var(--bg-primary);
+    background-image: 
+        radial-gradient(ellipse 650px 450px at 15% 12%, rgba(235, 192, 130, 0.15), transparent 60%),
+        radial-gradient(ellipse 600px 400px at 85% 25%, rgba(228, 178, 115, 0.12), transparent 55%),
+        radial-gradient(circle 500px at 50% 80%, rgba(220, 168, 92, 0.08), transparent 60%);
+    background-attachment: fixed;
     color: var(--text-primary);
-    line-height: 1.6;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -3491,5 +3511,1767 @@ img {
 .btn-remove-slot:hover {
     background: #fca5a5;
     color: #991b1b;
+}
+
+/* ==========================================================================
+   SIREN UI/UX LUXURY DESKTOP WEB APPLICATION
+   Matching Reference Concept Aesthetic by @siren.uix
+   ========================================================================== */
+
+/* Main Viewport & Layout */
+.siren-viewport-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #fbf8f3;
+    color: #231911;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Top Announcement Ribbon */
+.siren-top-announcement {
+    background: linear-gradient(90deg, #b88236 0%, #deb379 50%, #b88236 100%);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px 16px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(184, 130, 54, 0.25);
+}
+
+.siren-top-announcement span {
+    opacity: 0.95;
+}
+
+/* Sticky Desktop Navigation Bar */
+.siren-desktop-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(251, 248, 243, 0.94);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid rgba(212, 162, 85, 0.25);
+    box-shadow: 0 4px 20px rgba(180, 140, 95, 0.07);
+}
+
+.siren-navbar-inner {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.siren-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-shrink: 0;
+}
+
+.siren-desktop-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.siren-desktop-logo:hover {
+    transform: scale(1.03);
+}
+
+.siren-deliver-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #7a6652;
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: rgba(220, 190, 155, 0.15);
+    border: 1px solid rgba(220, 190, 155, 0.35);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.siren-deliver-badge:hover {
+    background: rgba(220, 190, 155, 0.3);
+}
+
+.siren-deliver-badge strong {
+    display: block;
+    color: #231911;
+    font-weight: 800;
+    font-size: 12.5px;
+}
+
+/* Omni Search Bar */
+.siren-desktop-search {
+    flex: 1;
+    max-width: 620px;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid rgba(212, 162, 85, 0.45);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(180, 140, 95, 0.08);
+    transition: all 0.25s;
+}
+
+.siren-desktop-search:focus-within {
+    border-color: #c48b3e;
+    box-shadow: 0 6px 22px rgba(196, 139, 62, 0.25);
+    background: #ffffff;
+}
+
+.siren-search-cat-select {
+    background: rgba(244, 236, 224, 0.6);
+    border: none;
+    border-right: 1px solid rgba(212, 162, 85, 0.3);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #554433;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.siren-search-text-input {
+    flex: 1;
+    border: none;
+    padding: 11px 16px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: #231911;
+    outline: none;
+    background: transparent;
+}
+
+.siren-search-text-input::placeholder {
+    color: #9c8b7c;
+}
+
+.siren-search-btn-action {
+    background: linear-gradient(135deg, #deb379 0%, #c48b3e 100%);
+    border: none;
+    width: 48px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #ffffff;
+    font-size: 17px;
+    transition: filter 0.2s;
+}
+
+.siren-search-btn-action:hover {
+    filter: brightness(1.08);
+}
+
+/* Nav Right Links & Actions */
+.siren-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.siren-nav-desktop-link {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #4a3b2c;
+    text-decoration: none;
+    padding: 7px 12px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.siren-nav-desktop-link:hover,
+.siren-nav-desktop-link.active {
+    color: #c48b3e;
+    background: rgba(220, 185, 140, 0.18);
+}
+
+.siren-nav-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(220, 195, 170, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #231911;
+    font-size: 17px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.siren-nav-icon-btn:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(180, 140, 95, 0.15);
+}
+
+.siren-nav-cart-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #deb379 0%, #c48b3e 100%);
+    color: #ffffff;
+    text-decoration: none;
+    padding: 9px 18px;
+    border-radius: 24px;
+    font-size: 13.5px;
+    font-weight: 800;
+    box-shadow: 0 4px 16px rgba(196, 139, 62, 0.35);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.siren-nav-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(196, 139, 62, 0.45);
+    background: linear-gradient(135deg, #e4b87e 0%, #b87f32 100%);
+}
+
+.siren-nav-cart-badge {
+    background: #ffffff;
+    color: #c48b3e;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 1px 7px;
+    border-radius: 12px;
+}
+
+/* Sub-Navigation Ribbon */
+.siren-subnav-strip {
+    background: rgba(255, 255, 255, 0.65);
+    border-bottom: 1px solid rgba(220, 195, 170, 0.25);
+    padding: 8px 24px;
+}
+
+.siren-subnav-inner {
+    max-width: 1380px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.siren-subnav-inner::-webkit-scrollbar {
+    display: none;
+}
+
+.siren-subnav-chip {
+    background: transparent;
+    border: 1px solid transparent;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #5a4634;
+    padding: 5px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.siren-subnav-chip:hover,
+.siren-subnav-chip.active {
+    background: rgba(220, 185, 140, 0.25);
+    color: #82551a;
+}
+
+/* Main Area Layout */
+.siren-desktop-main {
+    flex: 1;
+    width: 100%;
+}
+
+/* ==========================================================================
+   SCREEN 1: STORE & BRAND STORIES (Desktop Expansion)
+   ========================================================================== */
+
+.siren-store-page {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Brand Story Circles Bar */
+.siren-brand-bar {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    overflow-x: auto;
+    padding: 8px 4px 20px;
+    scrollbar-width: none;
+    margin-bottom: 24px;
+}
+
+.siren-brand-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.siren-brand-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.siren-brand-circle {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: #f4ecdf;
+    border: 2.5px solid rgba(220, 190, 155, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(175, 135, 90, 0.1);
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.siren-brand-circle img,
+.siren-brand-circle svg {
+    max-width: 44px;
+    max-height: 44px;
+    object-fit: contain;
+}
+
+.siren-brand-item:hover .siren-brand-circle,
+.siren-brand-item.active .siren-brand-circle {
+    border-color: #c98e40;
+    box-shadow: 0 0 0 4px rgba(201, 142, 64, 0.3), 0 10px 24px rgba(196, 139, 62, 0.25);
+    transform: translateY(-4px) scale(1.06);
+    background: #ffffff;
+}
+
+.siren-brand-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4a3b2c;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.siren-verified-tick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #0284c7;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+}
+
+/* Widescreen Hero Promo Banner */
+.siren-promo-card {
+    min-height: 320px;
+    border-radius: 36px;
+    padding: 36px 48px;
+    background: linear-gradient(135deg, #deb379 0%, #ce9f60 40%, #b98542 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 32px;
+    box-shadow: 0 18px 44px rgba(185, 133, 66, 0.28);
+}
+
+.siren-promo-bg-watermark {
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Outfit', sans-serif;
+    font-size: 160px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.15);
+    letter-spacing: 8px;
+    pointer-events: none;
+    line-height: 1;
+    z-index: 0;
+}
+
+.siren-promo-content {
+    position: relative;
+    z-index: 1;
+    max-width: 54%;
+}
+
+.siren-promo-pill {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.siren-promo-sub {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(35, 25, 17, 0.75);
+    margin-bottom: 6px;
+}
+
+.siren-promo-discount {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 4px 0 8px;
+    line-height: 1;
+}
+
+.siren-promo-discount .num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 64px;
+    font-weight: 900;
+    color: #ea4b4b;
+    letter-spacing: -2px;
+}
+
+.siren-promo-discount .unit {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    font-weight: 900;
+    color: #ea4b4b;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.siren-promo-desc {
+    font-size: 14px;
+    color: #3d2c1d;
+    line-height: 1.5;
+    margin: 6px 0 20px;
+    max-width: 460px;
+    font-weight: 500;
+}
+
+.siren-promo-btn {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #231911;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.siren-promo-btn:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.siren-promo-shoe-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 44%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.siren-promo-shoe-img {
+    max-width: 100%;
+    width: 350px;
+    height: auto;
+    transform: rotate(-14deg) translateY(-8px);
+    filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.3));
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.siren-promo-card:hover .siren-promo-shoe-img {
+    transform: rotate(-10deg) translateY(-14px) scale(1.08);
+}
+
+.siren-carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: -14px 0 24px;
+}
+
+.siren-carousel-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(200, 170, 135, 0.5);
+    transition: all 0.2s;
+}
+
+.siren-carousel-dots .dot.active {
+    width: 24px;
+    border-radius: 4px;
+    background: #c98e40;
+}
+
+/* Category Filter Chips & Toolbar */
+.siren-categories-section {
+    margin-bottom: 28px;
+}
+
+.siren-section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.siren-section-title-row h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #231911;
+    letter-spacing: -0.4px;
+}
+
+.siren-view-all-link {
+    font-size: 13px;
+    font-weight: 700;
+    color: #c98e40;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.siren-cat-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.siren-cat-pills {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 2px 2px 8px;
+}
+
+.siren-cat-pills::-webkit-scrollbar {
+    display: none;
+}
+
+.siren-cat-pill {
+    padding: 10px 20px;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(215, 190, 160, 0.5);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #554433;
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 4px 12px rgba(180, 140, 95, 0.05);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.siren-cat-pill:hover {
+    background: rgba(255, 255, 255, 0.98);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(180, 140, 95, 0.12);
+}
+
+.siren-cat-pill.active {
+    background: linear-gradient(135deg, #c98e40 0%, #b07425 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 6px 18px rgba(196, 139, 62, 0.38);
+    transform: translateY(-2px);
+}
+
+.siren-sort-dropdown {
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(215, 190, 160, 0.5);
+    background: rgba(255, 255, 255, 0.9);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: #4a3b2c;
+    outline: none;
+    cursor: pointer;
+}
+
+/* 4-Column Desktop Product Grid */
+.siren-products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 36px;
+}
+
+@media (max-width: 1200px) {
+    .siren-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .siren-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+}
+
+.siren-product-card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 26px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(165, 125, 80, 0.08);
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.siren-product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 36px rgba(165, 125, 80, 0.16);
+    border-color: rgba(212, 162, 85, 0.6);
+    background: #ffffff;
+}
+
+.siren-card-media {
+    width: 100%;
+    height: 200px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    background: #ede6d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.siren-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.siren-product-card:hover .siren-card-media img {
+    transform: scale(1.08);
+}
+
+.siren-card-discount {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    color: #ea4b4b;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    z-index: 2;
+}
+
+.siren-card-share-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #4a3b2c;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    z-index: 2;
+    transition: all 0.2s;
+}
+
+.siren-card-share-btn:hover {
+    background: #fff;
+    transform: scale(1.12);
+}
+
+.siren-card-wishlist-pill {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 14, 8, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 2;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.siren-card-wishlist-pill.active {
+    background: rgba(234, 75, 75, 0.9);
+    border-color: transparent;
+}
+
+.siren-card-body {
+    padding: 12px 6px 6px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.siren-card-stock {
+    font-size: 11px;
+    font-weight: 700;
+    color: #e55353;
+    margin-bottom: 3px;
+}
+
+.siren-card-brand-row {
+    font-size: 12px;
+    color: #8c7b6c;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 4px;
+}
+
+.siren-card-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #231911;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.siren-card-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: auto;
+    margin-bottom: 12px;
+}
+
+.siren-card-price-final {
+    font-size: 18px;
+    font-weight: 900;
+    color: #231911;
+}
+
+.siren-card-price-old {
+    font-size: 12px;
+    color: #9c8b7c;
+    text-decoration: line-through;
+}
+
+.siren-card-add-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #e4ad64 0%, #c48b3e 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(196, 139, 62, 0.25);
+    transition: all 0.2s;
+}
+
+.siren-card-add-btn:hover {
+    background: linear-gradient(135deg, #edb771 0%, #b2792e 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(196, 139, 62, 0.35);
+}
+
+/* ==========================================================================
+   SCREEN 2: PRODUCT DETAILS SHOWCASE (Desktop 2-Column Split)
+   ========================================================================== */
+
+.pd-siren-page {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.pd-desktop-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #8c7b6c;
+    margin-bottom: 24px;
+}
+
+.pd-desktop-breadcrumb a {
+    color: #8c7b6c;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.pd-desktop-breadcrumb a:hover {
+    color: #c48b3e;
+}
+
+.pd-desktop-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 48px;
+    align-items: start;
+    margin-bottom: 48px;
+}
+
+@media (max-width: 992px) {
+    .pd-desktop-layout {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}
+
+/* Left Column: Interactive Showcase Stage */
+.pd-showcase-stage {
+    min-height: 540px;
+    border-radius: 36px;
+    padding: 36px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 44px rgba(160, 120, 80, 0.1);
+}
+
+.pd-brand-watermark-text {
+    position: absolute;
+    font-family: 'Outfit', sans-serif;
+    font-size: 160px;
+    font-weight: 900;
+    color: rgba(180, 140, 95, 0.12);
+    letter-spacing: 12px;
+    pointer-events: none;
+    text-align: center;
+    width: 100%;
+    line-height: 0.9;
+    top: 45%;
+    transform: translateY(-50%);
+    z-index: 0;
+}
+
+/* Left Vertical Size Selector */
+.pd-vertical-sizes {
+    position: absolute;
+    left: 28px;
+    top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2;
+}
+
+.pd-sizes-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #8c7b6c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.pd-size-pill-btn {
+    width: 48px;
+    height: 38px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(220, 195, 170, 0.4);
+    font-size: 13px;
+    font-weight: 700;
+    color: #4a3b2c;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.pd-size-pill-btn.active {
+    background: linear-gradient(135deg, #deb379 0%, #c48b3e 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(196, 139, 62, 0.35);
+    transform: scale(1.05);
+}
+
+/* Floating Vertical Color Dots Capsule */
+.pd-floating-color-picker {
+    position: absolute;
+    left: 88px;
+    top: 60px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 28px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(160, 120, 80, 0.12);
+    z-index: 2;
+}
+
+.pd-color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.pd-color-dot.active::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid #231911;
+}
+
+/* Hero Center Product Image */
+.pd-hero-product-img {
+    max-width: 85%;
+    max-height: 380px;
+    object-fit: contain;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+}
+
+.pd-hero-product-img.is-shoe {
+    transform: rotate(-14deg) translateY(-8px);
+    filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.26));
+}
+
+.pd-hero-product-img.is-generic {
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(160, 120, 80, 0.18);
+}
+
+.pd-showcase-stage:hover .pd-hero-product-img.is-shoe {
+    transform: rotate(-10deg) translateY(-14px) scale(1.08);
+}
+
+.pd-showcase-stage:hover .pd-hero-product-img.is-generic {
+    transform: scale(1.05);
+}
+
+/* Stage Bottom Dots */
+.pd-stage-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+
+.pd-stage-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(200, 170, 135, 0.5);
+}
+
+.pd-stage-dots .dot.active {
+    width: 20px;
+    border-radius: 4px;
+    background: #c98e40;
+}
+
+/* Right Column: Buy Box & Product Info */
+.pd-buybox-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pd-siren-brand-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(220, 195, 170, 0.3);
+}
+
+.pd-siren-brand-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pd-siren-brand-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f4ecdf;
+    border: 2px solid rgba(212, 162, 85, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(180, 140, 95, 0.1);
+}
+
+.pd-siren-brand-name-group h4 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #241a12;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pd-siren-brand-name-group small {
+    font-size: 12px;
+    color: #8c7b6c;
+}
+
+.pd-siren-brand-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pd-siren-circle-action {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(220, 195, 170, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.pd-siren-circle-action:hover {
+    background: #fff;
+    transform: scale(1.08);
+}
+
+.pd-siren-title-block h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: #231911;
+    letter-spacing: -0.8px;
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.pd-siren-title-block p {
+    font-size: 14px;
+    color: #8c7b6c;
+    margin: 0;
+    font-weight: 600;
+}
+
+.pd-siren-rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(220, 195, 170, 0.4);
+    border-radius: 16px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #231911;
+    width: fit-content;
+}
+
+.pd-siren-pricing-block {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    border: 1px solid rgba(220, 195, 170, 0.35);
+}
+
+.pd-siren-price-display {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.pd-siren-price-display .currency {
+    font-size: 22px;
+    font-weight: 800;
+    color: #c98e40;
+}
+
+.pd-siren-price-display .amount {
+    font-family: 'Outfit', sans-serif;
+    font-size: 38px;
+    font-weight: 900;
+    color: #231911;
+    letter-spacing: -1.5px;
+}
+
+.pd-siren-price-display .old-amount {
+    font-size: 16px;
+    color: #9c8b7c;
+    text-decoration: line-through;
+}
+
+.pd-siren-discount-tag {
+    background: rgba(234, 75, 75, 0.12);
+    color: #ea4b4b;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.pd-option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pd-option-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #4a3b2c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pd-horizontal-size-chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pd-chip-btn {
+    padding: 8px 18px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1.5px solid rgba(220, 195, 170, 0.5);
+    font-size: 13px;
+    font-weight: 700;
+    color: #4a3b2c;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pd-chip-btn:hover {
+    border-color: #c48b3e;
+    background: #fff;
+}
+
+.pd-chip-btn.active {
+    background: linear-gradient(135deg, #deb379 0%, #c48b3e 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(196, 139, 62, 0.35);
+}
+
+.pd-stock-status-line {
+    font-size: 13px;
+    font-weight: 700;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pd-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pd-siren-stepper {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(220, 195, 170, 0.5);
+    border-radius: 20px;
+    padding: 6px 12px;
+    gap: 16px;
+}
+
+.pd-siren-stepper button {
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    font-weight: 800;
+    color: #5a493a;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pd-siren-stepper button:hover {
+    background: rgba(220, 185, 140, 0.25);
+    color: #231911;
+}
+
+.pd-siren-stepper .count {
+    font-size: 16px;
+    font-weight: 800;
+    color: #231911;
+    min-width: 24px;
+    text-align: center;
+}
+
+.pd-siren-cta-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #deb379 0%, #c48b3e 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 28px;
+    padding: 16px 28px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(196, 139, 62, 0.38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pd-siren-cta-btn:hover {
+    background: linear-gradient(135deg, #e8be87 0%, #b3792c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(196, 139, 62, 0.48);
+}
+
+/* Trust Perks Bar */
+.pd-trust-perks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 20px;
+    border: 1px solid rgba(220, 195, 170, 0.35);
+}
+
+.pd-perk-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #6a5746;
+}
+
+.pd-perk-item strong {
+    color: #231911;
+    font-weight: 800;
+}
+
+.pd-perk-icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+/* Expandable Secondary Blocks */
+.pd-siren-accordion {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.pd-siren-accordion-header {
+    padding: 16px 20px;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #231911;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(220, 195, 170, 0.25);
+    transition: background 0.2s;
+}
+
+.pd-siren-accordion-header:hover {
+    background: rgba(220, 185, 140, 0.12);
+}
+
+.pd-siren-accordion-content {
+    padding: 16px 20px;
+    font-size: 13.5px;
+    color: #6a5746;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   DESKTOP WEB APP FOOTER
+   ========================================================================== */
+
+.siren-desktop-footer {
+    background: #1f160e;
+    color: #d6c7b7;
+    margin-top: auto;
+    border-top: 1px solid rgba(212, 162, 85, 0.25);
+}
+
+.siren-footer-inner {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 60px 24px 36px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 48px;
+}
+
+@media (max-width: 992px) {
+    .siren-footer-inner {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+}
+
+@media (max-width: 576px) {
+    .siren-footer-inner {
+        grid-template-columns: 1fr;
+    }
+}
+
+.siren-footer-brand p {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #a89887;
+    margin: 14px 0 20px;
+    max-width: 340px;
+}
+
+.siren-footer-col h4 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 18px;
+    letter-spacing: 0.3px;
+}
+
+.siren-footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.siren-footer-links a {
+    color: #a89887;
+    text-decoration: none;
+    font-size: 13.5px;
+    transition: color 0.2s;
+}
+
+.siren-footer-links a:hover {
+    color: #deb379;
+}
+
+.siren-newsletter-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.siren-newsletter-input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+}
+
+.siren-newsletter-input::placeholder {
+    color: #8c7b6c;
+}
+
+.siren-newsletter-btn {
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #deb379 0%, #c48b3e 100%);
+    color: #fff;
+    border: none;
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.siren-newsletter-btn:hover {
+    filter: brightness(1.1);
+}
+
+.siren-footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 22px 24px;
+    text-align: center;
+    font-size: 12.5px;
+    color: #7a6b5c;
+}
+
+/* ==========================================================================
+   NOTIFICATIONS POPOVER, ACCOUNT DROPDOWN & DELIVERY MODAL
+   ========================================================================== */
+
+/* Notifications Popover */
+.notif-popover {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 340px;
+    max-height: 440px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(24px);
+    border: 1.5px solid rgba(220, 195, 170, 0.65);
+    border-radius: 20px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: sirenFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notif-header {
+    padding: 14px 18px;
+    background: rgba(245, 235, 220, 0.5);
+    border-bottom: 1px solid rgba(220, 195, 170, 0.35);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notif-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: #231911;
+}
+
+.notif-mark-read {
+    border: none;
+    background: none;
+    color: #c48b3e;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.notif-list {
+    overflow-y: auto;
+    max-height: 360px;
+    padding: 6px 0;
+}
+
+.notif-item {
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(230, 215, 200, 0.3);
+    transition: background 0.2s;
+}
+
+.notif-item:hover {
+    background: rgba(245, 235, 220, 0.3);
+}
+
+.notif-item.unread {
+    background: rgba(222, 179, 121, 0.08);
+    border-left: 3px solid #c48b3e;
+}
+
+.notif-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #231911;
+    margin-bottom: 3px;
+}
+
+.notif-msg {
+    font-size: 12px;
+    color: #6a5746;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.notif-time {
+    font-size: 10.5px;
+    color: #9c8b7c;
+}
+
+.notif-empty {
+    padding: 24px;
+    text-align: center;
+    color: #8c7b6c;
+    font-size: 13px;
+}
+
+/* Account Dropdown Menu */
+.siren-account-menu-wrapper {
+    position: relative;
+}
+
+.siren-account-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(220, 195, 170, 0.5);
+    font-size: 13px;
+    font-weight: 700;
+    color: #231911;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.siren-account-btn:hover {
+    background: #ffffff;
+    border-color: #c48b3e;
+    box-shadow: 0 4px 14px rgba(196, 139, 62, 0.18);
+}
+
+.siren-account-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 260px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(24px);
+    border: 1.5px solid rgba(220, 195, 170, 0.65);
+    border-radius: 20px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+    overflow: hidden;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: sirenFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.siren-account-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(220, 195, 170, 0.3);
+    margin-bottom: 4px;
+}
+
+.siren-account-header strong {
+    display: block;
+    font-size: 13.5px;
+    color: #231911;
+}
+
+.siren-account-header small {
+    font-size: 11.5px;
+    color: #8c7b6c;
+}
+
+.siren-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    color: #4a3b2c;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: all 0.15s;
+    box-sizing: border-box;
+}
+
+.siren-dropdown-item:hover {
+    background: rgba(222, 179, 121, 0.15);
+    color: #c48b3e;
+    transform: translateX(3px);
+}
+
+.siren-dropdown-item.danger {
+    color: #dc2626;
+}
+
+.siren-dropdown-item.danger:hover {
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+}
+
+.siren-dropdown-divider {
+    height: 1px;
+    background: rgba(220, 195, 170, 0.3);
+    margin: 4px 0;
+}
+
+/* Delivery Modal */
+.siren-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 10, 5, 0.55);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: sirenFadeIn 0.2s ease;
+}
+
+.siren-modal-box {
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-radius: 28px;
+    border: 1px solid rgba(220, 195, 170, 0.6);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    padding: 28px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.siren-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.siren-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #231911;
+}
+
+.siren-modal-close {
+    border: none;
+    background: #f5ede2;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #554433;
 }
 
