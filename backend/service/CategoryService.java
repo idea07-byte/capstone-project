@@ -57,6 +57,20 @@ public class CategoryService {
         return null;
     }
 
+    public Category getCategoryByNameOrSlug(String nameOrSlug) {
+        if (nameOrSlug == null || nameOrSlug.trim().isEmpty()) return null;
+        String normalized = nameOrSlug.trim().toLowerCase().replaceAll("[^a-z0-9]", "");
+        for (Category c : getAllCategories()) {
+            if (c.getName() != null) {
+                String cNorm = c.getName().trim().toLowerCase().replaceAll("[^a-z0-9]", "");
+                if (cNorm.equals(normalized) || cNorm.contains(normalized) || normalized.contains(cNorm)) {
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean updateCategory(int id, Category category) {
         String sql = "UPDATE categories SET name = COALESCE(?, name), description = COALESCE(?, description), image = COALESCE(?, image), status = COALESCE(?, status) WHERE id = ?";
         try (Connection conn = Database.getConnection();

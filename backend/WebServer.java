@@ -484,11 +484,35 @@ public class WebServer {
                     respondJson(exchange, "{\"success\":true,\"product\":" + productJson(p) + "}");
                 } else {
                     Map<String, String> params = parseQuery(query);
-                    Integer catId = params.containsKey("category") && !params.get("category").isEmpty() ? Integer.parseInt(params.get("category")) : null;
-                    Integer brandId = params.containsKey("brand") && !params.get("brand").isEmpty() ? Integer.parseInt(params.get("brand")) : null;
-                    Integer vendorId = params.containsKey("vendorId") && !params.get("vendorId").isEmpty() ? Integer.parseInt(params.get("vendorId")) : null;
-                    Double minP = params.containsKey("minPrice") && !params.get("minPrice").isEmpty() ? Double.parseDouble(params.get("minPrice")) : null;
-                    Double maxP = params.containsKey("maxPrice") && !params.get("maxPrice").isEmpty() ? Double.parseDouble(params.get("maxPrice")) : null;
+                    Integer catId = null;
+                    if (params.containsKey("category") && !params.get("category").isEmpty()) {
+                        String catStr = params.get("category").trim();
+                        try {
+                            catId = Integer.parseInt(catStr);
+                        } catch (NumberFormatException e) {
+                            model.Category cat = new CategoryService().getCategoryByNameOrSlug(catStr);
+                            if (cat != null) catId = cat.getId();
+                        }
+                    }
+                    Integer brandId = null;
+                    if (params.containsKey("brand") && !params.get("brand").isEmpty()) {
+                        String brandStr = params.get("brand").trim();
+                        try {
+                            brandId = Integer.parseInt(brandStr);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    Integer vendorId = null;
+                    if (params.containsKey("vendorId") && !params.get("vendorId").isEmpty()) {
+                        try { vendorId = Integer.parseInt(params.get("vendorId").trim()); } catch (Exception ignored) {}
+                    }
+                    Double minP = null;
+                    if (params.containsKey("minPrice") && !params.get("minPrice").isEmpty()) {
+                        try { minP = Double.parseDouble(params.get("minPrice").trim()); } catch (Exception ignored) {}
+                    }
+                    Double maxP = null;
+                    if (params.containsKey("maxPrice") && !params.get("maxPrice").isEmpty()) {
+                        try { maxP = Double.parseDouble(params.get("maxPrice").trim()); } catch (Exception ignored) {}
+                    }
                     String search = params.get("search");
                     String sort = params.get("sort");
                     List<Product> products = new ProductService().searchProducts(search, catId, brandId, vendorId, minP, maxP, sort);

@@ -1785,9 +1785,11 @@ function ProductDetailsPage({ addToast }) {
   const [wishlisted, setWishlisted] = useState(false);
   const [showSpecs, setShowSpecs] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
+  const [selectedImgIdx, setSelectedImgIdx] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setSelectedImgIdx(0);
     if (String(id) === 'puma' || String(id) === 'featured') {
       const pObj = MOCK_FALLBACK_PRODUCTS[0];
       setProduct(pObj);
@@ -1937,8 +1939,8 @@ function ProductDetailsPage({ addToast }) {
     ? product.images
     : (product.image ? [product.image] : [defaultFallback]);
   
-  const [selectedImgIdx, setSelectedImgIdx] = useState(0);
-  const currentRawImg = rawImages[selectedImgIdx] || rawImages[0] || defaultFallback;
+  const safeImgIdx = (selectedImgIdx >= 0 && selectedImgIdx < rawImages.length) ? selectedImgIdx : 0;
+  const currentRawImg = rawImages[safeImgIdx] || rawImages[0] || defaultFallback;
   const heroImage = resolveMediaUrl(currentRawImg) || defaultFallback;
   const brandNameDisplay = (String(id) === 'puma' || String(id) === 'featured') ? 'PUMA' : (product.brandName || 'BuyIt Flagship');
 
