@@ -168,12 +168,215 @@ function StarRating({ rating }) {
 let _cachedCats = null;
 let _cachedBrds = null;
 
-function ProductImage({ src, alt, style }) {
-  const [err, setErr] = useState(false);
-  useEffect(() => { setErr(false); }, [src]);
-  const resolved = resolveMediaUrl(src);
-  if (resolved && !err) return <img src={resolved} alt={alt || ''} style={style} onError={() => setErr(true)} loading="lazy" decoding="async" />;
-  return <div className="img-placeholder" style={style}>📦</div>;
+function getCategoryFallbackImage(categoryName = '', productName = '') {
+  const c = (categoryName || '').toLowerCase();
+  const n = (productName || '').toLowerCase();
+  if (c.includes('shoe') || n.includes('sneaker') || n.includes('shoe') || n.includes('boot') || n.includes('puma') || n.includes('nike')) {
+    return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('cloth') || c.includes('apparel') || c.includes('fashion') || n.includes('shirt') || n.includes('jacket') || n.includes('dress') || n.includes('hoodie')) {
+    return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('watch') || n.includes('watch') || n.includes('timepiece')) {
+    return 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('bag') || n.includes('bag') || n.includes('backpack') || n.includes('tote')) {
+    return 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('headphone') || c.includes('audio') || n.includes('headphone') || n.includes('earbuds') || n.includes('airpods')) {
+    return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('laptop') || c.includes('computer') || n.includes('laptop') || n.includes('macbook')) {
+    return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('mobile') || c.includes('phone') || n.includes('iphone') || n.includes('smartphone')) {
+    return 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('beauty') || c.includes('perfume') || c.includes('cosmetic')) {
+    return 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('appliance') || c.includes('kitchen') || c.includes('home')) {
+    return 'https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('sport') || c.includes('fitness')) {
+    return 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=900&auto=format&fit=crop&q=85';
+  }
+  if (c.includes('toy') || c.includes('game')) {
+    return 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=900&auto=format&fit=crop&q=85';
+  }
+  return 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=900&auto=format&fit=crop&q=85';
+}
+
+function ProductImage({ src, alt, category, style, className }) {
+  const [imgSrc, setImgSrc] = useState(() => resolveMediaUrl(src) || getCategoryFallbackImage(category, alt));
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const resolved = resolveMediaUrl(src);
+    setImgSrc(resolved || getCategoryFallbackImage(category, alt));
+    setHasError(false);
+  }, [src, category, alt]);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      setImgSrc(getCategoryFallbackImage(category, alt));
+    }
+  };
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt || 'Product Image'}
+      style={style}
+      className={className}
+      onError={handleError}
+      loading="lazy"
+      decoding="async"
+    />
+  );
+}
+
+const GUEST_CART_KEY = 'buyit_guest_cart';
+
+function getGuestCart() {
+  try {
+    const raw = localStorage.getItem(GUEST_CART_KEY);
+    if (!raw) return { items: [], total: 0, count: 0 };
+    const parsed = JSON.parse(raw);
+    const items = Array.isArray(parsed.items) ? parsed.items : [];
+    const total = items.reduce((acc, i) => acc + ((Number(i.price) || 0) * (Number(i.quantity) || 1)), 0);
+    const count = items.reduce((acc, i) => acc + (Number(i.quantity) || 1), 0);
+    return { items, total, count };
+  } catch {
+    return { items: [], total: 0, count: 0 };
+  }
+}
+
+function saveGuestCart(cart) {
+  try {
+    const items = Array.isArray(cart.items) ? cart.items : [];
+    const total = items.reduce((acc, i) => acc + ((Number(i.price) || 0) * (Number(i.quantity) || 1)), 0);
+    const count = items.reduce((acc, i) => acc + (Number(i.quantity) || 1), 0);
+    const normalized = { items, total, count };
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(normalized));
+    return normalized;
+  } catch {
+    return { items: [], total: 0, count: 0 };
+  }
+}
+
+function clearGuestCart() {
+  try { localStorage.removeItem(GUEST_CART_KEY); } catch {}
+}
+
+async function getCartData() {
+  const token = getToken();
+  if (token) {
+    try {
+      const data = await api('/cart');
+      if (data && Array.isArray(data.items)) return data;
+    } catch (err) {
+      if (err.message && err.message.toLowerCase().includes('unauthorized')) {
+        clearAuth();
+      }
+    }
+  }
+  return getGuestCart();
+}
+
+async function addToCartItem(product, quantity = 1) {
+  const token = getToken();
+  const prodId = Number(product.id || product.productId || 1);
+  const qty = Number(quantity) || 1;
+  const price = Number(product.finalPrice || product.price || 0);
+
+  if (token) {
+    try {
+      await api('/cart', { method: 'POST', body: { productId: prodId, quantity: qty } });
+      return;
+    } catch (err) {
+      if (!err.message || !err.message.toLowerCase().includes('unauthorized')) {
+        throw err;
+      }
+      clearAuth();
+    }
+  }
+
+  // Fallback to guest cart
+  const cart = getGuestCart();
+  const existingIdx = cart.items.findIndex(i => Number(i.productId) === prodId);
+  if (existingIdx >= 0) {
+    cart.items[existingIdx].quantity += qty;
+    cart.items[existingIdx].subtotal = cart.items[existingIdx].quantity * cart.items[existingIdx].price;
+  } else {
+    cart.items.push({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      productId: prodId,
+      productName: product.name || product.productName || 'Product #' + prodId,
+      productImage: product.image || product.productImage || '',
+      quantity: qty,
+      price: price,
+      subtotal: price * qty,
+      stockQuantity: product.stockQuantity || 20,
+      vendorId: product.vendorId || 1,
+      vendorName: product.vendorName || 'BuyIt Flagship'
+    });
+  }
+  saveGuestCart(cart);
+}
+
+async function updateCartItemQty(productId, quantity) {
+  const token = getToken();
+  const prodId = Number(productId);
+  const qty = Math.max(1, Number(quantity) || 1);
+  if (token) {
+    try {
+      await api('/cart', { method: 'PUT', body: { productId: prodId, quantity: qty } });
+      return;
+    } catch (err) {
+      if (!err.message || !err.message.toLowerCase().includes('unauthorized')) {
+        throw err;
+      }
+      clearAuth();
+    }
+  }
+  const cart = getGuestCart();
+  const item = cart.items.find(i => Number(i.productId) === prodId);
+  if (item) {
+    item.quantity = qty;
+    item.subtotal = item.price * qty;
+    saveGuestCart(cart);
+  }
+}
+
+async function removeCartItem(productId) {
+  const token = getToken();
+  const prodId = Number(productId);
+  if (token) {
+    try {
+      await api('/cart', { method: 'DELETE', body: { productId: prodId } });
+      return;
+    } catch (err) {
+      if (!err.message || !err.message.toLowerCase().includes('unauthorized')) {
+        throw err;
+      }
+      clearAuth();
+    }
+  }
+  const cart = getGuestCart();
+  cart.items = cart.items.filter(i => Number(i.productId) !== prodId);
+  saveGuestCart(cart);
+}
+
+async function clearCartAll() {
+  const token = getToken();
+  if (token) {
+    try {
+      await api('/cart', { method: 'DELETE', body: { productId: 0 } });
+    } catch {}
+  }
+  clearGuestCart();
 }
 
 const CartCtx = createContext({ cartCount: 0, refreshCart: () => {} });
@@ -725,7 +928,11 @@ function CustomerLayout({ user, onLogout }) {
   const location = useLocation();
 
   const refreshCart = useCallback(async () => {
-    try { const d = await api('/cart'); setCartCount(d.count || (d.items || []).length || 0); } catch { }
+    try {
+      const d = await getCartData();
+      const count = d.count !== undefined ? d.count : (d.items || []).reduce((acc, i) => acc + (i.quantity || 1), 0);
+      setCartCount(count);
+    } catch { }
   }, []);
 
   const refreshWishlist = useCallback(async () => {
@@ -1207,15 +1414,16 @@ function StorePage({ addToast }) {
     return () => clearTimeout(timer);
   }, [loadProducts]);
 
-  const addToCart = async (e, productId) => {
+  const addToCart = async (e, product) => {
     e.stopPropagation();
     try {
-      await api('/cart', { method: 'POST', body: { productId: typeof productId === 'number' ? productId : 1, quantity: 1 } });
+      const p = typeof product === 'object' && product !== null ? product : products.find(x => x.id === product) || { id: product, price: 99 };
+      const fp = (!p.discount || p.discount <= 0) ? p.price : Math.max(0, p.price * (1 - p.discount / 100));
+      await addToCartItem({ ...p, finalPrice: fp }, 1);
       addToast('Added to cart! 🛍️', 'success');
       refreshCart();
-    } catch {
-      addToast('Added to cart! 🛍️', 'success');
-      refreshCart();
+    } catch (err) {
+      addToast(err.message || 'Failed to add to cart', 'error');
     }
   };
 
@@ -1507,7 +1715,7 @@ function StorePage({ addToast }) {
                       <button
                         type="button"
                         className="siren-card-add-btn"
-                        onClick={(e) => addToCart(e, p.id)}
+                        onClick={(e) => addToCart(e, p)}
                       >
                         Add to Cart
                       </button>
@@ -1639,19 +1847,28 @@ function ProductDetailsPage({ addToast }) {
   }, [load]);
 
   const addToCart = async (redirect = false) => {
+    if (!product) return;
     setAddingCart(true);
-    const prodIdNum = Number(id);
+    const prodIdNum = Number(id) || Number(product.id) || 1;
     try {
-      if (!isNaN(prodIdNum)) {
-        await api('/cart', { method: 'POST', body: { productId: prodIdNum, quantity: qty } });
-      }
+      await addToCartItem({
+        id: prodIdNum,
+        productId: prodIdNum,
+        name: product.name,
+        productName: product.name,
+        image: currentRawImg || product.image,
+        productImage: currentRawImg || product.image,
+        price: fp,
+        finalPrice: fp,
+        stockQuantity: product.stockQuantity,
+        vendorId: product.vendorId,
+        vendorName: product.vendorName
+      }, qty);
       addToast(`Added ${qty} item${qty > 1 ? 's' : ''} (${isShoe ? `Size: US ${selectedSize}` : `Option: ${selectedSize}`}) to cart! 🛍️`, 'success');
       refreshCart();
       if (redirect) navigate('/cart');
-    } catch {
-      // Graceful fallback for offline demo
-      addToast(`Added ${qty} item${qty > 1 ? 's' : ''} (${isShoe ? `Size: US ${selectedSize}` : `Option: ${selectedSize}`}) to cart! 🛍️`, 'success');
-      if (redirect) navigate('/cart');
+    } catch (err) {
+      addToast(err.message || 'Failed to add item to cart', 'error');
     } finally {
       setAddingCart(false);
     }
@@ -1714,8 +1931,16 @@ function ProductDetailsPage({ addToast }) {
   const dp = (!product.discount || product.discount <= 0) ? 0 : Math.round(product.discount);
   const isOutOfStock = !product.stockQuantity || product.stockQuantity <= 0;
   const isShoe = String(id) === 'puma' || String(id) === 'featured' || (product.name || '').toLowerCase().includes('shoe') || (product.name || '').toLowerCase().includes('puma') || (product.brandName || '').toLowerCase().includes('puma') || (product.categoryName || '').toLowerCase().includes('shoe');
-  const heroImage = (String(id) === 'puma' || String(id) === 'featured' || isShoe) ? '/puma_xetic_sculpt.png' : (product.image || '/puma_xetic_sculpt.png');
-  const brandNameDisplay = (String(id) === 'puma' || String(id) === 'featured') ? 'PUMA' : (product.brandName || 'PUMA');
+  
+  const defaultFallback = isShoe ? '/puma_xetic_sculpt.png' : getCategoryFallbackImage(product.categoryName, product.name);
+  const rawImages = (Array.isArray(product.images) && product.images.length > 0)
+    ? product.images
+    : (product.image ? [product.image] : [defaultFallback]);
+  
+  const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+  const currentRawImg = rawImages[selectedImgIdx] || rawImages[0] || defaultFallback;
+  const heroImage = resolveMediaUrl(currentRawImg) || defaultFallback;
+  const brandNameDisplay = (String(id) === 'puma' || String(id) === 'featured') ? 'PUMA' : (product.brandName || 'BuyIt Flagship');
 
   return (
     <div className="pd-siren-page">
@@ -1781,14 +2006,26 @@ function ProductDetailsPage({ addToast }) {
             src={heroImage}
             alt={product.name}
             className={`pd-hero-product-img ${isShoe ? 'is-shoe' : 'is-generic'}`}
+            onError={(e) => {
+              e.currentTarget.src = getCategoryFallbackImage(product.categoryName, product.name);
+            }}
           />
 
           {/* Stage Bottom Carousel Dots */}
-          <div className="pd-stage-dots">
-            <span className="dot" />
-            <span className="dot active" />
-            <span className="dot" />
-          </div>
+          {rawImages.length > 1 && (
+            <div className="pd-stage-dots" style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+              {rawImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`dot ${selectedImgIdx === idx ? 'active' : ''}`}
+                  onClick={() => setSelectedImgIdx(idx)}
+                  style={{ cursor: 'pointer', border: 'none' }}
+                  aria-label={`Show image ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Column: Buy Box Container */}
@@ -2091,32 +2328,51 @@ function CartPage({ addToast }) {
   const navigate = useNavigate();
   const loadCart = useCallback(async () => {
     setLoading(true);
-    try { setCart(await api('/cart')); }
-    catch (err) { addToast(err.message, 'error'); }
-    finally { setLoading(false); }
+    try {
+      const data = await getCartData();
+      setCart(data);
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   }, [addToast]);
   useEffect(() => { loadCart(); }, [loadCart]);
 
   const updateQty = async (productId, quantity) => {
-    try { await api('/cart', { method: 'PUT', body: { productId, quantity } }); loadCart(); refreshCart(); }
-    catch (err) { addToast(err.message, 'error'); }
+    try {
+      await updateCartItemQty(productId, quantity);
+      await loadCart();
+      refreshCart();
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
   };
 
   const removeItem = async (productId) => {
-    try { await api('/cart', { method: 'DELETE', body: { productId } }); addToast('Item removed from cart', 'success'); loadCart(); refreshCart(); }
-    catch (err) { addToast(err.message, 'error'); }
+    try {
+      await removeCartItem(productId);
+      addToast('Item removed from cart', 'success');
+      await loadCart();
+      refreshCart();
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
   };
 
   const handleClearCart = async () => {
     if (!window.confirm('Are you sure you want to remove all items from your cart?')) return;
     setClearing(true);
     try {
-      await api('/cart', { method: 'DELETE', body: { productId: 0 } });
+      await clearCartAll();
       addToast('Cart cleared', 'success');
-      loadCart();
+      await loadCart();
       refreshCart();
-    } catch (err) { addToast(err.message, 'error'); }
-    finally { setClearing(false); }
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setClearing(false);
+    }
   };
 
   if (loading) return <Loader />;
@@ -2227,7 +2483,18 @@ function CartPage({ addToast }) {
               <span>Estimated Total</span>
               <span>{fmt(cart.total)}</span>
             </div>
-            <button className="btn-primary btn-lg btn-full" style={{ marginTop: 20 }} onClick={() => navigate('/checkout')}>
+            <button
+              className="btn-primary btn-lg btn-full"
+              style={{ marginTop: 20 }}
+              onClick={() => {
+                if (!getToken()) {
+                  addToast('Please sign in or create an account to proceed to checkout 🔒', 'info');
+                  navigate('/login');
+                } else {
+                  navigate('/checkout');
+                }
+              }}
+            >
               Proceed to Checkout →
             </button>
             <button className="btn-secondary btn-full" style={{ marginTop: 10 }} onClick={() => navigate('/store')}>
@@ -2256,7 +2523,7 @@ function CheckoutPage({ addToast }) {
   useEffect(() => {
     Promise.all([
       api('/addresses').then(d => { const a = Array.isArray(d) ? d : []; setAddresses(a); if (a.length) setSelectedAddress(a.find(x => x.isDefault)?.id || a[0].id); }).catch(() => {}),
-      api('/cart').then(d => setCart(d)).catch(() => {}),
+      getCartData().then(d => setCart(d)).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
   const saveAddress = async (e) => {
@@ -3826,9 +4093,19 @@ function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }, []);
   const removeToast = useCallback((id) => setToasts(prev => prev.filter(t => t.id !== id)), []);
-  const handleAuth = useCallback((token, u) => {
+  const handleAuth = useCallback(async (token, u) => {
     setAuth(token, u);
     setUser(u);
+    // Automatically merge any guest cart items into user's cloud cart
+    try {
+      const gCart = getGuestCart();
+      if (gCart.items && gCart.items.length > 0) {
+        for (const it of gCart.items) {
+          await api('/cart', { method: 'POST', body: { productId: it.productId, quantity: it.quantity } });
+        }
+        clearGuestCart();
+      }
+    } catch {}
   }, []);
   const handleLogout = useCallback(async () => {
     try { await api('/auth/logout', { method: 'POST' }); } catch { }

@@ -376,15 +376,24 @@ public class WebServer {
             String body = readBody(exchange);
             String email = jsonStr(body, "email");
             String password = jsonStr(body, "password");
-            User user = new UserService().getUserByEmail(email);
-            String resp;
-            if (user != null && user.getPassword().equals(password)) {
-                String token = createToken(user.getId());
-                resp = "{\"success\":true,\"message\":\"Login successful\",\"user\":" + userJson(user) + ",\"token\":\"" + esc(token) + "\"}";
-            } else {
-                resp = "{\"success\":false,\"message\":\"Invalid email or password\"}";
+            if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+                respondJson(exchange, "{\"success\":false,\"message\":\"Email and password are required\"}", 400);
+                return;
             }
-            respondJson(exchange, resp);
+            try {
+                User user = new UserService().getUserByEmail(email.trim());
+                if (user != null && user.getPassword() != null && user.getPassword().equals(password.trim())) {
+                    String token = createToken(user.getId());
+                    String resp = "{\"success\":true,\"message\":\"Login successful\",\"user\":" + userJson(user) + ",\"token\":\"" + esc(token) + "\"}";
+                    respondJson(exchange, resp, 200);
+                } else {
+                    respondJson(exchange, "{\"success\":false,\"message\":\"Invalid email or password\"}", 401);
+                }
+            } catch (Exception e) {
+                System.err.println("Login error: " + e.getMessage());
+                e.printStackTrace();
+                respondJson(exchange, "{\"success\":false,\"message\":\"Database connection error: " + esc(e.getMessage() != null ? e.getMessage() : "Unable to reach database") + "\"}", 500);
+            }
         }
     }
 

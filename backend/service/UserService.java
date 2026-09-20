@@ -169,15 +169,23 @@ public class UserService {
         String email = rs.getString("email");
         String phone = rs.getString("phone");
         String password = rs.getString("password");
-        Role role = Role.valueOf(rs.getString("role"));
+        String roleStr = rs.getString("role");
+        Role role = Role.CUSTOMER;
+        if (roleStr != null && !roleStr.trim().isEmpty()) {
+            try {
+                role = Role.valueOf(roleStr.trim().toUpperCase());
+            } catch (Exception ignored) {
+                role = Role.CUSTOMER;
+            }
+        }
         String status = rs.getString("status");
         Timestamp createdAt = rs.getTimestamp("created_at");
         Timestamp updatedAt = rs.getTimestamp("updated_at");
 
         return switch (role) {
-            case ADMIN -> new Admin(id, name, email, phone, password, status, createdAt, updatedAt);
-            case VENDOR -> new model.VendorUser(id, name, email, phone, password, status, createdAt, updatedAt);
-            default -> new Customer(id, name, email, phone, password, status, createdAt, updatedAt);
+            case ADMIN -> new Admin(id, name, email, phone, password, status != null ? status : "ACTIVE", createdAt, updatedAt);
+            case VENDOR -> new model.VendorUser(id, name, email, phone, password, status != null ? status : "ACTIVE", createdAt, updatedAt);
+            default -> new Customer(id, name, email, phone, password, status != null ? status : "ACTIVE", createdAt, updatedAt);
         };
     }
 }
